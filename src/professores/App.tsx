@@ -11,6 +11,7 @@ import {
   KeyRound,
   LoaderCircle,
   LogOut,
+  MapPin,
   Plus,
   Search,
   Settings,
@@ -22,6 +23,7 @@ import {
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { AccountSiteNavigation } from '../AccountSiteNavigation'
+import { PageHeading } from '../PageHeading'
 import { requestPasswordReset } from './passwordReset'
 import { ProfileDialog } from './ProfileDialog'
 import { observeCatalog, invalidateCatalog } from './publicQueries'
@@ -254,15 +256,15 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell portal-frame">
       <AccountSiteNavigation active="professores" menu={{ open: menuOpen, onOpen: () => setMenuOpen(true) }} />
 
-      <main id="inicio" className="main-content">
-        <div className="professor-controls interface-panel">
-          <h1 className="professor-title">Encontre seu professor</h1>
+      <main id="inicio" className="main-content portal-main">
+        <div className="professor-controls interface-panel portal-toolbar">
+          <PageHeading icon={MapPin} title="Encontre seu professor" />
 
-          <section className="search-section" aria-label="Pesquisar professores">
-            <div className="search-box">
+          <section className="search-section portal-tool-row" aria-label="Pesquisar professores">
+            <div className="portal-search">
               <Search size={18} aria-hidden="true" />
               <input
                 id="main-search"
@@ -286,9 +288,9 @@ function App() {
           </section>
 
           <div className="schedule-filters" aria-label="Filtros da grade">
-            <label>Turma<select value={classFilter} onChange={(event) => selectClass(event.target.value)}><option value="">Todas as turmas</option>{CLASS_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
-            <label>Matéria<select value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}><option value="">Todas as matérias</option>{subjects.map((subject) => <option key={subject} value={subject}>{subject}</option>)}</select></label>
-            <label>Dia<select value={dayFilter} onChange={(event) => { setDayFilter(Number(event.target.value)); setView('all') }}><option value={0}>Semana inteira</option>{WEEKDAYS.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}</select></label>
+            <label>Turma<select className="portal-control" value={classFilter} onChange={(event) => selectClass(event.target.value)}><option value="">Todas as turmas</option>{CLASS_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
+            <label>Matéria<select className="portal-control" value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}><option value="">Todas as matérias</option>{subjects.map((subject) => <option key={subject} value={subject}>{subject}</option>)}</select></label>
+            <label>Dia<select className="portal-control" value={dayFilter} onChange={(event) => { setDayFilter(Number(event.target.value)); setView('all') }}><option value={0}>Semana inteira</option>{WEEKDAYS.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}</select></label>
           </div>
 
         </div>

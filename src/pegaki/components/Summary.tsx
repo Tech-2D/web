@@ -85,7 +85,7 @@ export function Summary({ rows, action }: { rows: SummaryRow[]; action?: ReactNo
 
   return (
     <section
-      className="animate-fade-up rounded-2xl bg-surface p-4 shadow-card sm:p-6"
+      className="interface-panel animate-fade-up"
       style={{ animationDelay: "60ms" }}
       aria-label="Resumo do ano"
     >
@@ -111,11 +111,11 @@ export function Summary({ rows, action }: { rows: SummaryRow[]; action?: ReactNo
 
       <div className="mt-5 grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr]">
         {/* Número principal: quantas disciplinas já estão garantidas. */}
-        <div className="col-span-full flex items-end gap-3 rounded-xl bg-brand p-4 text-on-brand sm:col-span-1">
-          <span className="text-5xl leading-none font-semibold">{shownSafe}</span>
-          <span className="pb-1 text-sm leading-tight text-on-brand/80">
+        <div className="col-span-full flex items-center gap-3 rounded-xl bg-brand-soft p-4 text-brand-ink sm:col-span-1">
+          <span className="text-3xl leading-none font-semibold tabular-nums">{shownSafe}</span>
+          <span className="text-sm leading-tight">
             de {total} disciplinas
-            <span className="block font-medium text-on-brand">garantidas</span>
+            <span className="block font-medium">garantidas</span>
           </span>
         </div>
         <div className="col-span-full grid grid-cols-2 gap-3 sm:contents">

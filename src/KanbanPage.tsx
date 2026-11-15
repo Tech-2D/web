@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
-import { ChevronLeft, LayoutPanelLeft, LockKeyhole, LogOut, Plus, Search, Settings2, Users } from 'lucide-react'
+import { Columns3, LayoutPanelLeft, LockKeyhole, LogOut, Plus, Search, Settings2, Users } from 'lucide-react'
 import { auth, db } from './firebase'
 import { doc, getDoc } from './dataClient'
 import { enqueueDocument, queuedDocument, queuedViewData, seedQueuedDocument, subscribeQueuedDocument } from './queuedWrites'
@@ -11,22 +11,31 @@ import { BoardForm, ColumnForm, TaskForm, EditorDialog } from './KanbanForms'
 import { KanbanBoardView } from './KanbanBoardView'
 import { SharedKanban } from './SharedKanban'
 import { kanbanInvite } from './kanbanSharing'
+import { PageHeading } from './PageHeading'
 import type { Activity } from './types'
 import './kanban.css'
 
-export default function KanbanPage({ onBack, activities }: { onBack: () => void; activities: Activity[] }) {
+export default function KanbanPage({ activities }: { activities: Activity[] }) {
   const [user, setUser] = useState<User | null>(null)
   const [checked, setChecked] = useState(false)
   const [invite,setInvite]=useState(()=>kanbanInvite(window.location.hash))
   const [mode,setMode]=useState<'personal'|'shared'>(()=>kanbanInvite(window.location.hash) ? 'shared' : 'personal')
   useEffect(() => onAuthStateChanged(auth, account => { setUser(account); setChecked(true) }), [])
   useEffect(()=>{const change=()=>{const id=kanbanInvite(window.location.hash);setInvite(id);if(id)setMode('shared')};window.addEventListener('hashchange',change);return()=>window.removeEventListener('hashchange',change)},[])
-  return <main className="kb-page">
-    <button className="kb-back" onClick={onBack}><ChevronLeft size={18} /> Voltar para a agenda</button>
-    <header className="kb-heading"><div><span className="kb-eyebrow">SEU ESPAÇO</span><h1>Meu Kanban</h1><p>Organize sozinho ou com seu grupo. Você escolhe o que compartilhar.</p></div><LockKeyhole size={24} aria-hidden="true" /></header>
+  return <main className="kb-page portal-main">
+    <div className="portal-toolbar interface-panel">
+      <div className="portal-toolbar-heading">
+        <PageHeading icon={Columns3} title="Kanban" />
+        {user && <div className="kb-account"><span><LockKeyhole size={14} aria-hidden="true" />{user.email || 'Sua conta'}</span><button className="kb-link" onClick={()=>void signOut(auth).catch(()=>window.alert('Não foi possível sair. Tente novamente.'))}><LogOut size={14} aria-hidden="true" />Sair</button></div>}
+      </div>
+      {user && <div className="portal-tool-row">
+        <div className="kb-tabs interface-segments" role="group" aria-label="Tipo de quadro">
+          <button type="button" aria-pressed={mode === 'personal'} onClick={() => setMode('personal')}><LockKeyhole size={15} aria-hidden="true" /> Pessoais</button>
+          <button type="button" aria-pressed={mode === 'shared'} onClick={() => setMode('shared')}><Users size={15} aria-hidden="true" /> Compartilhados</button>
+        </div>
+      </div>}
+    </div>
     {!checked ? <p role="status">Conferindo sua conta…</p> : user ? <div key={user.uid}>
-      <div className="kb-account"><span><LockKeyhole size={14}/>{user.email || 'Sua conta'}</span><button className="kb-link" onClick={()=>void signOut(auth).catch(()=>window.alert('Não foi possível sair. Tente novamente.'))}><LogOut size={14}/>Sair</button></div>
-      <div className="kb-tabs" role="group" aria-label="Tipo de quadro"><button aria-pressed={mode==='personal'} onClick={()=>setMode('personal')}><LockKeyhole size={16}/> Pessoais</button><button aria-pressed={mode==='shared'} onClick={()=>setMode('shared')}><Users size={16}/> Compartilhados</button></div>
       {mode==='personal' ? <Workspace user={user} activities={activities}/> : <SharedKanban user={user} invite={invite} activities={activities}/>}
     </div> : <>{invite && <p className="kb-invite-note">Você recebeu um convite para um quadro compartilhado. Entre ou crie sua conta para pedir acesso ao dono.</p>}<KanbanLogin /></>}
   </main>
@@ -134,7 +143,7 @@ function Workspace({user,activities}:{user:User;activities:Activity[]}) {
     <section className="kb-workarea" aria-label={board?.name || 'Criar seu primeiro quadro'}>
       {!board ? <div className="kb-empty"><LayoutPanelLeft size={36}/><h2>Comece pelo seu primeiro quadro</h2><p>Use um modelo de estudos, planeje sua semana ou comece do zero.</p><button className="primary-button" disabled={disabled} onClick={()=>setEditor({kind:'board'})}><Plus size={18}/> Criar meu quadro</button></div> : <>
         <header className="kb-board-heading"><div><span className={`kb-dot kb-color-${board.color}`}/><h2>{board.name}</h2><small>{done}/{board.tasks.length} concluídas</small></div><button className="secondary-button" disabled={disabled} onClick={()=>{setError('');setEditor({kind:'board',board})}}><Settings2 size={16}/> Personalizar quadro</button></header>
-        <div className="kb-toolbar"><label className="kb-search"><Search size={17}/><input aria-label="Buscar tarefas pessoais" placeholder="Buscar tarefa ou etiqueta" value={search} onChange={e=>setSearch(e.target.value)}/></label><select aria-label="Filtrar prioridade" value={priority} onChange={e=>setPriority(e.target.value)}><option value="">Todas as prioridades</option>{Object.entries(PRIORITIES).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><button className="kb-add" disabled={disabled || board.columns.length>=12} onClick={()=>{setError('');setEditor({kind:'column'})}}><Plus size={16}/> Coluna</button></div>
+        <div className="kb-toolbar"><label className="kb-search portal-search"><Search size={17} aria-hidden="true" /><input aria-label="Buscar tarefas pessoais" placeholder="Buscar tarefa ou etiqueta" value={search} onChange={e=>setSearch(e.target.value)}/></label><select className="portal-control" aria-label="Filtrar prioridade" value={priority} onChange={e=>setPriority(e.target.value)}><option value="">Todas as prioridades</option>{Object.entries(PRIORITIES).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><button className="kb-add portal-control" disabled={disabled || board.columns.length>=12} onClick={()=>{setError('');setEditor({kind:'column'})}}><Plus size={16}/> Coluna</button></div>
         <p className="kb-hint">Arraste pelos seis pontos para organizar colunas e cartões. Use espaço e setas no teclado, ou “Mover para”. Soltar fora ou pressionar Escape cancela.</p>
         <KanbanBoardView key={board.id} board={board} disabled={disabled} search={search} priority={priority} canAddTask={workspace.boards.reduce((n,b)=>n+b.tasks.length,0)<200} onChange={changeBoard} onEditTask={task=>{setError('');setEditor({kind:'task',columnId:task.columnId,task})}} onEditColumn={column=>{setError('');setEditor({kind:'column',column})}} onAddTask={columnId=>{setError('');setEditor({kind:'task',columnId})}}/>
       </>}

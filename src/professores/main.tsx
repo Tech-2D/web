@@ -6,6 +6,7 @@ import { observeStoredAppearance } from '../appearance'
 import './styles.css'
 import './sharedAppearance.css'
 import './professorAdmin.css'
+import '../portalInterface.css'
 import './interface.css'
 import '../siteNavigation.css'
 

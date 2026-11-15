@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNotebook } from "./lib/useNotebook";
-import { ChevronDown, Search } from "lucide-react";
+import { Calculator, ChevronDown, Search } from "lucide-react";
+import { PageHeading } from "../PageHeading";
 import { calculateSemesters, DEFAULT_N1_WEIGHT, type InputMode, type Modes, type Situation } from "./lib/grades";
 import { SUBJECTS_BY_YEAR, type Year } from "./data/subjects";
 import { Formulas } from "./components/Formulas";
@@ -82,7 +83,10 @@ export default function App() {
     window.scrollTo({ top: 0 });
   };
 
-  if (user === undefined) return <p role="status" className="p-6 text-muted">Carregando sua conta…</p>;
+  if (user === undefined) return <main className="portal-main"><div className="portal-toolbar interface-panel">
+    <PageHeading icon={Calculator} title="Notaki" />
+    <p role="status" className="portal-tool-row text-sm text-muted">Carregando sua conta…</p>
+  </div></main>;
   if (!hasSubjects(year)) return <YearPicker onPick={pick} />;
   return <GradesView key={`${user?.uid ?? "guest"}:${year}:${academicYear}`} user={user} academicYear={academicYear} onAcademicYear={setAcademicYear} year={year} onChangeYear={() => pick(null)} />;
 }
@@ -172,19 +176,25 @@ function GradesView({ year, onChangeYear, user, academicYear, onAcademicYear }: 
   const q = query.trim().toLowerCase();
   const visible = rows.filter(({ name, r }) => (filter === "todas" || r.situation === filter) && (!q || name.toLowerCase().includes(q)));
 
-  if (user && !cloud.ready) return <main className="mx-auto max-w-7xl p-6"><p role="status">{cloud.loading ? 'Carregando notas da sua conta…' : cloud.error}</p>{!cloud.loading && <button type="button" onClick={cloud.reload}>Tentar novamente</button>}</main>;
+  if (user && !cloud.ready) return <main className="portal-main"><div className="portal-toolbar interface-panel">
+    <PageHeading icon={Calculator} title="Notaki" />
+    <div className="portal-tool-row">
+      <p role="status" className="text-sm text-muted">{cloud.loading ? 'Carregando notas da sua conta…' : cloud.error}</p>
+      {!cloud.loading && <button type="button" className="portal-control" onClick={cloud.reload}>Tentar novamente</button>}
+    </div>
+  </div></main>;
 
   return (
-    <div className="min-h-dvh">
-      <AppHeader year={year} onChangeYear={() => { void cloud.save().then(saved => { if (!cloud.dirty || saved) onChangeYear(); }); }} />
-
-      <main className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:py-8">
-        <section aria-label="Notas da sua conta" className="flex flex-wrap items-center gap-3 rounded-xl bg-surface p-4 shadow-card">
+    <>
+      <main className="portal-main space-y-4">
+        <div className="portal-toolbar interface-panel">
+          <AppHeader year={year} onChangeYear={() => { void cloud.save().then(saved => { if (!cloud.dirty || saved) onChangeYear(); }); }} />
+          <section aria-label="Notas da sua conta" className="portal-tool-row">
           {user ? <>
             <label className="inline-flex items-center gap-2 text-sm">
               Ano letivo
               <span className="relative inline-flex">
-                <select aria-label="Ano letivo" className="appearance-none rounded-lg border border-line bg-surface py-2 pr-9 pl-3"
+                <select aria-label="Ano letivo" className="portal-control notaki-year-select appearance-none"
                   disabled={cloud.loading || cloud.saving} value={academicYear}
                   onChange={event => {
                     const next = Number(event.target.value);
@@ -200,27 +210,11 @@ function GradesView({ year, onChangeYear, user, academicYear, onAcademicYear }: 
             {cloud.error && <p role="alert" className="w-full text-sm">{cloud.error}</p>}
             {cloud.conflict && <button type="button" onClick={()=>{if(window.confirm('Recarregar as notas da conta e descartar as alterações desta tela?'))cloud.reload()}}>Recarregar notas da conta</button>}
           </> : <><p className="flex-1 text-sm text-muted">{CLOUD_GRADES_ENABLED ? 'Suas notas ficam neste navegador. Entre para salvá-las na conta e acessar em outros dispositivos.' : 'Suas notas ficam salvas neste navegador.'}</p>{CLOUD_GRADES_ENABLED && <a className="text-sm text-brand-ink underline" href={agendaMenuUrl("profiles")}>Entrar ou criar conta</a>}</>}
-        </section>
-        <div className="flex animate-fade-up flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-xl font-semibold sm:text-2xl">Disciplinas do {year}º ano</h1>
-            <p className="text-sm text-muted">
-              <span className="sm:hidden">Notas privadas, com cálculo atualizado enquanto você digita.</span>
-              <span className="hidden sm:inline">
-                Escolha, em cada semestre, se vai lançar a N1 e a N2 ou só a média. Notas privadas, com cálculo atualizado enquanto você digita.
-              </span>
-            </p>
-          </div>
-          {/* No celular os dois seletores viram um painel com título; no desktop ficam soltos ao lado do título. */}
-          <section
-            aria-label="Como lançar as notas"
-            className="shrink-0 rounded-2xl bg-surface p-3 shadow-card sm:bg-transparent sm:p-0 sm:shadow-none"
-          >
-            <h2 className="mb-2 px-1 text-xs font-semibold text-muted sm:hidden">Como lançar as notas</h2>
-            <div className="grid gap-2 sm:grid-cols-2">
+          </section>
+          <section className="portal-tool-row" aria-label="Como lançar as notas">
               {(["s1", "s2"] as const).map((sem, i) => (
-                <div key={sem} className="flex min-w-0 items-center justify-between gap-3 sm:block">
-                  <span className="px-1 text-sm font-medium text-ink sm:mb-1 sm:block sm:text-[11px] sm:font-semibold sm:text-muted">
+                <div key={sem} className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-muted">
                     {i + 1}º semestre
                   </span>
                   <Segmented
@@ -231,12 +225,11 @@ function GradesView({ year, onChangeYear, user, academicYear, onAcademicYear }: 
                       setModeTouched(true);
                       setModes((x) => ({ ...x, [sem]: v }));
                     }}
-                    className="w-44 shrink-0 rounded-full bg-page p-1 sm:w-auto sm:bg-surface sm:shadow-card"
-                    buttonClassName="h-9 flex-1 rounded-full px-3 text-xs font-medium sm:flex-none"
+                    className="interface-segments"
+                    indicatorClassName="rounded-[.4375rem] bg-brand"
                   />
                 </div>
               ))}
-            </div>
           </section>
         </div>
 
@@ -255,12 +248,11 @@ function GradesView({ year, onChangeYear, user, academicYear, onAcademicYear }: 
           }
         />
 
-        <div
-          className="flex animate-fade-up flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-          style={{ animationDelay: "120ms" }}
-        >
+        <section className="portal-toolbar interface-panel" aria-labelledby="notaki-subjects">
+          <h2 id="notaki-subjects" className="text-base font-semibold">Disciplinas do {year}º ano</h2>
+          <div className="portal-tool-row justify-between">
           <div
-            className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0"
+            className="interface-segments max-w-full flex-wrap"
             role="group"
             aria-label="Filtrar por situação"
           >
@@ -272,9 +264,8 @@ function GradesView({ year, onChangeYear, user, academicYear, onAcademicYear }: 
                   key={f}
                   onClick={() => setFilter(f)}
                   aria-pressed={active}
-                  className={`h-9 shrink-0 cursor-pointer rounded-full px-3.5 text-xs font-medium outline-none transition-[background-color,color,transform] duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand ${
-                    active ? "bg-brand text-white shadow-lift" : "bg-surface text-ink shadow-card hover:bg-brand-soft"
-                  }`}
+                  type="button"
+                  className="cursor-pointer"
                 >
                   {f === "todas" ? "Todas" : SITUATION[f].text}{" "}
                   <span key={n} className="inline-block animate-pop opacity-70 tabular-nums">
@@ -284,20 +275,20 @@ function GradesView({ year, onChangeYear, user, academicYear, onAcademicYear }: 
               );
             })}
           </div>
-          <label className="relative sm:w-64">
+          <label className="portal-search w-full sm:w-64">
             <span className="sr-only">Buscar disciplina</span>
-            <Search size={16} aria-hidden className="absolute top-1/2 left-3 -translate-y-1/2 text-muted" />
+            <Search size={18} aria-hidden="true" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar disciplina"
-              className="h-11 w-full rounded-lg border border-line bg-surface pr-3 pl-9 text-sm outline-none transition-shadow focus:border-brand focus:ring-4 focus:ring-brand/15"
             />
           </label>
-        </div>
+          </div>
+        </section>
 
-        <section className="lg:overflow-hidden lg:rounded-2xl lg:bg-surface lg:shadow-card">
+        <section aria-labelledby="notaki-subjects" className="notaki-grades lg:overflow-hidden">
           <div className={`hidden border-b border-line px-4 py-3 pl-5 text-xs font-semibold lg:grid ${GRID}`}>
             <span>Disciplinas</span>
             <span>
@@ -342,7 +333,7 @@ function GradesView({ year, onChangeYear, user, academicYear, onAcademicYear }: 
         </section>
 
         <details
-          className="group rounded-2xl bg-surface shadow-card [&_summary::-webkit-details-marker]:hidden"
+          className="group interface-panel notaki-formulas [&_summary::-webkit-details-marker]:hidden"
           open
         >
           <summary className="flex h-14 cursor-pointer list-none items-center justify-between rounded-2xl px-5 font-semibold outline-none focus-visible:ring-2 focus-visible:ring-brand">
@@ -365,6 +356,6 @@ function GradesView({ year, onChangeYear, user, academicYear, onAcademicYear }: 
           onClose={closeSubject}
         />
       )}
-    </div>
+    </>
   );
 }

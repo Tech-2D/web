@@ -7,6 +7,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { AccountSiteNavigation } from "../AccountSiteNavigation";
 import "../siteNavigation.css";
 import "../sitePalette.css";
+import "../portalInterface.css";
 import { observeStoredAppearance } from "../appearance";
 
 import { auth } from "../firebase";
@@ -22,7 +23,7 @@ if (SQL_ENABLED) {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <SiteSession destination="o Notaki">
-      <div className="pegaki-shell">
+      <div className="app-shell portal-frame">
         <AccountSiteNavigation active="pegaki" />
         <App />
       </div>

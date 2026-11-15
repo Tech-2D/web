@@ -203,6 +203,18 @@ body {
   background: var(--color-page);
 }
 
+.portal-frame select.notaki-year-select { padding-inline-end: 2.25rem; }
+.interface-panel.notaki-formulas { padding: 0; }
+
+@media (min-width: 64rem) {
+  .notaki-grades {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-interface-panel);
+    background: var(--interface-surface);
+    box-shadow: var(--interface-elevation);
+  }
+}
+
 /* Troca de tema: as cores cruzam por um instante (a classe sai sozinha depois de 320ms). */
 .theme-transition,
 .theme-transition *,

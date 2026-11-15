@@ -512,7 +512,7 @@ function App() {
   )
 
   if (adminOpen) return (
-    <div className="app-shell admin-shell">
+    <div className="app-shell portal-frame admin-shell">
       <SiteNavigation active="admin" role={calendarProfile?.role} />
       <SyncStatus />
       <DialogLoadBoundary>
@@ -525,13 +525,13 @@ function App() {
   )
 
   return (
-    <div className="app-shell">
+    <div className="app-shell portal-frame">
       <SiteNavigation active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
       <SyncStatus />
 
       {kanbanOpen ? (
         <DialogLoadBoundary><Suspense fallback={<div className="state-card" role="status"><LoaderCircle className="spin" /><p>Carregando seu Kanban…</p></div>}>
-          <KanbanPage activities={[...turmaActivities, ...globalActivities]} onBack={() => { setKanbanOpen(false); window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`) }} />
+          <KanbanPage activities={[...turmaActivities, ...globalActivities]} />
         </Suspense></DialogLoadBoundary>
       ) : moreOptionsOpen ? (
         <MoreOptionsPage
@@ -545,34 +545,34 @@ function App() {
           onResetShortcuts={resetMenuShortcuts}
         />
       ) : compareMode ? (
-      <main id="inicio" className="main-content">
+      <main id="inicio" className="main-content portal-main">
         <Suspense fallback={<div className="state-card"><LoaderCircle className="spin" /><p>Carregando…</p></div>}>
           <CompareCalendar classNames={classNames} currentTurmaId={turmaId} onBack={() => setCompareMode(false)} />
         </Suspense>
       </main>
       ) : (
-      <main id="inicio" className="main-content">
-        <div className="agenda-toolbar interface-panel">
-          <div className="agenda-heading">
-            <PageHeading icon={Calendar} title="Sua agenda" />
+      <main id="inicio" className="main-content portal-main">
+        <div className="agenda-toolbar interface-panel portal-toolbar">
+          <PageHeading icon={Calendar} title="Agenda" />
+          <div className="agenda-heading portal-tool-row">
             <label className="turma-select-inline" aria-label="Turma selecionada">
-              <select value={turmaId ?? ''} onChange={(event) => chooseTurma(event.target.value)}>
+              <select className="portal-control" value={turmaId ?? ''} onChange={(event) => chooseTurma(event.target.value)}>
                 <option value="" disabled>Selecione uma turma</option>
                 {classNames.map((name) => <option key={name} value={name}>{name}</option>)}
               </select>
             </label>
             {turmaId && (
               <label className="turma-select-inline" aria-label="Filtrar por matéria">
-                <select value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}>
+                <select className="portal-control" value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}>
                   <option value="">Todas as matérias</option>
                   {SUBJECTS.map((subject) => <option key={subject} value={subject}>{subject}</option>)}
                 </select>
               </label>
             )}
-            <button type="button" className="compare-link" onClick={() => setCompareMode(true)}>
+            <button type="button" className="compare-link portal-control" onClick={() => setCompareMode(true)}>
               <LayoutGrid size={14} aria-hidden="true" /> Comparar turmas
             </button>
-            <button type="button" className="compare-link" onClick={() => setDocsOpen(true)}>
+            <button type="button" className="compare-link portal-control" onClick={() => setDocsOpen(true)}>
               <BookOpen size={14} aria-hidden="true" /> Comece por aqui
             </button>
           </div>
