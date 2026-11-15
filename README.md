@@ -1,8 +1,8 @@
 # Tech 2D
 
-Site principal da comunidade Tech 2D. A navegação entre as áreas fica no topo de cada página. [Agenda](https://tech-2d.github.io/web/) · [Professores](https://tech-2d.github.io/web/professores/) · [Notas](https://tech-2d.github.io/web/pegaki/) · [Kanban](https://tech-2d.github.io/web/#kanban)
+Site principal da comunidade Tech 2D. A navegação entre as áreas fica no topo de cada página. [Agenda](https://tech-2d.github.io/web/) · [Professores](https://tech-2d.github.io/web/professores/) · [Notas](https://tech-2d.github.io/web/notas/) · [Kanban](https://tech-2d.github.io/web/#kanban)
 
-Consulte [a estrutura e a transição dos links antigos](docs/unificacao-site.md). Para desenvolver, execute `npm ci` e `npm run dev`; `/` abre a agenda, `/professores/` abre os horários e `/pegaki/` abre a calculadora de notas. Um único `npm run build` gera todo o site.
+Consulte [a estrutura e a transição dos links antigos](docs/unificacao-site.md). Para desenvolver, execute `npm ci` e `npm run dev`; `/` abre a agenda, `/professores/` abre os horários e `/notas/` abre a calculadora de notas. Um único `npm run build` gera todo o site.
 
 A calculadora de notas foi criada por Arakaki e integrada a partir de `Tech-2D/pegaki`. Sua [licença MIT](docs/pegaki/LICENSE) e [documentação original](docs/pegaki/README.md) estão preservadas. O código fica em `src/pegaki/`, incluindo os testes de cálculo e leitura do boletim. A página **Minhas notas** abre na turma padrão do portal e usa as disciplinas de sua grade. As notas são salvas automaticamente no caderno da conta por ano letivo. A importação das notas locais é explícita e os PDFs continuam no dispositivo.
 

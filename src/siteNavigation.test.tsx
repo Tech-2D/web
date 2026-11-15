@@ -8,14 +8,16 @@ it('connects all pages on the same origin and identifies the current page', () =
     const html = renderToStaticMarkup(createElement(SiteNavigation, { active }))
     expect(html).toContain('href="/"')
     expect(html).toContain('href="/professores/"')
-    expect(html).toContain('href="/pegaki/"')
+    expect(html).toContain('href="/notas/"')
+    expect(html).not.toContain('href="/pegaki/"')
     expect(html).toContain('>Notas</a>')
     expect(html).toContain('lucide-clipboard-list')
     expect(html).toContain('href="/#kanban"')
     expect(html).toContain('aria-label="Abrir menu" aria-haspopup="dialog" aria-expanded="false"')
     expect(html).not.toContain('target=')
     expect(html.match(/aria-current="page"/g)).toHaveLength(1)
-    expect(html).toContain(`href="${active === 'agenda' ? '/' : active === 'kanban' ? '/#kanban' : `/${active}/`}" aria-current="page"`)
+    const paths = { agenda: '/', kanban: '/#kanban', professores: '/professores/', pegaki: '/notas/' }
+    expect(html).toContain(`href="${paths[active]}" aria-current="page"`)
   }
 })
 

@@ -13,3 +13,13 @@ it('keeps class filters and existing activity and Kanban links on the old Agenda
     }
   }
 })
+
+it('redirects old grade URLs to Notas while preserving the query and fragment', () => {
+  const source = readFileSync('public/notesRedirect.js', 'utf8')
+  for (const base of ['/', '/web/']) {
+    const replace = vi.fn()
+    const document = { currentScript: { src: `https://tech-2d.github.io${base}notesRedirect.js` } }
+    runInNewContext(source, { URL, document, window: { location: { search: '?ano=2026', hash: '#disciplina', replace } } })
+    expect(replace).toHaveBeenCalledWith(`https://tech-2d.github.io${base}notas/?ano=2026#disciplina`)
+  }
+})

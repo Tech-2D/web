@@ -5,5 +5,5 @@ export const sitePaths = {
   kanban: `${base}#kanban`,
   admin: `${base}admin/`,
   professores: `${base}professores/`,
-  pegaki: `${base}pegaki/`,
+  pegaki: `${base}notas/`,
 }

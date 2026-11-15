@@ -4,7 +4,7 @@ O repositório `Tech-2D/web` publica o site em [tech-2d.github.io/web/](https://
 
 - `/`: agenda de atividades e recursos da turma.
 - `/professores/`: horários, localização e administração de professores.
-- `/pegaki/`: calculadora de médias, simulações e importação/exportação de boletim.
+- `/notas/`: calculadora de médias, simulações e importação/exportação de boletim.
 - `/Agenda/`: compatibilidade com os links antigos, preservando parâmetros e fragmentos de atividades, convites de Kanban e atalhos.
 
 As três páginas usam uma instalação npm, um build Vite e o mesmo workflow de publicação. A navegação é interna, na mesma aba. Agenda e Professores compartilham Firebase, configuração de backend, aparência e atalhos de `src/`. As preferências de turma conservam as chaves de armazenamento existentes; cada área mantém seu catálogo, pois professores abrange turmas que ainda não têm agenda. Cada página carrega seus estilos específicos.
@@ -23,11 +23,11 @@ O GitHub Pages informa o caminho base durante a publicação. O build usa esse c
 
 ## Desenvolvimento
 
-Execute `npm ci` e `npm run dev`. Abra `/` para a agenda, `/professores/` para os professores e `/pegaki/` para as notas. `npm run build` gera as três páginas em `dist/`; nenhuma delas depende de compilar ou buscar outro repositório.
+Execute `npm ci` e `npm run dev`. Abra `/` para a agenda, `/professores/` para os professores e `/notas/` para as notas. `npm run build` gera as três páginas em `dist/`; nenhuma delas depende de compilar ou buscar outro repositório.
 
 ## Notas
 
-O código de `Tech-2D/pegaki` foi incorporado em `src/pegaki/`, com os testes das fórmulas e da leitura de boletim integrados ao Vitest. O importador de PDF carrega sob demanda e funciona no navegador. Notas, pesos e ano selecionado usam as chaves `aprovae:*` do `localStorage`. O endereço `https://tech-2d.github.io/web/pegaki/` tem a mesma origem do endereço antigo e pode acessar as notas salvas nesse domínio.
+O código de `Tech-2D/pegaki` foi incorporado em `src/pegaki/`, com os testes das fórmulas e da leitura de boletim integrados ao Vitest. O importador de PDF carrega sob demanda e funciona no navegador. Notas, pesos e ano selecionado usam as chaves `aprovae:*` do `localStorage`. O endereço `https://tech-2d.github.io/web/notas/` tem a mesma origem do endereço antigo e pode acessar as notas salvas nesse domínio.
 
 A área de Notas compartilha a paleta da Agenda em `src/sitePalette.css` e usa as mesmas preferências de tema, neon e acessibilidade. O menu do portal dá acesso às configurações.
 
@@ -35,4 +35,6 @@ O salvamento por conta é controlado por `VITE_PEGAKI_CLOUD_GRADES`, ativado em 
 
 A ativação foi validada em 13/11/2026 na API publicada: duas contas temporárias confirmaram gravação e leitura, isolamento entre contas, rejeição de acesso anônimo, conflitos de versão, autoria forjada e limpeza de notas. As contas e os cadernos de teste foram removidos ao terminar. Nenhuma nota foi enviada à IA.
 
-A navegação compartilhada mostra Agenda, Professores, Notas e Kanban na mesma aba. O Pages separado de `Tech-2D/pegaki` deve ser desativado após a publicação para que `/pegaki/` seja servido pelo site principal. A integração não altera nem exclui o repositório pessoal do autor.
+A navegação compartilhada mostra Agenda, Professores, Notas e Kanban na mesma aba. O Pages separado de `Tech-2D/pegaki` deve ser desativado após a publicação para que `/notas/` seja servido pelo site principal. A integração não altera nem exclui o repositório pessoal do autor.
+
+O endereço antigo `/pegaki/` redireciona para `/notas/`, preservando parâmetros e fragmentos do link.
