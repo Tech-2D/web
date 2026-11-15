@@ -86,7 +86,7 @@ export function SiteAccessPanel({ user }: { user: User }) {
             )
           })}
         </div>
-        {result.analytics && <AccessUsageInsights data={result.analytics} total={total} days={days} />}
+        {result.analytics && <AccessUsageInsights data={result.analytics} total={total} days={days} sites={sites} />}
         <details className="access-daily-details">
           <summary>Ver acessos por dia</summary>
           <div className="access-table-scroll" role="region" aria-label="Tabela de acessos diários" tabIndex={0}>
@@ -104,9 +104,10 @@ export function SiteAccessPanel({ user }: { user: User }) {
           </div>
         </details>
         <p className="site-access-note">{result.professorSince && <>Comparativo entre Agenda e Professores disponível desde {accessDateLabel(result.professorSince)}. </>}
-          {result.pegakiSince && <>Notas desde {accessDateLabel(result.pegakiSince)}. </>}A tabela indica os períodos sem registros.</p>
+          {result.pegakiSince && <>Notas desde {accessDateLabel(result.pegakiSince)}. </>}
+          {result.kanbanSince && <>Kanban separado desde {accessDateLabel(result.kanbanSince)}. </>}A tabela indica os períodos sem registros.</p>
       </>}
-      <p className="site-access-note">Uma conta pode gerar um acesso a cada 30 minutos em cada área. Datas seguem Brasília. Kanban é contabilizado junto à Agenda.</p>
+      <p className="site-access-note">Uma conta pode gerar um acesso a cada 30 minutos em cada área. Datas seguem Brasília.</p>
     </section>
   )
 }

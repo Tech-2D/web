@@ -1,6 +1,6 @@
 export type AccessCounts = { authenticated: number; anonymous: number; accounts: number }
 export type AccessSite = { total: AccessCounts; daily: (AccessCounts & { date: string })[] }
-export const accessSiteLabels = { agenda: 'Agenda', professores: 'Professores', pegaki: 'Notas' }
+export const accessSiteLabels = { agenda: 'Agenda', professores: 'Professores', pegaki: 'Notas', kanban: 'Kanban' }
 export type AccessSiteId = keyof typeof accessSiteLabels
 export const accessSiteIds = Object.keys(accessSiteLabels) as AccessSiteId[]
 
@@ -9,7 +9,8 @@ export type AccessStatistics = {
   agendaSince?: string | null
   professorSince: string | null
   pegakiSince?: string | null
-  sites: Record<'agenda' | 'professores', AccessSite> & { pegaki?: AccessSite }
+  kanbanSince?: string | null
+  sites: Record<'agenda' | 'professores', AccessSite> & Partial<Record<'pegaki' | 'kanban', AccessSite>>
   analytics?: UsageAnalytics
 }
 
@@ -34,7 +35,7 @@ export const accessDateLabel = (date: string) => new Date(date + 'T12:00:00Z').t
 
 export function accessTimeline(result: AccessStatistics, days: number): AccessDay[] {
   const daily = new Map(accessSiteIds.map(site => [site, new Map(result.sites[site]?.daily.map(row => [row.date, accessCount(row)]))]))
-  const since = { agenda: result.agendaSince ?? result.professorSince, professores: result.professorSince, pegaki: result.pegakiSince }
+  const since = { agenda: result.agendaSince ?? result.professorSince, professores: result.professorSince, pegaki: result.pegakiSince, kanban: result.kanbanSince }
   const end = new Date(result.today + 'T12:00:00Z')
   return Array.from({ length: days }, (_, index) => {
     const day = new Date(end)

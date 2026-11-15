@@ -57,8 +57,10 @@
 .access-series-total, .access-series-agenda { --access-color: var(--ink); }
 .access-series-professores { --access-color: #0f766e; }
 .access-series-pegaki { --access-color: #9333ea; }
+.access-series-kanban { --access-color: #a44a12; }
 :root:is([data-theme="escuro"], [data-theme="cyberpunk"]) .access-series-professores { --access-color: #5eead4; }
 :root:is([data-theme="escuro"], [data-theme="cyberpunk"]) .access-series-pegaki { --access-color: #d8b4fe; }
+:root:is([data-theme="escuro"], [data-theme="cyberpunk"]) .access-series-kanban { --access-color: #fdba74; }
 .access-series-mark { flex: none; width: 1rem; height: .25rem; border-radius: 2px; background: var(--access-color); }
 .access-series-professores .access-series-mark { height: 0; border-top: 3px dashed var(--access-color); background: none; border-radius: 0; }
 .access-series-pegaki .access-series-mark { height: 0; border-top: 3px dotted var(--access-color); background: none; border-radius: 0; }
@@ -70,6 +72,7 @@
 .access-chart-line { stroke: var(--access-color); stroke-width: 2.5; fill: none; stroke-linejoin: round; stroke-linecap: round; }
 .access-series-professores .access-chart-line { stroke-dasharray: 7 4; }
 .access-series-pegaki .access-chart-line { stroke-dasharray: 2 5; }
+.access-series-kanban .access-chart-line { stroke-dasharray: 9 4 2 4; }
 .access-chart-point { stroke: var(--access-color); stroke-width: 2; fill: var(--paper); }
 .access-chart-controls { display: flex; align-items: center; gap: .75rem; }
 .access-chart-controls input { flex: 1; min-width: 0; height: 44px; accent-color: var(--accent); cursor: pointer; }

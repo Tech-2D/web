@@ -2,13 +2,13 @@ import type { User } from 'firebase/auth'
 import { auth } from './firebase'
 import { SQL_BASE, SQL_ENABLED } from './dataBackend'
 
-export async function recordAgendaAccess(account: User | null) {
-  const response = await recordSiteAccess('agenda', account)
+export async function recordCalendarAreaAccess(site: 'agenda' | 'kanban', account: User) {
+  const response = await recordSiteAccess(site, account)
   if (response?.status !== 403) return false
   return (await response.json().catch(() => null))?.code === 'agenda-access-blocked'
 }
 
-export async function recordSiteAccess(site: 'agenda' | 'professor' | 'pegaki', account: User | null) {
+export async function recordSiteAccess(site: 'agenda' | 'professor' | 'pegaki' | 'kanban', account: User | null) {
   if (!SQL_ENABLED) return
   try {
     const token = await account?.getIdToken()

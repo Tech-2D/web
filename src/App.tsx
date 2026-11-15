@@ -40,7 +40,7 @@ import { IntegratedMenu } from './IntegratedMenu'
 import { menuOptionSections, type MoreOption, type MoreOptionSection } from './menuCatalog'
 import './integratedMenu.css'
 import { SyncStatus } from './SyncStatus'
-import { recordAgendaAccess } from './agendaAccess'
+import { recordCalendarAreaAccess } from './agendaAccess'
 import './agendaAccess.css'
 import { ActivityDetails } from './ActivityDetails'
 import { AgendaGuide, type GuideFeature } from './AgendaGuide'
@@ -151,27 +151,29 @@ function App() {
 
   useEffect(() => {
     let previousUid: string | null | undefined
-    let revision = 0
     const stop = observeCalendarSession({
       subscribeAccount: change => onAuthStateChanged(auth, account => {
         const uid = account?.uid ?? null
         setCalendarUser(account)
         change(uid)
-        if (uid !== previousUid) {
-          const current = ++revision
-          setAccessBlocked(false)
-          void recordAgendaAccess(account).then(blocked => {
-            if (revision === current && auth.currentUser?.uid === account?.uid) setAccessBlocked(blocked)
-          })
-        }
+        if (uid !== previousUid) setAccessBlocked(false)
         previousUid = uid
       }),
       subscribeProfile: subscribeAdminProfile,
       publish: setCalendarProfile,
       reset: () => { setQuickCreateDate(null); setQuickEditActivity(null) },
     })
-    return () => { revision++; stop() }
+    return stop
   }, [])
+
+  useEffect(() => {
+    if (!calendarUser) return
+    let current = true
+    void recordCalendarAreaAccess(kanbanOpen ? 'kanban' : 'agenda', calendarUser).then(blocked => {
+      if (current && auth.currentUser?.uid === calendarUser.uid) setAccessBlocked(blocked)
+    })
+    return () => { current = false }
+  }, [calendarUser, kanbanOpen])
 
 
   function setNeon(value: NeonColor) {
