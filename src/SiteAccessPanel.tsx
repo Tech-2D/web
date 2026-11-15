@@ -4,6 +4,7 @@ import type { User } from 'firebase/auth'
 import { SQL_BASE } from './dataBackend'
 import { auth } from './firebase'
 import { SiteAccessChart } from './SiteAccessChart'
+import { AccessUsageInsights } from './AccessUsageInsights'
 import { accessCount, accessDateLabel, accessSiteIds, accessSiteLabels, accessTimeline, formatAccessCount, type AccessStatistics } from './siteAccess'
 import './siteAccess.css'
 
@@ -85,6 +86,7 @@ export function SiteAccessPanel({ user }: { user: User }) {
             )
           })}
         </div>
+        {result.analytics && <AccessUsageInsights data={result.analytics} total={total} days={days} />}
         <details className="access-daily-details">
           <summary>Ver acessos por dia</summary>
           <div className="access-table-scroll" role="region" aria-label="Tabela de acessos diários" tabIndex={0}>

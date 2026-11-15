@@ -6,7 +6,7 @@ import { auth } from './firebase'
 
 type AgendaAccount = { uid: string; email: string | null; lastVisitDay: string | null; protected: boolean; blocked: boolean; blockId: string | null; blockedUntil: string | null }
 type Block = { id: string; label: string; createdAt: string; expiresAt: string }
-type UsersResult = { users: AgendaAccount[]; hasMore: boolean; blocks: Block[]; hasMoreBlocks: boolean }
+type UsersResult = { totalUsers?: number | null; matchedUsers?: number | null; users: AgendaAccount[]; hasMore: boolean; blocks: Block[]; hasMoreBlocks: boolean }
 type Change = { action: 'block'; kind: 'email' | 'uid'; value: string; durationSeconds: number } | { action: 'unblock'; id: string }
 const endpoint = SQL_BASE + '/api/admin/agenda-users'
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' })
@@ -115,6 +115,10 @@ export function AgendaUsersPanel({ user }: { user: User }) {
           <button type="button" className="secondary-button" disabled={busy} onClick={() => refresh(n => n + 1)}><RefreshCw size={16} /> Atualizar</button>
         </div>
       </div>
+      {result && <div className="agenda-user-totals" role="status">
+        <div><span>Contas cadastradas no sistema</span><strong>{result.totalUsers == null ? '—' : result.totalUsers.toLocaleString('pt-BR')}</strong><small>Total geral, incluindo contas que ainda não acessaram a Agenda.</small></div>
+        {query && <div><span>Resultados da busca</span><strong>{result.matchedUsers == null ? '—' : result.matchedUsers.toLocaleString('pt-BR')}</strong><small>O total geral permanece independente do filtro.</small></div>}
+      </div>}
       <div className="agenda-users-form">
         <label>Duração do bloqueio<input type="number" min={1} max={Math.floor(365 * 86400 / unit)} step={1} value={duration} onChange={event => setDuration(Number(event.target.value))} /></label>
         <label>Unidade<select value={unit} onChange={event => setUnit(Number(event.target.value))}>

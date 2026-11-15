@@ -1,4 +1,21 @@
 .site-access { display: grid; gap: 1rem; min-width: 0; color: var(--text); }
+.access-insight-metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,220px),1fr)); gap: .75rem; }
+.access-insight-metrics article { display: grid; align-content: start; gap: .5rem; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem; background: var(--paper); }
+.access-insight-metrics article > span { font-size: .8rem; font-weight: 600; }
+.access-insight-metrics strong { color: var(--ink); font-size: 1.65rem; font-variant-numeric: tabular-nums; }
+.access-insight-metrics small { color: var(--ink-soft); font-size: .75rem; line-height: 1.5; font-weight: 400; }
+.access-insight-section { display: grid; gap: 1rem; min-width: 0; padding: 1rem; border: 1px solid var(--line); border-radius: .875rem; background: var(--paper); }
+.access-insight-section label { display: flex; align-items: center; gap: .5rem; font-size: .8rem; }
+.access-insight-section select { max-width: 100%; border: 1px solid var(--line); border-radius: .5rem; padding: .5rem; color: var(--text); background: var(--paper); font: inherit; }
+.access-class-list { display: grid; gap: 1rem; max-height: 560px; overflow: auto; }
+.access-class-list article { display: grid; gap: .4rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.access-class-label { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .4rem; font-size: .875rem; }
+.access-class-list :is(p,small) { margin: 0; font-size: .75rem; color: var(--ink-soft); line-height: 1.6; }
+.access-class-track { height: .55rem; overflow: hidden; background: var(--surface-alt); border-radius: 1rem; }
+.access-class-track span { display: block; height: 100%; border-radius: inherit; background: var(--ink); }
+.access-users-table th:first-child { min-width: 190px; max-width: 300px; overflow-wrap: anywhere; }
+.access-users-table th small { display: block; color: var(--ink-soft); font-size: .7rem; font-weight: 400; margin-top: .2rem; }
+.access-users-table th strong { font-weight: 600; }
 .site-access-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .site-access-toolbar h3 { flex: 1 0 160px; margin: 0; color: var(--ink); font-size: 1rem; }
 .site-access-toolbar label { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; font-size: .8125rem; }

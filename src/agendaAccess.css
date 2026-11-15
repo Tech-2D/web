@@ -7,3 +7,8 @@
 .agenda-user-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .agenda-users-blocks { display: grid; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line); }
 .agenda-users-blocks h4 { margin: 0; color: var(--ink); }
+.agenda-user-totals { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+.agenda-user-totals > div { display: grid; gap: .3rem; flex: 1 1 230px; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem; background: var(--surface-alt); }
+.agenda-user-totals span { font-size: .85rem; font-weight: 600; }
+.agenda-user-totals strong { font-size: 2rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.agenda-user-totals small { color: var(--ink-soft); font-size: .75rem; }
