@@ -1,6 +1,6 @@
 import { sitePaths } from './sitePaths'
 import type { ReactNode } from 'react'
-import { Bell, BookOpen, CalendarClock, ClipboardList, History, KeyRound, LayoutGrid, Lightbulb, ListChecks, MapPin, MessageSquarePlus, Plus, Settings, StickyNote, UserRound } from 'lucide-react'
+import { BookOpen, History, KeyRound, Lightbulb, ListChecks, MessageSquarePlus, Plus, Settings, StickyNote, UserRound } from 'lucide-react'
 import type { MenuShortcutId } from './menuShortcuts'
 
 export type MoreOption = {
@@ -15,35 +15,23 @@ export type MoreOption = {
 }
 
 export type MoreOptionSection = {
-  id: 'estudos' | 'turma' | 'conta' | 'ajuda' | 'outros'
+  id: 'turma' | 'conta' | 'ajuda' | 'outros'
   title: string
   items: MoreOption[]
 }
 
-export function menuOptionSections({ hasTurma, actions, todayClassesUrl, unreadCount, hasUnseenUpdate }: {
+export function menuOptionSections({ hasTurma, actions, hasUnseenUpdate }: {
   hasTurma: boolean
   actions: Partial<Record<MenuShortcutId, () => void>>
   todayClassesUrl?: string
   unreadCount: number
   hasUnseenUpdate: boolean
 }): MoreOptionSection[] {
-  const notificationsBadge = unreadCount > 0 ? `${unreadCount} ${unreadCount === 1 ? 'não lida' : 'não lidas'}` : undefined
   return [
-    {
-      id: 'estudos',
-      title: 'Estudos',
-      items: [
-        { id: 'teachers', title: 'Professores', description: 'Busque professores, matérias e salas.', icon: <MapPin />, href: sitePaths.professores },
-        { id: 'todayClasses', title: 'Aulas de hoje', description: hasTurma ? 'Consulte os horários e salas de hoje.' : 'Defina a turma padrão em “Minha turma”.', icon: <CalendarClock />, href: todayClassesUrl, disabled: !hasTurma },
-        { id: 'pegaki', title: 'Notas', description: 'Calcule médias e simule notas.', icon: <ClipboardList />, href: sitePaths.pegaki },
-        { id: 'kanban', title: 'Kanban', description: 'Organize suas tarefas em quadros privados.', icon: <LayoutGrid />, onClick: actions.kanban },
-      ],
-    },
     {
       id: 'turma',
       title: 'Minha turma',
       items: [
-        { id: 'notifications', title: 'Notificações da turma', description: 'Veja atividades novas ou alteradas.', icon: <Bell />, onClick: actions.notifications, pendingLabel: notificationsBadge },
         { id: 'notices', title: 'Quadro de avisos', description: hasTurma ? 'Consulte os comunicados da turma.' : 'Selecione sua turma para ver os comunicados.', icon: <StickyNote />, onClick: actions.notices, disabled: !hasTurma },
         { id: 'suggestActivity', title: 'Sugerir atividade', description: hasTurma ? 'Peça para incluir uma atividade na Agenda.' : 'Selecione sua turma para sugerir uma atividade.', icon: <Lightbulb />, onClick: actions.suggestActivity, disabled: !hasTurma },
         { id: 'requestClass', title: 'Pedir agenda para minha turma', description: 'Solicite uma agenda para uma turma que ainda não aparece.', icon: <Plus />, onClick: actions.requestClass },

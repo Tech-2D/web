@@ -1,13 +1,15 @@
-import { CalendarDays, ClipboardList, Columns3, KeyRound, MapPin } from 'lucide-react'
+import { Bell, CalendarDays, ClipboardList, Columns3, KeyRound, MapPin } from 'lucide-react'
+import { agendaMenuUrl } from './menuShortcuts'
 import { sitePaths } from './sitePaths'
 import { SiteOptions } from './SiteOptions'
 import { SiteOptionsButton } from './SiteOptionsButton'
 import type { AdminRole } from './types'
 
-export function SiteNavigation({ active, role, menu }: {
+export function SiteNavigation({ active, role, menu, notifications }: {
   active: 'agenda' | 'professores' | 'pegaki' | 'admin' | 'kanban'
   role?: AdminRole
   menu?: { open: boolean; onOpen: () => void; hasPending?: boolean }
+  notifications?: { onOpen: () => void; count: number }
 }) {
   const panelLabel = role === 'superadmin' ? 'Administração' : role === 'representante' ? 'Representante' : null
   return (
@@ -21,7 +23,14 @@ export function SiteNavigation({ active, role, menu }: {
           <a href={sitePaths.kanban} aria-current={active === 'kanban' ? 'page' : undefined}><Columns3 size={17} aria-hidden="true" />Kanban</a>
           {(panelLabel || active === 'admin') && <a href={sitePaths.admin} aria-current={active === 'admin' ? 'page' : undefined}><KeyRound size={17} aria-hidden="true" />{panelLabel ?? 'Painel'}</a>}
         </div>
-        {menu ? <SiteOptionsButton {...menu} /> : <SiteOptions />}
+        <div className="site-navigation-actions">
+          {notifications ? <button type="button" className="site-options-button" onClick={notifications.onOpen}
+            aria-label={notifications.count > 0 ? `Notificações da turma, ${notifications.count} não lidas` : 'Notificações da turma'} title="Notificações" aria-haspopup="dialog">
+            <Bell size={21} aria-hidden="true" />
+            {notifications.count > 0 && <span className="site-options-pending" aria-hidden="true" />}
+          </button> : <a className="site-options-button" href={agendaMenuUrl('notifications')} aria-label="Notificações da turma" title="Notificações"><Bell size={21} aria-hidden="true" /></a>}
+          {menu ? <SiteOptionsButton {...menu} /> : <SiteOptions />}
+        </div>
       </nav>
     </header>
   )

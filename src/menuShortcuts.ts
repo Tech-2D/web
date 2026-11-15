@@ -5,7 +5,8 @@ export const MENU_SHORTCUT_IDS = [
 ] as const
 
 export type MenuShortcutId = (typeof MENU_SHORTCUT_IDS)[number]
-export const DEFAULT_MENU_SHORTCUTS: readonly MenuShortcutId[] = ['notifications', 'updates', 'notices']
+export const DEFAULT_MENU_SHORTCUTS: readonly MenuShortcutId[] = ['updates', 'notices']
+const RETIRED_SHORTCUTS = new Set<string>(['notifications', 'teachers', 'todayClasses', 'pegaki', 'kanban'])
 export const MENU_SHORTCUTS_KEY = 'agenda:menu-shortcuts:v1'
 
 export function readMenuShortcuts(): MenuShortcutId[] {
@@ -15,7 +16,7 @@ export function readMenuShortcuts(): MenuShortcutId[] {
     const value: unknown = JSON.parse(saved)
     if (Array.isArray(value)) {
       return [...new Set(value.filter((id): id is MenuShortcutId =>
-        typeof id === 'string' && (MENU_SHORTCUT_IDS as readonly string[]).includes(id),
+        typeof id === 'string' && (MENU_SHORTCUT_IDS as readonly string[]).includes(id) && !RETIRED_SHORTCUTS.has(id),
       ))]
     }
   } catch {

@@ -354,7 +354,7 @@ function App() {
   }, [activities])
 
   const unseenNotifications = recentActivities.filter((activity) => updatedAtMs(activity) > notificationsSeenAt).length
-  const hasPendingMenuItems = unseenNotifications > 0 || Boolean(unseenSystemUpdate)
+  const hasPendingMenuItems = Boolean(unseenSystemUpdate)
 
   const activitiesByDay = useMemo(() => {
     const map = new Map<string, Activity[]>()
@@ -527,7 +527,7 @@ function App() {
 
   return (
     <div className="app-shell portal-frame">
-      <SiteNavigation active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
+      <SiteNavigation active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} notifications={{ onOpen: () => openMenuDialog('notifications'), count: unseenNotifications }} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
       <SyncStatus />
 
       {kanbanOpen ? (
