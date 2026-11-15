@@ -113,6 +113,19 @@ export function SignatureEditor() {
     })
   }
 
+  function handleHistoryShortcut(event: KeyboardEvent<HTMLElement>) {
+    if (event.defaultPrevented || event.nativeEvent.isComposing || event.altKey || !(event.ctrlKey || event.metaKey)) return
+    const key = event.key.toLowerCase()
+    if (key !== 'z' && key !== 'y') return
+    const target = event.target
+    if (target instanceof HTMLElement && (target.isContentEditable || target.closest('input, textarea, select'))) return
+
+    event.preventDefault()
+    if (gesture.current) return
+    if (key === 'y' || event.shiftKey) redo()
+    else undo()
+  }
+
   function editLayer(id: string, change: (layer: Layer) => Layer, remember = true) {
     commit(current => {
       let template = current.template
@@ -322,7 +335,7 @@ export function SignatureEditor() {
     return { ...next, layers: current.layers.map(layer => fitLayer(layer, next)) }
   })
 
-  return <main className="signature-page portal-main" aria-label="Editor de assinatura de e-mail">
+  return <main className="signature-page portal-main" aria-label="Editor de assinatura de e-mail" onKeyDownCapture={handleHistoryShortcut}>
     <header className="signature-heading">
       <PageHeading icon={PenLine} title="Assinatura de e-mail" description="Monte o layout e baixe uma imagem para usar no Outlook." />
       <button type="button" className="primary-button compact" onClick={download} disabled={!hasContent || uploading || exporting || Boolean(moving)}>
@@ -345,8 +358,8 @@ export function SignatureEditor() {
         <div className="signature-tools">
           <h2 id="signature-board-title">Área de edição</h2>
           <div className="signature-button-group">
-            <button type="button" title="Desfazer" aria-label="Desfazer" disabled={!history.past.length || Boolean(moving)} onClick={undo}><Undo2 size={17} /></button>
-            <button type="button" title="Refazer" aria-label="Refazer" disabled={!history.future.length || Boolean(moving)} onClick={redo}><Redo2 size={17} /></button>
+            <button type="button" title="Desfazer (Ctrl+Z ou ⌘Z)" aria-label="Desfazer" aria-keyshortcuts="Control+Z Meta+Z" disabled={!history.past.length || Boolean(moving)} onClick={undo}><Undo2 size={17} /></button>
+            <button type="button" title="Refazer (Ctrl+Shift+Z, Ctrl+Y ou ⌘Shift+Z)" aria-label="Refazer" aria-keyshortcuts="Control+Shift+Z Control+Y Meta+Shift+Z" disabled={!history.future.length || Boolean(moving)} onClick={redo}><Redo2 size={17} /></button>
             <button type="button" title="Mostrar grade" aria-label="Mostrar grade" aria-pressed={showGrid} onClick={() => setShowGrid(!showGrid)}><Grid2X2 size={16} /></button>
             <button type="button" aria-pressed={preview} onClick={() => setPreview(!preview)}>{preview ? 'Voltar a editar' : 'Prévia limpa'}</button>
           </div>
@@ -419,6 +432,7 @@ export function SignatureEditor() {
           </div>
         </div>
         <div className="signature-board-footer"><span>{design.width} × {design.height} px</span><span>{preview ? 'Visual da imagem exportada' : 'Arraste para mover. Use o canto para redimensionar.'}</span></div>
+        <p className="signature-tip">Ctrl+Z desfaz · Ctrl+Shift+Z ou Ctrl+Y refaz</p>
       </section>
 
       <aside className="signature-inspector" aria-label="Controles da assinatura">
