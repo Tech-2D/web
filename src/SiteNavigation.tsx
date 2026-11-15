@@ -5,12 +5,11 @@ import { SiteOptions } from './SiteOptions'
 import { SiteOptionsButton } from './SiteOptionsButton'
 import type { AdminRole } from './types'
 
-export function SiteNavigation({ active, role, menu, notifications, onOpenProfile }: {
-  active: 'agenda' | 'professores' | 'pegaki' | 'admin' | 'kanban'
+export function SiteNavigation({ active, role, menu, notifications }: {
+  active: 'agenda' | 'professores' | 'pegaki' | 'admin' | 'kanban' | 'profile'
   role?: AdminRole
   menu?: { open: boolean; onOpen: () => void; hasPending?: boolean }
   notifications?: { onOpen: () => void; count: number }
-  onOpenProfile?: () => void
 }) {
   const panelLabel = role === 'superadmin' ? 'Administração' : role === 'representante' ? 'Representante' : null
   return (
@@ -30,8 +29,7 @@ export function SiteNavigation({ active, role, menu, notifications, onOpenProfil
             <Bell size={21} aria-hidden="true" />
             {notifications.count > 0 && <span className="site-options-pending" aria-hidden="true" />}
           </button> : <a className="site-options-button" href={agendaMenuUrl('notifications')} aria-label="Notificações da turma" title="Notificações"><Bell size={21} aria-hidden="true" /></a>}
-          {onOpenProfile ? <button type="button" className="site-options-button" onClick={onOpenProfile} aria-label="Perfis da comunidade" title="Perfil" aria-haspopup="dialog"><UserRound size={21} aria-hidden="true" /></button> :
-            <a className="site-options-button" href={agendaMenuUrl('profiles')} aria-label="Perfis da comunidade" title="Perfil"><UserRound size={21} aria-hidden="true" /></a>}
+          <a className="site-options-button" href={sitePaths.profile} aria-label="Perfis da comunidade" aria-current={active === 'profile' ? 'page' : undefined} title="Perfil"><UserRound size={21} aria-hidden="true" /></a>
           {menu ? <SiteOptionsButton {...menu} /> : <SiteOptions />}
         </div>
       </nav>

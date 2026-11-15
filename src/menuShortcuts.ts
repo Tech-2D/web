@@ -44,6 +44,7 @@ export function readAgendaMenuDialog(hash: string) {
 export function agendaMenuUrl(id?: MenuShortcutId | 'options') {
   if (!id) return AGENDA_URL
   if (id === 'options') return AGENDA_URL + '#opcoes'
+  if (id === 'profiles') return sitePaths.profile
   if (id === 'admin') return sitePaths.admin
   if (id === 'kanban') return sitePaths.kanban
   return AGENDA_DIALOGS.some(dialog => dialog === id) ? AGENDA_URL + '#menu=' + id : AGENDA_URL

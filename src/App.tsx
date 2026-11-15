@@ -50,7 +50,6 @@ import { isAdminRoute, legacyAdminUrl } from './adminRoute'
 import { sitePaths } from './sitePaths'
 
 const CompareCalendar = lazy(() => import('./CompareCalendar').then(module => ({ default: module.CompareCalendar })))
-const ProfileDialog = lazy(() => import('./ProfileDialog').then(module => ({ default: module.ProfileDialog })))
 const ClassRequestDialog = lazy(() => import('./ClassRequestDialog').then(module => ({ default: module.ClassRequestDialog })))
 const NoticeBoardDialog = lazy(() => import('./NoticeBoard').then(module => ({ default: module.NoticeBoardDialog })))
 const AdminPage = lazy(() => import('./AdminPage'))
@@ -104,7 +103,6 @@ function App() {
   const [kanbanOpen, setKanbanOpen] = useState(window.location.hash.split('?')[0] === '#kanban')
   const [compareMode, setCompareMode] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
-  const [profilesOpen, setProfilesOpen] = useState(false)
   const [suggestOpen, setSuggestOpen] = useState(false)
   const [mySuggestionsOpen, setMySuggestionsOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
@@ -228,7 +226,7 @@ function App() {
     ? latestUnseenUpdate(systemUpdates, seenSystemUpdateId)
     : null
   const activeMenuDialog = notificationsOpen || updatesOpen || noticesOpen
-    || suggestOpen || classRequestOpen || feedbackOpen || mySuggestionsOpen || configOpen || profilesOpen || docsOpen
+    || suggestOpen || classRequestOpen || feedbackOpen || mySuggestionsOpen || configOpen || docsOpen
   const menuDialogOpen = linkedMenuDialog || activeMenuDialog
   const acknowledgeSystemUpdate = useCallback((id: string) => {
     markSystemUpdateSeen(id)
@@ -264,6 +262,7 @@ function App() {
   }, [])
 
   const openMenuDialog = useCallback((id: NonNullable<ReturnType<typeof readAgendaMenuDialog>>) => {
+    if (id === 'profiles') { window.location.assign(sitePaths.profile); return }
     if (id === 'notifications') {
       setNotificationsOpenedFrom(turmaId ? readLastSeen(turmaId) : 0)
       setNotificationsOpen(true)
@@ -273,7 +272,7 @@ function App() {
     const open = {
       updates: setUpdatesOpen, notices: setNoticesOpen, suggestActivity: setSuggestOpen,
       requestClass: setClassRequestOpen, feedback: setFeedbackOpen, mySuggestions: setMySuggestionsOpen,
-      settings: setConfigOpen, profiles: setProfilesOpen, help: setDocsOpen,
+      settings: setConfigOpen, help: setDocsOpen,
     }
     open[id](true)
   }, [turmaId])
@@ -527,7 +526,7 @@ function App() {
 
   return (
     <div className="app-shell portal-frame">
-      <SiteNavigation onOpenProfile={() => openMenuDialog('profiles')} active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} notifications={{ onOpen: () => openMenuDialog('notifications'), count: unseenNotifications }} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
+      <SiteNavigation active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} notifications={{ onOpen: () => openMenuDialog('notifications'), count: unseenNotifications }} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
       <SyncStatus />
 
       {kanbanOpen ? (
@@ -713,7 +712,6 @@ function App() {
       )}
 
       {docsOpen && <AgendaGuide hasClass={Boolean(turmaId)} onClose={() => setDocsOpen(false)} onCalendar={openCalendarFromGuide} onFeature={openGuideFeature} />}
-      {profilesOpen && <ProfileDialog onClose={() => setProfilesOpen(false)} />}
 
       {updatesOpen && <SystemUpdatesDialog pendingId={unseenSystemUpdate?.id} onRead={acknowledgeSystemUpdate} onClose={() => setUpdatesOpen(false)} />}
 

@@ -6,7 +6,7 @@ import { observeCalendarSession } from './calendarSession'
 import { SiteNavigation } from './SiteNavigation'
 import type { AdminProfile } from './types'
 
-export function AccountSiteNavigation({ active, menu, onOpenProfile }: Pick<React.ComponentProps<typeof SiteNavigation>, 'menu' | 'onOpenProfile'> & { active: 'professores' | 'pegaki' }) {
+export function AccountSiteNavigation({ active, menu }: Pick<React.ComponentProps<typeof SiteNavigation>, 'menu'> & { active: 'professores' | 'pegaki' | 'profile' }) {
   const [profile, setProfile] = useState<AdminProfile | null>(null)
 
   useEffect(() => observeCalendarSession({
@@ -16,5 +16,5 @@ export function AccountSiteNavigation({ active, menu, onOpenProfile }: Pick<Reac
     reset: () => {},
   }), [])
 
-  return <SiteNavigation active={active} role={profile?.role} menu={menu} onOpenProfile={onOpenProfile} />
+  return <SiteNavigation active={active} role={profile?.role} menu={menu} />
 }

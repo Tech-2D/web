@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import { SiteNavigation } from './SiteNavigation'
 
 it('connects all pages on the same origin and identifies the current page', () => {
-  for (const active of ['agenda', 'professores', 'pegaki', 'kanban'] as const) {
+  for (const active of ['agenda', 'professores', 'pegaki', 'kanban', 'profile'] as const) {
     const html = renderToStaticMarkup(createElement(SiteNavigation, { active }))
     expect(html).toContain('href="/"')
     expect(html).toContain('href="/professores/"')
@@ -16,7 +16,7 @@ it('connects all pages on the same origin and identifies the current page', () =
     expect(html).toContain('aria-label="Abrir menu" aria-haspopup="dialog" aria-expanded="false"')
     expect(html).not.toContain('target=')
     expect(html.match(/aria-current="page"/g)).toHaveLength(1)
-    const paths = { agenda: '/', kanban: '/#kanban', professores: '/professores/', pegaki: '/notas/' }
+    const paths = { agenda: '/', kanban: '/#kanban', profile: '/perfil/', professores: '/professores/', pegaki: '/notas/' }
     expect(html).toContain(`href="${paths[active]}" aria-current="page"`)
   }
 })

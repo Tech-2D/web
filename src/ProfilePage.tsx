@@ -1,9 +1,10 @@
 import { registerAccount } from './registration'
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { auth } from './firebase'
-import { Camera, Check, CheckCircle2, ChevronRight, GraduationCap, LoaderCircle, LogOut, MapPin, Search, ShieldCheck, UserRound, Users, X } from 'lucide-react'
+import { Camera, Check, CheckCircle2, ChevronRight, GraduationCap, LoaderCircle, LogOut, MapPin, Search, UserRound, Users, ArrowLeft } from 'lucide-react'
+import { sitePaths } from './sitePaths'
 import './profiles.css'
 
 const API = 'https://tech-2d-auth-email.vercel.app'
@@ -18,7 +19,7 @@ async function request(path: string, init?: RequestInit) {
   return data
 }
 
-export function ProfileDialog({ onClose }: { onClose: () => void }) {
+export function ProfilePage() {
   const [user, setUser] = useState<User | null>(auth.currentUser)
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [mine, setMine] = useState<Profile | null>(null)
@@ -36,25 +37,6 @@ export function ProfileDialog({ onClose }: { onClose: () => void }) {
   const [directoryError, setDirectoryError] = useState('')
   const [loadError, setLoadError] = useState('')
   const [profileReload, setProfileReload] = useState(0)
-  const dialogRef = useRef<HTMLElement>(null)
-
-  useEffect(() => {
-    const previous = document.activeElement
-    const overflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    dialogRef.current?.querySelector<HTMLButtonElement>('[aria-label="Fechar perfil"]')?.focus()
-    const keyboard = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); onClose() }
-      if (event.key !== 'Tab') return
-      const controls = [...(dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), a[href]') ?? [])].filter(el => el.getClientRects().length > 0)
-      const first = controls[0], last = controls.at(-1)
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
-    }
-    document.addEventListener('keydown', keyboard)
-    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', keyboard); if (previous instanceof HTMLElement) previous.focus() }
-  }, [onClose])
-
   useEffect(() => onAuthStateChanged(auth, setUser), [])
   useEffect(() => {
     let active = true
@@ -126,9 +108,8 @@ export function ProfileDialog({ onClose }: { onClose: () => void }) {
   }
 
   const preview = { ...fields, photoUrl: mine?.photoUrl ?? null }
-  return <div className="profiles-backdrop" role="presentation" onMouseDown={event => event.target === event.currentTarget && onClose()}>
-    <section ref={dialogRef} className="profiles-dialog" role="dialog" aria-modal="true" aria-labelledby="profiles-title">
-      <header className="profiles-header"><div><span className="profiles-eyebrow">Tech 2D · Comunidade</span><h2 id="profiles-title">Seu espaço no portal</h2></div><button type="button" className="profiles-icon-button" onClick={onClose} aria-label="Fechar perfil"><X size={21} /></button></header>
+  return <main className="profiles-page" aria-labelledby="profiles-title">
+      <header className="profiles-header"><div><span className="profiles-eyebrow">Tech 2D · Comunidade</span><h1 id="profiles-title">Perfil e comunidade</h1></div><a className="profiles-back-link" href={sitePaths.agenda}><ArrowLeft size={17} />Voltar à Agenda</a></header>
       <nav className="profiles-tabs" aria-label="Área de perfis">
         <button type="button" aria-pressed={tab === 'mine'} onClick={() => setTab('mine')}><UserRound size={18} />Meu perfil</button>
         <button type="button" aria-pressed={tab === 'community'} onClick={() => setTab('community')}><Users size={18} />Comunidade</button>
@@ -167,13 +148,11 @@ export function ProfileDialog({ onClose }: { onClose: () => void }) {
             <fieldset disabled={busy}><legend>Onde encontrar você</legend><p>Preencha se quiser compartilhar sua localização na escola.</p>
               <div className="profiles-pair"><label>Sala <span className="profiles-optional">Opcional</span><input value={fields.room} onChange={e => setFields({ ...fields, room: e.target.value })} maxLength={80} placeholder="Ex.: 12" /></label><label>Andar <span className="profiles-optional">Opcional</span><input value={fields.floor} onChange={e => setFields({ ...fields, floor: e.target.value })} maxLength={30} placeholder="Ex.: 2º andar" /></label></div>
             </fieldset>
-            <div className="profiles-privacy"><ShieldCheck size={20} /><p>Nome, foto e informações preenchidas ficam visíveis na comunidade. Seu e-mail fica privado.</p></div>
             <div className="profiles-save"><span>{mine ? 'As alterações aparecem após salvar.' : 'Publique para aparecer na comunidade.'}</span><button type="submit" className="profiles-primary" disabled={busy}>{busy ? <LoaderCircle size={17} /> : <Check size={17} />}{busy ? 'Salvando…' : mine ? 'Salvar alterações' : 'Publicar perfil'}</button></div>
           </form>}
         </section>
       </div> : <CommunityDirectory profiles={profiles} loading={directoryLoading} error={directoryError} currentUid={user?.uid} onRetry={() => setRefresh(n => n + 1)} onEdit={() => setTab('mine')} />}
-    </section>
-  </div>
+  </main>
 }
 
 function ProfileAvatar({ profile, large = false }: { profile: { displayName: string; photoUrl: string | null }; large?: boolean }) {

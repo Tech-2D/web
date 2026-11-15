@@ -25,7 +25,6 @@ import { FirebaseError } from 'firebase/app'
 import { AccountSiteNavigation } from '../AccountSiteNavigation'
 import { PageHeading } from '../PageHeading'
 import { requestPasswordReset } from './passwordReset'
-import { ProfileDialog } from './ProfileDialog'
 import { observeCatalog, invalidateCatalog } from './publicQueries'
 import {
   addDoc,
@@ -94,7 +93,6 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuShortcuts, setMenuShortcuts] = useState(readMenuShortcuts)
   const [configOpen, setConfigOpen] = useState(false)
-  const [profilesOpen, setProfilesOpen] = useState(false)
   const [theme, setThemeState] = useState<Theme>(readStoredTheme)
   const [neon, setNeonState] = useState<NeonColor>(readStoredNeon)
   const [fontScale, setFontScale] = useState(readStoredFontScale)
@@ -252,7 +250,7 @@ function App() {
 
   return (
     <div className="app-shell portal-frame">
-      <AccountSiteNavigation onOpenProfile={() => setProfilesOpen(true)} active="professores" menu={{ open: menuOpen, onOpen: () => setMenuOpen(true) }} />
+      <AccountSiteNavigation active="professores" menu={{ open: menuOpen, onOpen: () => setMenuOpen(true) }} />
 
       <main id="inicio" className="main-content portal-main">
         <div className="professor-controls interface-panel portal-toolbar">
@@ -322,7 +320,6 @@ function App() {
           </>}
           options={menuOptionSections({ hasTurma: true, actions: {}, unreadCount: 0, hasUnseenUpdate: false }).flatMap(section => section.items.map(option => {
             if (option.id === 'settings') return { ...option, onClick: () => { setMenuOpen(false); setConfigOpen(true) } }
-            if (option.id === 'profiles') return { ...option, onClick: () => { setMenuOpen(false); setProfilesOpen(true) } }
             if (option.id === 'todayClasses') return { ...option, onClick: () => { setView('today'); setMenuOpen(false) } }
             if (option.id === 'teachers') return { ...option, href: undefined, onClick: () => setMenuOpen(false) }
             return { ...option, href: option.href ?? agendaMenuUrl(option.id) }
@@ -344,7 +341,6 @@ function App() {
           onClose={() => setConfigOpen(false)}
         />
       )}
-      {profilesOpen && <ProfileDialog onClose={() => setProfilesOpen(false)} />}
 
       {adminOpen && (
         <AdminDialog
