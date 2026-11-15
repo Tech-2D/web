@@ -18,7 +18,6 @@ import { REPEAT_DAYS, recurrenceLabel, validateCustomRepeat } from './recurrence
 import { deleteRecurrence } from './deleteRecurrence'
 import { filterFeedback, isFeedbackCompleted, type FeedbackFilter } from './feedbackStatus'
 import { RetentionPanel } from './RetentionPanel'
-import { RepresentativesChat } from './RepresentativesChat'
 import { creditForUpdate, isCreditEligible } from './publicCredit'
 import { FeedbackConversation } from './FeedbackConversation'
 import { canEditCalendarActivity } from './calendarPermissions'
@@ -53,7 +52,7 @@ type AdminPageProps = {
   onReturnToCalendar: () => void
 }
 
-type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'chat' | 'suggestions'
+type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
   | 'representatives' | 'classes' | 'updates' | 'announcement' | 'feedback' | 'storage' | 'access' | 'users'
 
 type AdminSection = {
@@ -797,7 +796,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
         { id: 'suggestions', label: 'Sugestões de atividades', count: pendingSuggestions.length },
       ],
     },
-    { label: 'Comunidade', icon: MessagesSquare, tabs: [{ id: 'chat', label: 'Chat de representantes' }] },
   ]
   if (isSuperAdmin) adminSections.push(
     {
@@ -1019,7 +1017,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   )}
                   {adminTab === 'retention' && <RetentionPanel key={managedTurma} turmaId={managedTurma} userId={user.uid} activityDates={managedActivities.map((activity) => activity.date)} />}
                   {adminTab === 'notices' && <NoticesAdminPanel key={managedTurma} turmaId={managedTurma} user={user} />}
-                  {adminTab === 'chat' && <RepresentativesChat userId={user.uid} email={user.email ?? ''} profile={profile} />}
                   {adminTab === 'suggestions' && (
                     <>
                       <div className="admin-list-heading">
