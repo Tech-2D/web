@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FileDown, GraduationCap, X } from "lucide-react";
+import { ClipboardList, FileDown, X } from "lucide-react";
 import type { NotesResult } from "../lib/grades";
 import formulas from "../assets/boletim-formulas.png";
 import { SITUATION } from "./SubjectRow";
@@ -63,7 +63,6 @@ function Report({ rows, student, issued }: { rows: ReportRow[]; student: { name:
       }}
     >
       <div style={{ position: "relative", height: 107 }}>
-        {/* Marca do Notaki no lugar do logo da escola: este boletim não é o documento oficial. */}
         <div
           style={{
             position: "absolute",
@@ -77,8 +76,8 @@ function Report({ rows, student, issued }: { rows: ReportRow[]; student: { name:
             color: "#0a2dc4",
           }}
         >
-          <GraduationCap size={34} strokeWidth={2} aria-hidden />
-          <span style={{ fontFamily: '"Poppins", system-ui, sans-serif', fontSize: 18, fontWeight: 600 }}>Notaki</span>
+          <ClipboardList size={34} strokeWidth={2} aria-hidden />
+          <span style={{ fontFamily: '"Poppins", system-ui, sans-serif', fontSize: 18, fontWeight: 600 }}>Tech 2D</span>
         </div>
         <div style={{ position: "absolute", left: 257, top: 23, fontSize: 20, lineHeight: "20px", fontWeight: "bold" }}>
           Boletim Escolar
@@ -110,7 +109,7 @@ function Report({ rows, student, issued }: { rows: ReportRow[]; student: { name:
             <td />
           </tr>
           <tr style={{ height: 19 }}>
-            <td style={info}>UNIDADE: Gerado pelo Notaki (não substitui o boletim oficial)</td>
+            <td style={info}>Gerado na área de Notas do Tech 2D (não substitui o boletim oficial)</td>
             <td style={{ ...info, textAlign: "right", fontSize: 9 }}>EMISSÃO: {issued}</td>
           </tr>
         </tbody>

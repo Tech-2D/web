@@ -1,4 +1,4 @@
-import { Calculator, CalendarDays, Columns3, KeyRound, MapPin } from 'lucide-react'
+import { CalendarDays, ClipboardList, Columns3, KeyRound, MapPin } from 'lucide-react'
 import { sitePaths } from './sitePaths'
 import { SiteOptions } from './SiteOptions'
 import { SiteOptionsButton } from './SiteOptionsButton'
@@ -17,7 +17,7 @@ export function SiteNavigation({ active, role, menu }: {
         <div className="site-navigation-pages">
           <a href={sitePaths.agenda} aria-current={active === 'agenda' ? 'page' : undefined}><CalendarDays size={17} aria-hidden="true" />Agenda</a>
           <a href={sitePaths.professores} aria-current={active === 'professores' ? 'page' : undefined}><MapPin size={17} aria-hidden="true" />Professores</a>
-          <a href={sitePaths.pegaki} aria-current={active === 'pegaki' ? 'page' : undefined}><Calculator size={17} aria-hidden="true" />Notaki</a>
+          <a href={sitePaths.pegaki} aria-current={active === 'pegaki' ? 'page' : undefined}><ClipboardList size={17} aria-hidden="true" />Notas</a>
           <a href={sitePaths.kanban} aria-current={active === 'kanban' ? 'page' : undefined}><Columns3 size={17} aria-hidden="true" />Kanban</a>
           {(panelLabel || active === 'admin') && <a href={sitePaths.admin} aria-current={active === 'admin' ? 'page' : undefined}><KeyRound size={17} aria-hidden="true" />{panelLabel ?? 'Painel'}</a>}
         </div>

@@ -8,7 +8,7 @@ import './siteAccess.css'
 type Counts = { authenticated: number; anonymous: number; accounts: number }
 type Site = { total: Counts; daily: (Counts & { date: string })[] }
 type RecentAccount = { uid: string; email: string | null; lastSeen: string }
-const siteLabels = { agenda: 'Agenda', professores: 'Cadê o professor?', pegaki: 'Notaki' }
+const siteLabels = { agenda: 'Agenda', professores: 'Cadê o professor?', pegaki: 'Notas' }
 type SiteId = keyof typeof siteLabels
 const siteIds = Object.keys(siteLabels) as SiteId[]
 
@@ -84,8 +84,8 @@ export function SiteAccessPanel({ user }: { user: User }) {
           ? 'O comparativo entre Agenda e Cadê o professor começa no primeiro registro do Cadê o professor (' + labelDate(result.professorSince) + ').'
           : 'O Cadê o professor ainda não tem acessos registrados. A Agenda mostra seu histórico no período.'}</p>
         {result.sites.pegaki && <p className="site-access-note">{result.pegakiSince
-          ? 'O Notaki tem registros desde ' + labelDate(result.pegakiSince) + ' e mostra seu histórico no período escolhido.'
-          : 'O Notaki ainda não tem acessos registrados.'}</p>}
+          ? 'Os acessos à área de Notas são registrados desde ' + labelDate(result.pegakiSince) + '.'
+          : 'Ainda não há acessos registrados à área de Notas.'}</p>}
         <div className="site-access-summary">
           {siteIds.map(site => {
             const stats = result.sites[site]
@@ -112,7 +112,7 @@ export function SiteAccessPanel({ user }: { user: User }) {
             ))}
           </tr>)}</tbody>
         </table>}
-        {result.pegakiRecent && <RecentAccounts title="Contas que acessaram o Notaki" accounts={result.pegakiRecent} />}
+        {result.pegakiRecent && <RecentAccounts title="Contas que acessaram a área de Notas" accounts={result.pegakiRecent} />}
       </>}
       <p className="site-access-note">A contagem agrupa acessos da mesma conta em intervalos de 30 minutos por site. Os acessos anônimos são do histórico. Datas e horários seguem Brasília.</p>
     </section>

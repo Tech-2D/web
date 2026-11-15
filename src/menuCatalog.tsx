@@ -1,6 +1,6 @@
 import { sitePaths } from './sitePaths'
 import type { ReactNode } from 'react'
-import { Bell, BookOpen, Calculator, CalendarClock, History, KeyRound, LayoutGrid, Lightbulb, ListChecks, MapPin, MessageSquarePlus, Plus, Settings, StickyNote, UserRound } from 'lucide-react'
+import { Bell, BookOpen, CalendarClock, ClipboardList, History, KeyRound, LayoutGrid, Lightbulb, ListChecks, MapPin, MessageSquarePlus, Plus, Settings, StickyNote, UserRound } from 'lucide-react'
 import type { MenuShortcutId } from './menuShortcuts'
 
 export type MoreOption = {
@@ -35,7 +35,7 @@ export function menuOptionSections({ hasTurma, actions, todayClassesUrl, unreadC
       items: [
         { id: 'teachers', title: 'Professores', description: 'Busque professores, matérias e salas.', icon: <MapPin />, href: sitePaths.professores },
         { id: 'todayClasses', title: 'Aulas de hoje', description: hasTurma ? 'Consulte os horários e salas de hoje.' : 'Defina a turma padrão em “Minha turma”.', icon: <CalendarClock />, href: todayClassesUrl, disabled: !hasTurma },
-        { id: 'pegaki', title: 'Notaki', description: 'Calcule médias e simule notas.', icon: <Calculator />, href: sitePaths.pegaki },
+        { id: 'pegaki', title: 'Notas', description: 'Calcule médias e simule notas.', icon: <ClipboardList />, href: sitePaths.pegaki },
         { id: 'kanban', title: 'Kanban', description: 'Organize suas tarefas em quadros privados.', icon: <LayoutGrid />, onClick: actions.kanban },
       ],
     },

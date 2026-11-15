@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { ArrowRight, CalendarDays, Calculator, Columns3, Eye, EyeOff, MapPin, ShieldCheck } from 'lucide-react'
+import { ArrowRight, CalendarDays, ClipboardList, Columns3, Eye, EyeOff, MapPin, ShieldCheck } from 'lucide-react'
 import { auth } from './firebase'
 import { requestPasswordReset } from './passwordReset'
 import './siteSession.css'
@@ -84,7 +84,7 @@ function AccountEntry({ destination }: { destination: string }) {
         <ul>
           <li><CalendarDays aria-hidden="true" /> Agenda</li>
           <li><MapPin aria-hidden="true" /> Professores</li>
-          <li><Calculator aria-hidden="true" /> Notaki</li>
+          <li><ClipboardList aria-hidden="true" /> Notas</li>
           <li><Columns3 aria-hidden="true" /> Kanban</li>
         </ul>
       </section>

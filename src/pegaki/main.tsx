@@ -22,7 +22,7 @@ if (SQL_ENABLED) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <SiteSession destination="o Notaki">
+    <SiteSession destination="a área de Notas">
       <div className="app-shell portal-frame">
         <AccountSiteNavigation active="pegaki" />
         <App />
