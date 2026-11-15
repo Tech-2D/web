@@ -1,6 +1,10 @@
 .signature-page.portal-main { width: min(1340px, var(--portal-content-width)); margin: 1.2rem auto 0; padding-bottom: 2rem; }
 .signature-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.15rem; }
 .signature-heading > .primary-button { flex: 0 0 auto; width: auto; }
+.signature-heading-actions { display: flex; flex: none; align-items: center; gap: .65rem; flex-wrap: wrap; }
+.signature-heading-actions button { margin: 0; }
+.signature-draft-note { margin: -.4rem 0 1rem; color: var(--ink-soft); font-size: .78rem; line-height: 1.6; }
+.signature-draft-loading { display: flex; align-items: center; gap: .6rem; color: var(--ink-soft); }
 .signature-heading button:disabled { opacity: .55; cursor: not-allowed; }
 .signature-templates {
   display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: stretch; gap: .55rem; margin-bottom: 1rem; padding: .75rem;

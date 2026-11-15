@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react'
-import { ArrowDown, ArrowUp, Copy, Download, Grid2X2, ImagePlus, Layers, Minus, PenLine, Redo2, Square, Trash2, Type, Undo2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Copy, Download, Grid2X2, ImagePlus, Layers, LoaderCircle, Minus, PenLine, Redo2, Save, Square, Trash2, Type, Undo2 } from 'lucide-react'
 import { PageHeading } from './PageHeading'
+import { auth } from './firebase'
+import { loadSignatureDraft, saveSignatureDraft, signatureDraftKey, type SignatureDraft } from './signatureDraft'
 import { accent, applyTemplate, clamp, drawSignature, fitLayer, initialDesign, MAX_LAYERS, newShape, newText, type Design, type Font, type Layer, type Template } from './signatureCanvas'
 import './signatureEditor.css'
 
@@ -63,6 +65,9 @@ function NumberField({ label, value, min, max, onChange }: { label: string; valu
 
 export function SignatureEditor() {
   const [history, setHistory] = useState<History>(() => ({ current: initialDesign(), past: [], future: [] }))
+  const [draftKey] = useState(() => signatureDraftKey(auth.currentUser?.uid))
+  const [restoring, setRestoring] = useState(true)
+  const [savedDraft, setSavedDraft] = useState<SignatureDraft | null>(null)
   const design = history.current
   const [selectedId, setSelectedId] = useState('')
   const [moving, setMoving] = useState<Layer | null>(null)
@@ -84,10 +89,42 @@ export function SignatureEditor() {
   const hasContent = design.layers.some(layer => layer.kind === 'text' ? layer.value.trim() : layer.kind === 'image' || !layer.preset)
 
   useEffect(() => {
+    let active = true
+    void (async () => {
+      try {
+        const draft = await loadSignatureDraft(window.localStorage, draftKey)
+        if (active && draft) {
+          setHistory({ current: draft.design, past: [], future: [] })
+          setSavedDraft(draft)
+          setStatus('Rascunho recuperado. Continue sua edição.')
+        }
+      } catch {
+        if (active) setError('Não foi possível recuperar o rascunho deste navegador. Tente recarregar a página.')
+      } finally {
+        if (active) setRestoring(false)
+      }
+    })()
+    return () => { active = false }
+  }, [draftKey])
+
+  useEffect(() => {
     if (!canvas.current) return
     const shown = moving ? { ...design, layers: design.layers.map(layer => layer.id === moving.id ? moving : layer) } : design
     drawSignature(canvas.current, shown, !preview)
-  }, [design, moving, preview])
+  }, [design, moving, preview, restoring])
+
+  function saveDraft() {
+    if (uploading || exporting || gesture.current) return
+    setError('')
+    setStatus('')
+    try {
+      const savedAt = saveSignatureDraft(window.localStorage, draftKey, design)
+      setSavedDraft({ design, savedAt })
+      setStatus('Rascunho salvo neste navegador. Você pode continuar quando voltar.')
+    } catch {
+      setError('Não foi possível salvar o rascunho. Confira o espaço e as permissões de armazenamento do navegador ou reduza as imagens.')
+    }
+  }
 
   function commit(change: (current: Design) => Design, remember = true) {
     setStatus('')
@@ -337,13 +374,23 @@ export function SignatureEditor() {
     return { ...next, layers: current.layers.map(layer => fitLayer(layer, next)) }
   })
 
+  if (restoring) return <main className="signature-page portal-main"><p className="signature-draft-loading" role="status"><LoaderCircle size={20} />Carregando seu rascunho…</p></main>
+
   return <main className="signature-page portal-main" aria-label="Editor de assinatura de e-mail" onKeyDownCapture={handleHistoryShortcut}>
     <header className="signature-heading">
       <PageHeading icon={PenLine} title="Assinatura de e-mail" description="Monte o layout e baixe uma imagem para usar no Outlook." />
-      <button type="button" className="primary-button compact" onClick={download} disabled={!hasContent || uploading || exporting || Boolean(moving)}>
-        <Download size={18} />{exporting ? 'Gerando PNG…' : 'Baixar PNG'}
-      </button>
+      <div className="signature-heading-actions">
+        <button type="button" className="secondary-button" onClick={saveDraft} disabled={uploading || exporting || Boolean(moving)}><Save size={18} />Salvar rascunho</button>
+        <button type="button" className="primary-button compact" onClick={download} disabled={!hasContent || uploading || exporting || Boolean(moving)}>
+          <Download size={18} />{exporting ? 'Gerando PNG…' : 'Baixar PNG'}
+        </button>
+      </div>
     </header>
+    <p className="signature-draft-note">{savedDraft
+      ? savedDraft.design === design
+        ? `Rascunho salvo neste navegador em ${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(savedDraft.savedAt))}.`
+        : 'Há alterações que ainda não foram salvas no rascunho.'
+      : 'Salve um rascunho para continuar neste navegador depois.'}</p>
     {(error || status) && <p className="signature-message" role={error ? 'alert' : 'status'}>{error || status}</p>}
 
     <section className="signature-templates" aria-label="Modelos de assinatura">
