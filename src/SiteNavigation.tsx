@@ -6,7 +6,7 @@ import { SiteOptionsButton } from './SiteOptionsButton'
 import type { AdminRole } from './types'
 
 export function SiteNavigation({ active, role, menu, notifications }: {
-  active: 'agenda' | 'professores' | 'pegaki' | 'admin' | 'kanban' | 'profile'
+  active?: 'agenda' | 'professores' | 'pegaki' | 'admin' | 'kanban' | 'profile'
   role?: AdminRole
   menu?: { open: boolean; onOpen: () => void; hasPending?: boolean }
   notifications?: { onOpen: () => void; count: number }

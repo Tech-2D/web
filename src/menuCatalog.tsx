@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { BookOpen, Briefcase, GraduationCap, History, Lightbulb, ListChecks, MessageSquarePlus, Plus, Settings, StickyNote } from 'lucide-react'
+import { sitePaths } from './sitePaths'
+import { BookOpen, Briefcase, GraduationCap, History, Lightbulb, ListChecks, MessageSquarePlus, PenLine, Plus, Settings, StickyNote } from 'lucide-react'
 import type { MenuShortcutId } from './menuShortcuts'
 
 export type MoreOption = {
@@ -57,6 +58,7 @@ export function menuOptionSections({ hasTurma, actions, hasUnseenUpdate }: {
       id: 'outros',
       title: 'Outros recursos',
       items: [
+        { id: 'signature', title: 'Assinatura de e-mail', description: 'Monte uma assinatura para o Outlook e baixe em PNG.', icon: <PenLine />, href: sitePaths.signature },
         { id: 'studentPlatform', title: 'Plataforma Odette', description: 'Acesse o portal de alunos do Instituto Germinare.', icon: <GraduationCap />, href: 'https://alunos.igerminare.org.br/' },
         { id: 'rhPeex', title: 'RH Peex', description: 'Acesse a plataforma de RH da Peex Brasil.', icon: <Briefcase />, href: 'https://www.peexbrasil.com.br/rhpeex/' },
         { id: 'pong', title: 'Liga Germinare Pong', description: 'Conheça a liga de tênis de mesa.', icon: <TableTennisPaddle />, href: 'https://ligagerminare-pong.vercel.app/' },
