@@ -35,6 +35,8 @@ const logos = [
   { name: 'Friboi', file: 'friboi.png' },
   { name: 'Lhg Mining', file: 'lhg-mining.png' },
   { name: 'Instituto J&F', file: 'instituto-jf.png' },
+  { name: 'Flora', file: 'flora.png' },
+  { name: 'Eldorado Brasil', file: 'eldorado-brasil.png' },
 ]
 
 function logoUrl(file: string) {
