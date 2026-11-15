@@ -937,7 +937,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   </button>
                 ))}
                 {isSuperAdmin && (
-                  <a href="https://tech-2d.github.io/modelagem-dados/" target="_blank" rel="noopener noreferrer" aria-label="Modelagem de dados (abre em nova aba)">
+                  <a href="https://tech-2d.github.io/database/" target="_blank" rel="noopener noreferrer" aria-label="Modelagem de dados (abre em nova aba)">
                     <ExternalLink size={16} aria-hidden="true" />
                     <span>Modelagem de dados</span>
                   </a>
