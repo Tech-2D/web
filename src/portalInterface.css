@@ -1,13 +1,8 @@
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities) source(none);
-
-@theme {
+/* Shared styles load before the Notes entry, which defines its own Tailwind cascade layers. */
+:root {
   --font-interface: "Poppins", system-ui, sans-serif;
   --radius-interface-control: .625rem;
   --radius-interface-panel: 1rem;
-}
-
-:root {
   font-family: var(--font-interface);
   --interface-accent: var(--accent, var(--neon-ink, var(--ink)));
   --interface-on-accent: var(--accent-contrast, var(--accent-text, #fff));
@@ -42,7 +37,10 @@
 }
 
 .interface-heading-icon {
-  @apply grid shrink-0 place-items-center rounded-interface-control;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: var(--radius-interface-control);
   width: 2.375rem;
   height: 2.375rem;
   background: var(--interface-subtle);
@@ -67,19 +65,21 @@
 }
 
 .interface-panel {
-  @apply rounded-interface-panel border border-solid;
   min-width: 0;
-  border-color: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-interface-panel);
   background: var(--interface-surface);
   box-shadow: var(--interface-elevation);
   padding: clamp(.75rem, 2vw, 1.125rem);
 }
 
 .app-shell .interface-segments {
-  @apply flex items-stretch rounded-interface-control border border-solid;
+  display: flex;
+  align-items: stretch;
   gap: .25rem;
   padding: .25rem;
-  border-color: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-interface-control);
   background: var(--interface-subtle);
 }
 

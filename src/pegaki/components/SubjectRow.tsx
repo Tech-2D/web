@@ -158,7 +158,7 @@ function SemesterFields({ title, subject, mode, n1, n2, avgInput, avg, onN1, onN
           placeholder="Média"
           value={avgInput}
           onChange={onAvg}
-          className={`w-full lg:w-[9rem] ${a.className}`}
+          className={`w-full lg:max-w-[9rem] ${a.className}`}
           style={a.style}
         />
       </>
