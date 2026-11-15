@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { BookOpen, History, Lightbulb, ListChecks, MessageSquarePlus, Plus, Settings, StickyNote } from 'lucide-react'
+import { BookOpen, GraduationCap, History, Lightbulb, ListChecks, MessageSquarePlus, Plus, Settings, StickyNote } from 'lucide-react'
 import type { MenuShortcutId } from './menuShortcuts'
 
 export type MoreOption = {
@@ -57,6 +57,7 @@ export function menuOptionSections({ hasTurma, actions, hasUnseenUpdate }: {
       id: 'outros',
       title: 'Outros recursos',
       items: [
+        { id: 'studentPlatform', title: 'Plataforma de alunos', description: 'Acesse o portal de alunos do Instituto Germinare.', icon: <GraduationCap />, href: 'https://alunos.igerminare.org.br/' },
         { id: 'pong', title: 'Liga Germinare Pong', description: 'Conheça a liga de tênis de mesa.', icon: <TableTennisPaddle />, href: 'https://ligagerminare-pong.vercel.app/' },
       ],
     },
