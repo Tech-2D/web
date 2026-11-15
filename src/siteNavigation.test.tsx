@@ -17,7 +17,8 @@ it('connects all pages on the same origin and identifies the current page', () =
     expect(html).not.toContain('target=')
     expect(html.match(/aria-current="page"/g)).toHaveLength(1)
     const paths = { agenda: '/', kanban: '/#kanban', profile: '/perfil/', professores: '/professores/', pegaki: '/notas/' }
-    expect(html).toContain(`href="${paths[active]}" aria-current="page"`)
+    const currentLink = [...html.matchAll(/<a\b[^>]*>/g)].find(([tag]) => tag.includes('aria-current="page"'))?.[0]
+    expect(currentLink).toContain(`href="${paths[active]}"`)
   }
 })
 
