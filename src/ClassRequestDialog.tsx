@@ -50,7 +50,7 @@ export function ClassRequestDialog({ classNames, onClose }: { classNames: string
             <label className="wide">Nome da turma<input required maxLength={60} value={className} onChange={event => setClassName(event.target.value)} placeholder="Ex.: 3º Tech DS E" autoFocus /></label>
             <label className="wide">Seu e-mail para contato<input required type="email" maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="voce@escola.com" /></label>
           </div>
-          <p className="config-hint">Seu e-mail será visto apenas pelos administradores para avaliar o pedido.</p>
+          <p className="config-hint">Seu e-mail será visto apenas pelos administradores para avaliar o pedido. O pedido fica disponível por 7 dias; depois desse prazo, envie novamente se ainda precisar.</p>
           {error && <p className="form-error" role="alert">{error}</p>}
           <div className="form-actions"><button type="button" className="secondary-button" onClick={onClose}>Cancelar</button><button type="submit" className="primary-button compact" disabled={busy}>{busy ? <LoaderCircle className="spin" /> : <><Calendar size={16} /> Enviar pedido</>}</button></div>
         </form>}

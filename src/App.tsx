@@ -1097,7 +1097,7 @@ function SuggestDialog({ turmaId, onClose }: { turmaId: string; onClose: () => v
           <button className="icon-button" onClick={onClose} aria-label="Fechar"><X /></button>
         </div>
         {sent ? (
-          <div className="state-card"><Check /><p>Sugestão enviada! O representante da turma vai avaliar. Acompanhe em "Minhas sugestões" no menu.</p></div>
+          <div className="state-card"><Check /><p>Sugestão enviada! O representante da turma vai avaliar. Acompanhe em "Minhas sugestões" no menu por até 7 dias após o envio.</p></div>
         ) : (
           <form className="activity-form standalone" onSubmit={submit}>
             <div className="form-grid">
