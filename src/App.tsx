@@ -1,7 +1,8 @@
+import { registerAccount } from './registration'
 import { Component, type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { BookOpen, Calendar, CalendarClock, Check, ChevronLeft, ChevronRight, DoorOpen, ExternalLink, LayoutGrid, Lightbulb, LoaderCircle, Plus, StickyNote, X } from 'lucide-react'
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
+import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { requestPasswordReset } from './passwordReset'
 import { WeeklyDigestSettings } from './WeeklyDigestSettings'
@@ -1215,7 +1216,7 @@ function FeedbackDialog({ turmaId, onClose }: { turmaId: string | null; onClose:
     setAuthNotice('')
     try {
       if (authMode === 'register') {
-        await createUserWithEmailAndPassword(auth, email.trim(), password)
+        await registerAccount(email.trim(), password)
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password)
       }

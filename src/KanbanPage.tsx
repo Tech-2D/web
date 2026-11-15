@@ -1,5 +1,6 @@
+import { registerAccount } from './registration'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, type User } from 'firebase/auth'
+import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { Columns3, LayoutPanelLeft, LockKeyhole, LogOut, Plus, Search, Settings2, Users } from 'lucide-react'
 import { auth, db } from './firebase'
@@ -47,7 +48,7 @@ function KanbanLogin() {
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError(''); setNotice('')
     try {
-      if (register) await createUserWithEmailAndPassword(auth,email.trim(),password)
+      if (register) await registerAccount(email.trim(),password)
       else await signInWithEmailAndPassword(auth,email.trim(),password)
       setPassword('')
     } catch { setError('Não foi possível entrar. Confira os dados. Para criar uma conta, use uma senha de pelo menos 6 caracteres.') }

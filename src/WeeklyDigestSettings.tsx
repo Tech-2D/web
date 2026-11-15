@@ -1,5 +1,6 @@
+import { registerAccount } from './registration'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
+import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { auth } from './firebase'
 import { CLASS_NAMES } from './classNames'
@@ -38,7 +39,7 @@ export function WeeklyDigestSettings() {
   async function login(event: FormEvent, create = false) {
     event.preventDefault(); setBusy(true); setMessage('')
     try {
-      if (create) await createUserWithEmailAndPassword(auth, email.trim(), password)
+      if (create) await registerAccount(email.trim(), password)
       else await signInWithEmailAndPassword(auth, email.trim(), password)
     } catch { setMessage('Confira seu e-mail e senha. Para criar conta, a senha precisa de pelo menos 6 caracteres.') }
     finally { setBusy(false) }

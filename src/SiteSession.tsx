@@ -1,5 +1,6 @@
+import { registerAccount } from './registration'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth'
+import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { ArrowRight, CalendarDays, ClipboardList, Columns3, Eye, EyeOff, MapPin, ShieldCheck } from 'lucide-react'
 import { auth } from './firebase'
@@ -12,6 +13,7 @@ function accountError(error: unknown, mode: Mode) {
   const code = error instanceof FirebaseError ? error.code : ''
   if (code === 'auth/network-request-failed') return 'Confira sua conexão e tente novamente.'
   if (code === 'auth/too-many-requests') return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.'
+  if (code === 'auth/registration-failed') return 'Não foi possível criar a conta com os dados informados.'
   if (code === 'auth/email-already-in-use') return 'Este e-mail já tem uma conta. Entre com a sua senha ou solicite a recuperação.'
   if (code === 'auth/weak-password' || code === 'auth/password-does-not-meet-requirements') return 'Escolha uma senha mais forte para criar sua conta.'
   if (code === 'auth/user-disabled') return 'Esta conta está desativada. Fale com a administração.'
@@ -59,7 +61,7 @@ function AccountEntry({ destination }: { destination: string }) {
     setError('')
     setMessage('')
     try {
-      if (mode === 'register') await createUserWithEmailAndPassword(auth, address, password)
+      if (mode === 'register') await registerAccount(address, password)
       else if (mode === 'login') await signInWithEmailAndPassword(auth, address, password)
       else {
         await requestPasswordReset(address)

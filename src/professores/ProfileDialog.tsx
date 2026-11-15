@@ -1,5 +1,6 @@
+import { registerAccount } from '../registration'
 import { type FormEvent, useEffect, useState } from 'react'
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
 import { auth } from './firebase'
 import './profiles.css'
 
@@ -47,7 +48,7 @@ export function ProfileDialog({ onClose }: { onClose: () => void }) {
   async function authenticate(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError(''); setNotice('')
     try {
-      if (register) await createUserWithEmailAndPassword(auth, email.trim(), password)
+      if (register) await registerAccount(email.trim(), password)
       else await signInWithEmailAndPassword(auth, email.trim(), password)
       setPassword('')
     } catch { setError('Não foi possível entrar. Confira e-mail e senha ou tente outra conta.') }
