@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activeNotices, defaultNoticeExpiry, isNoticeActive, noticePurgeAt, sortNotices, validateNoticeDraft, type NoticeDraft } from './notices'
+import { activeNotices, isNoticeActive, sortNotices, validateNoticeDraft, type NoticeDraft } from './notices'
 
 const NOW = new Date('2026-09-26T12:00:00Z')
 const at = (iso: string) => ({ toDate: () => new Date(iso) })
@@ -25,19 +25,11 @@ describe('notices', () => {
     expect(isNoticeActive(notices[1], NOW)).toBe(false)
   })
 
-  it('defaults the expiry to 30 days and purges 30 days after expiring', () => {
-    expect(defaultNoticeExpiry(NOW).toISOString()).toBe('2026-10-26T12:00:00.000Z')
-    expect(noticePurgeAt(new Date('2026-10-26T12:00:00Z')).toISOString()).toBe('2026-11-25T12:00:00.000Z')
-  })
-
   it('validates the draft', () => {
-    const draft: NoticeDraft = { title: ' Prova ', body: 'Trazer calculadora', type: 'aviso', expiresAt: defaultNoticeExpiry(NOW) }
-    expect(validateNoticeDraft(draft, NOW)).toBeNull()
-    expect(validateNoticeDraft({ ...draft, title: '  ' }, NOW)).toMatch(/título/)
-    expect(validateNoticeDraft({ ...draft, title: 'x'.repeat(61) }, NOW)).toMatch(/60/)
-    expect(validateNoticeDraft({ ...draft, body: 'x'.repeat(501) }, NOW)).toMatch(/500/)
-    expect(validateNoticeDraft({ ...draft, expiresAt: new Date('2026-09-25T00:00:00Z') }, NOW)).toMatch(/futura/)
-    expect(validateNoticeDraft({ ...draft, expiresAt: new Date('2028-01-01T00:00:00Z') }, NOW)).toMatch(/365/)
-    expect(validateNoticeDraft({ ...draft, expiresAt: new Date('2026-09-01T00:00:00Z') }, NOW, false)).toBeNull()
+    const draft: NoticeDraft = { title: ' Prova ', body: 'Trazer calculadora', type: 'aviso' }
+    expect(validateNoticeDraft(draft)).toBeNull()
+    expect(validateNoticeDraft({ ...draft, title: '  ' })).toMatch(/título/)
+    expect(validateNoticeDraft({ ...draft, title: 'x'.repeat(61) })).toMatch(/60/)
+    expect(validateNoticeDraft({ ...draft, body: 'x'.repeat(501) })).toMatch(/500/)
   })
 })

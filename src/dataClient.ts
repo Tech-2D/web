@@ -6,7 +6,7 @@ import { auth } from './firebase'
 import { SQL_ENABLED, SQL_BASE } from './dataBackend'
 export { SQL_ENABLED, SQL_BASE } from './dataBackend'
 
-const CHANGED = 'tech2d-sql-data-changed'
+export const SQL_DATA_CHANGED = 'tech2d-sql-data-changed'
 type Constraint = { kind: 'filter' | 'order' | 'limit'; field?: string; op?: string; value?: unknown; direction?: string; limit?: number }
 type Ref = { path: string; isCollection: boolean; constraints: Constraint[] }
 export type DataRow = { path: string; id: string; data: Record<string, unknown>; version: string }
@@ -115,7 +115,7 @@ function acceptConfirmation(result:{documents?:Row[];deleted?:string[]},paths:st
   const epoch=++confirmationEpoch
   for(const row of result.documents || []){known.set(key(row.path),row);versions.set(key(row.path),row.version);confirmedAt.set(key(row.path),epoch)}
   for(const path of result.deleted || []){known.set(key(path),null);versions.delete(key(path));confirmedAt.set(key(path),epoch)}
-  window.dispatchEvent(new CustomEvent(CHANGED,{detail:{paths}}))
+  window.dispatchEvent(new CustomEvent(SQL_DATA_CHANGED,{detail:{paths}}))
 }
 export function knownDocument(ref:native.DocumentReference){return known.get(key(asRef(ref).path))}
 export function clearDataSession(){known.clear();versions.clear();confirmedAt.clear();reading.clear()}
@@ -191,9 +191,9 @@ export const onSnapshot = choose(native.onSnapshot,(ref:Ref,next:(value:unknown)
     if(paths && !paths.some(path=>ref.isCollection ? path.slice(0,path.lastIndexOf('/'))===ref.path : path===ref.path))return
     void refresh()
   }
-  window.addEventListener(CHANGED,wake)
+  window.addEventListener(SQL_DATA_CHANGED,wake)
   document.addEventListener('visibilitychange',wake)
   void refresh()
-  return ()=>{stopped=true;clearTimeout(timer);window.removeEventListener(CHANGED,wake);document.removeEventListener('visibilitychange',wake)}
+  return ()=>{stopped=true;clearTimeout(timer);window.removeEventListener(SQL_DATA_CHANGED,wake);document.removeEventListener('visibilitychange',wake)}
 })
 export { Timestamp } from 'firebase/firestore'

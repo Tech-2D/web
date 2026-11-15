@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Clock, Info, LoaderCircle, Megaphone, Pencil, Plus, StickyNote, Trash2, TriangleAlert, X } from 'lucide-react'
 import type { User } from 'firebase/auth'
@@ -6,13 +6,11 @@ import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from '
 import { db } from './firebase'
 import {
   NOTICE_BODY_MAX,
-  NOTICE_MAX_DAYS,
+  NOTICE_TTL_DAYS,
   NOTICE_TITLE_MAX,
   NOTICE_TYPES,
   NOTICE_TYPE_LABELS,
-  defaultNoticeExpiry,
   isNoticeActive,
-  noticePurgeAt,
   sortNotices,
   validateNoticeDraft,
   type Notice,
@@ -26,17 +24,8 @@ const TYPE_ICONS: Record<NoticeType, ReactNode> = {
   lembrete: <Info size={13} aria-hidden="true" />,
 }
 
-function formatDay(date: Date): string {
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
-function toDateInput(date: Date): string {
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-function endOfDay(value: string): Date {
-  return new Date(`${value}T23:59:00`)
+function formatDeadline(date: Date): string {
+  return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
 // ——— Preview (hover/foco no desktop, toque no celular) ———
@@ -117,7 +106,7 @@ function NoticePreviewCard({ api }: { api: PreviewApi }) {
       <strong className="notice-preview-title">{notice.title}</strong>
       <p>{notice.body}</p>
       <span className="preview-author">
-        {expiresAt && <>Vale até {formatDay(expiresAt)}</>}
+        {expiresAt && <>Vale até {formatDeadline(expiresAt)}</>}
       </span>
     </div>,
     document.body,
@@ -156,28 +145,20 @@ type NoticeFormProps = {
 }
 
 export function NoticeForm({ turmaId, user, notice, onDone }: NoticeFormProps) {
-  const originalExpiry = notice?.expiresAt?.toDate() ?? null
   const [type, setType] = useState<NoticeType>(notice?.type ?? 'aviso')
   const [title, setTitle] = useState(notice?.title ?? '')
   const [body, setBody] = useState(notice?.body ?? '')
-  const [expiry, setExpiry] = useState(() => toDateInput(originalExpiry ?? defaultNoticeExpiry(new Date())))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const today = toDateInput(new Date())
-  const maxExpiry = toDateInput(new Date(Date.now() + NOTICE_MAX_DAYS * 24 * 60 * 60 * 1000))
 
   async function submit(event: FormEvent) {
     event.preventDefault()
-    const now = new Date()
-    const expiryChanged = !originalExpiry || expiry !== toDateInput(originalExpiry)
-    const expiresAt = expiryChanged || !originalExpiry ? endOfDay(expiry) : originalExpiry
-    const draft = { title, body, type, expiresAt }
-    const problem = validateNoticeDraft(draft, now, expiryChanged)
+    const problem = validateNoticeDraft({ title, body, type })
     if (problem) { setError(problem); return }
     setBusy(true)
     setError('')
     try {
-      const fields = { title: title.trim(), body: body.trim(), type, expiresAt, purgeAt: noticePurgeAt(expiresAt), updatedAt: serverTimestamp() }
+      const fields = { title: title.trim(), body: body.trim(), type, updatedAt: serverTimestamp() }
       if (notice) {
         await updateDoc(doc(db, 'boardNotices', notice.id), fields)
       } else {
@@ -211,10 +192,9 @@ export function NoticeForm({ turmaId, user, notice, onDone }: NoticeFormProps) {
         <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={NOTICE_BODY_MAX} rows={4} placeholder="O que a turma precisa saber?" required />
         <small className="notice-counter">{body.length}/{NOTICE_BODY_MAX}</small>
       </label>
-      <label>Vale até
-        <input type="date" value={expiry} min={notice ? undefined : today} max={maxExpiry} onChange={(event) => setExpiry(event.target.value)} required />
-        <small className="notice-counter">Depois dessa data o aviso some da agenda. O padrão é 30 dias.</small>
-      </label>
+      <p className="notice-counter">{notice
+        ? 'O aviso mantém a validade da publicação original.'
+        : 'O aviso expira automaticamente ' + NOTICE_TTL_DAYS + ' dias após a publicação.'}</p>
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="notice-form-actions">
         <button type="submit" className="primary-button compact" disabled={busy}>{busy ? <LoaderCircle className="spin" /> : notice ? 'Salvar alterações' : 'Publicar aviso'}</button>
@@ -300,7 +280,7 @@ export function NoticeBoardDialog({ turmaId, notices, loading, error, user, canM
   )
 }
 
-// ——— Aba do painel: lista completa, incluindo expirados ———
+// ——— Aba do painel ———
 
 export function NoticesAdminPanel({ turmaId, user }: { turmaId: string; user: User }) {
   const { notices, loading, error } = useTurmaNotices(turmaId, true)
@@ -308,26 +288,18 @@ export function NoticesAdminPanel({ turmaId, user }: { turmaId: string; user: Us
   const [editing, setEditing] = useState<Notice | 'new' | null>(null)
   const [actionError, setActionError] = useState('')
 
-  const { active, expired } = useMemo(() => {
-    const sorted = sortNotices(notices)
-    return {
-      active: sorted.filter((notice) => isNoticeActive(notice, now)),
-      expired: sorted.filter((notice) => !isNoticeActive(notice, now)),
-    }
-  }, [notices, now])
+  const active = sortNotices(notices.filter(notice => isNoticeActive(notice, now)))
 
-  const row = (notice: Notice, isExpired: boolean) => {
+  const row = (notice: Notice) => {
     const expiresAt = notice.expiresAt?.toDate()
-    const purgeAt = notice.purgeAt?.toDate()
     return (
-      <article key={notice.id} className={`admin-row compact notice-row ${isExpired ? 'is-expired' : ''}`}>
+      <article key={notice.id} className="admin-row compact notice-row">
         <div className="admin-row-main">
           <strong><span className={`postit-tag postit-tag-${notice.type}`}>{TYPE_ICONS[notice.type]}{NOTICE_TYPE_LABELS[notice.type]}</span> {notice.title}</strong>
           <span>{notice.body}</span>
           <span className="notice-row-meta">
             <Clock size={11} aria-hidden="true" />
-            {isExpired ? 'Expirado' : 'Vale até'} {expiresAt ? formatDay(expiresAt) : '—'}
-            {isExpired && purgeAt ? ` · será apagado em ${formatDay(purgeAt)}` : ''}
+            Vale até {expiresAt ? formatDeadline(expiresAt) : '—'}
             {notice.authorEmail ? ` · ${notice.authorEmail}` : ''}
           </span>
         </div>
@@ -350,17 +322,9 @@ export function NoticesAdminPanel({ turmaId, user }: { turmaId: string; user: Us
       {loading ? <p className="admin-empty"><LoaderCircle className="spin" size={15} /> Carregando avisos…</p>
         : error ? <p className="form-error" role="alert">{error}</p>
           : (
-            <>
-              <div className="admin-list">
-                {active.length === 0 ? <p className="admin-empty">Nenhum aviso ativo.</p> : active.map((notice) => row(notice, false))}
-              </div>
-              {expired.length > 0 && (
-                <>
-                  <div className="admin-list-heading"><strong>Expirados</strong><span className="config-hint" style={{ margin: 0 }}>Somem da agenda; são apagados 30 dias depois de expirar</span></div>
-                  <div className="admin-list">{expired.map((notice) => row(notice, true))}</div>
-                </>
-              )}
-            </>
+            <div className="admin-list">
+              {active.length === 0 ? <p className="admin-empty">Nenhum aviso ativo.</p> : active.map(row)}
+            </div>
           )}
     </div>
   )

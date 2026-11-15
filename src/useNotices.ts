@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { collection, onSnapshot, query, where } from './dataClient'
 import { db } from './firebase'
 import type { Notice } from './notices'
-import { observePublicInfo } from './publicInfo'
+import { observeClassNotices } from './publicInfo'
 
 export function useTurmaNotices(turmaId: string | null, privateAdminView = false) {
   const [notices, setNotices] = useState<Notice[]>([])
@@ -14,7 +14,7 @@ export function useTurmaNotices(turmaId: string | null, privateAdminView = false
     setError('')
     if (!turmaId) { setLoading(false); return }
     setLoading(true)
-    if (!privateAdminView) return observePublicInfo<{ notices: Record<string, unknown>[] }>({ action: 'notices', turma: turmaId }, data => {
+    if (!privateAdminView) return observeClassNotices(turmaId, data => {
       setNotices(data.notices.map(item => {
         const notice = { ...item }
         for (const key of ['expiresAt', 'createdAt', 'updatedAt']) {
@@ -28,6 +28,7 @@ export function useTurmaNotices(turmaId: string | null, privateAdminView = false
     }, () => { setLoading(false); setError('Não foi possível carregar o quadro de avisos.') })
     return onSnapshot(query(collection(db, 'boardNotices'), where('turmaId', '==', turmaId)), (snapshot) => {
       setNotices(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Notice))
+      setError('')
       setLoading(false)
     }, () => {
       setLoading(false)

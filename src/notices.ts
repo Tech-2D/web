@@ -14,11 +14,7 @@ const NOTICE_TYPE_PRIORITY: Record<NoticeType, number> = { urgente: 0, aviso: 1,
 
 export const NOTICE_TITLE_MAX = 60
 export const NOTICE_BODY_MAX = 500
-export const NOTICE_DEFAULT_DAYS = 30
-export const NOTICE_MAX_DAYS = 365
-export const NOTICE_PURGE_GRACE_DAYS = 30
-
-const DAY_MS = 24 * 60 * 60 * 1000
+export const NOTICE_TTL_DAYS = 7
 
 type FirestoreDate = { toDate: () => Date }
 
@@ -29,21 +25,10 @@ export type Notice = {
   body: string
   type: NoticeType
   expiresAt: FirestoreDate | null
-  purgeAt: FirestoreDate | null
-  createdBy: string
-  authorEmail: string
+  createdBy?: string
+  authorEmail?: string
   createdAt?: FirestoreDate | null
   updatedAt?: FirestoreDate | null
-}
-
-export function defaultNoticeExpiry(now: Date): Date {
-  return new Date(now.getTime() + NOTICE_DEFAULT_DAYS * DAY_MS)
-}
-
-// O TTL do Firestore apaga o documento em purgeAt; até lá o aviso expirado
-// continua listado na aba do painel.
-export function noticePurgeAt(expiresAt: Date): Date {
-  return new Date(expiresAt.getTime() + NOTICE_PURGE_GRACE_DAYS * DAY_MS)
 }
 
 export function isNoticeActive(notice: Pick<Notice, 'expiresAt'>, now: Date): boolean {
@@ -66,10 +51,9 @@ export function activeNotices<T extends Pick<Notice, 'type' | 'createdAt' | 'exp
   return sortNotices(notices.filter((notice) => isNoticeActive(notice, now)))
 }
 
-export type NoticeDraft = { title: string; body: string; type: NoticeType; expiresAt: Date }
+export type NoticeDraft = { title: string; body: string; type: NoticeType }
 
-// expiryChanged=false permite corrigir o texto de um aviso já expirado sem mexer na validade.
-export function validateNoticeDraft(draft: NoticeDraft, now: Date, expiryChanged = true): string | null {
+export function validateNoticeDraft(draft: NoticeDraft): string | null {
   const title = draft.title.trim()
   const body = draft.body.trim()
   if (!title) return 'Informe um título.'
@@ -77,9 +61,6 @@ export function validateNoticeDraft(draft: NoticeDraft, now: Date, expiryChanged
   if (!body) return 'Escreva o texto do aviso.'
   if (body.length > NOTICE_BODY_MAX) return `O texto pode ter até ${NOTICE_BODY_MAX} caracteres.`
   if (!NOTICE_TYPES.includes(draft.type)) return 'Tipo de aviso inválido.'
-  if (!expiryChanged) return null
-  if (Number.isNaN(draft.expiresAt.getTime()) || draft.expiresAt.getTime() <= now.getTime()) return 'A validade precisa ser uma data futura.'
-  if (draft.expiresAt.getTime() > now.getTime() + NOTICE_MAX_DAYS * DAY_MS) return `A validade pode ser de no máximo ${NOTICE_MAX_DAYS} dias.`
   return null
 }
 
