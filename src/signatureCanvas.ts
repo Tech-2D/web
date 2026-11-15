@@ -20,8 +20,9 @@ export type Design = {
   background: string
   transparent: boolean
   layers: Layer[]
+  template?: Template
 }
-export type Template = 'side' | 'center' | 'columns'
+export type Template = 'side' | 'center' | 'columns' | 'right' | 'banner' | 'footer'
 
 export const MAX_LAYERS = 24
 export const accent = '#0a2dc4'
@@ -74,6 +75,10 @@ export function applyTemplate(design: Design, template: Template): Design {
   const images = existing.filter(layer => layer.kind === 'image')
   const centered = template === 'center'
   const columns = template === 'columns'
+  const imageRight = template === 'right'
+  const imageBelow = template === 'footer'
+  const banner = template === 'banner'
+  const imageInRow = centered || columns || imageBelow
   const padding = 28
   const photoWidth = 84
   const photoGap = 10
@@ -82,15 +87,17 @@ export function applyTemplate(design: Design, template: Template): Design {
     ? Math.ceil(images.length / imageColumns) * (photoWidth + photoGap) + 8
     : 0
   const left = !centered && !columns && images.length ? padding + photoWidth + 20 : padding
-  const rowTop = padding + imageBand
+  const textLeft = imageRight || imageBelow ? padding : left
+  const rightGutter = imageRight && images.length ? photoWidth + 20 : 0
+  const rowTop = padding + imageBand + (banner ? 10 : 0)
   const half = Math.floor((design.width - 2 * padding - 28) / 2)
   let y = rowTop
   const placedTexts = texts.map((layer, index) => {
     const rowHeight = Math.max(layer.height, Math.ceil(layer.size * 1.4) + 2)
     const column = columns && index % 2 === 1 ? 1 : 0
-    const x = columns ? padding + column * (half + 28) : left
+    const x = columns ? padding + column * (half + 28) : textLeft
     const result: TextLayer = {
-      ...layer, x, y, width: columns ? half : design.width - padding - left,
+      ...layer, x, y, width: columns ? half : design.width - padding - textLeft - rightGutter,
       height: rowHeight, align: centered ? 'center' : 'left',
     }
     if (!columns) y += rowHeight
@@ -101,30 +108,34 @@ export function applyTemplate(design: Design, template: Template): Design {
     return result
   })
   const placedImages: ImageLayer[] = images.map((layer, index) => {
-    if (!centered && !columns) {
-      return { ...layer, x: padding - 8, y: padding + index * (photoWidth + photoGap), width: photoWidth, height: photoWidth }
+    if (!imageInRow) {
+      const x = imageRight ? design.width - padding - photoWidth : padding - 8
+      return { ...layer, x, y: rowTop + index * (photoWidth + photoGap), width: photoWidth, height: photoWidth }
     }
     const row = Math.floor(index / imageColumns)
     const count = Math.min(imageColumns, images.length - row * imageColumns)
     const rowWidth = count * photoWidth + (count - 1) * photoGap
     const start = centered ? Math.round((design.width - rowWidth) / 2) : padding
-    return { ...layer, x: start + (index % imageColumns) * (photoWidth + photoGap), y: padding + row * (photoWidth + photoGap), width: photoWidth, height: photoWidth }
+    const top = imageBelow ? y + 18 : padding
+    return { ...layer, x: start + (index % imageColumns) * (photoWidth + photoGap), y: top + row * (photoWidth + photoGap), width: photoWidth, height: photoWidth }
   })
-  const required = Math.max(y, ...placedImages.map(layer => layer.y + layer.height)) + padding
+  const required = Math.max(y + (imageBelow ? 8 : 0), ...placedImages.map(layer => layer.y + layer.height)) + padding
   if (required > 1400) return design
   const height = Math.max(design.height, required)
-  const decoration = centered
-    ? { x: Math.round(design.width / 2) - 22, y: 14, width: 44, height: 3 }
-    : columns
-      ? { x: padding + half + 13, y: rowTop, width: 2, height: Math.max(18, y - rowTop) }
-      : { x: 14, y: rowTop, width: 3, height: Math.max(18, y - rowTop) }
+  let decoration: Bounds = { x: 14, y: rowTop, width: 3, height: Math.max(18, y - rowTop) }
+  if (centered) decoration = { x: Math.round(design.width / 2) - 22, y: 14, width: 44, height: 3 }
+  if (columns) decoration = { ...decoration, x: padding + half + 13, width: 2 }
+  if (imageRight) decoration = { ...decoration, x: design.width - padding - rightGutter + 9, width: 2 }
+  if (banner) decoration = { x: 0, y: 0, width: design.width, height: 12 }
+  if (imageBelow) decoration = { x: padding, y: y + 8, width: design.width - 2 * padding, height: 2 }
 
   const byId = new Map<string, Layer>([...placedTexts, ...placedImages].map(layer => [layer.id, layer]))
   const layers = existing.map(layer => byId.get(layer.id) ?? layer)
   if (layers.length < MAX_LAYERS) {
-    layers.unshift({ ...newShape('Divisória do modelo', 44, 3, accent), ...decoration, preset: true })
+    const divider = design.layers.find((layer): layer is ShapeLayer => layer.kind === 'shape' && layer.preset === true)
+    layers.unshift({ ...(divider ?? newShape('Divisória do modelo', 44, 3, accent)), ...decoration, preset: true })
   }
-  const next = { ...design, height }
+  const next = { ...design, height, template }
   return { ...next, layers: layers.map(layer => fitLayer(layer, next)) }
 }
 

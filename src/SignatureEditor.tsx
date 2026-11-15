@@ -21,7 +21,25 @@ const templates: { id: Template; label: string; description: string }[] = [
   { id: 'side', label: 'Lateral', description: 'Foto ao lado do texto' },
   { id: 'center', label: 'Centralizado', description: 'Elementos alinhados ao centro' },
   { id: 'columns', label: 'Duas colunas', description: 'Informações lado a lado' },
+  { id: 'right', label: 'Logo à direita', description: 'Texto à esquerda, marca à direita' },
+  { id: 'banner', label: 'Faixa superior', description: 'Faixa de cor no topo' },
+  { id: 'footer', label: 'Logo no rodapé', description: 'Marca abaixo dos contatos' },
 ]
+
+const logos = [
+  { name: 'Seara', file: 'seara.png' },
+  { name: 'JBS', file: 'jbs.png' },
+  { name: 'PicPay', file: 'picpay.png' },
+  { name: 'Swift', file: 'swift.png' },
+  { name: 'JBS Novos Negócios', file: 'jbs-novos-negocios.png' },
+  { name: 'Friboi', file: 'friboi.png' },
+  { name: 'Lhg Mining', file: 'lhg-mining.png' },
+  { name: 'Instituto J&F', file: 'instituto-jf.png' },
+]
+
+function logoUrl(file: string) {
+  return import.meta.env.BASE_URL + 'signature-logos/' + file
+}
 
 function NumberField({ label, value, min, max, onChange }: { label: string; value: number; min: number; max: number; onChange: (value: number) => void }) {
   return <label>{label}
@@ -49,11 +67,13 @@ export function SignatureEditor() {
   const [showGrid, setShowGrid] = useState(true)
   const [preview, setPreview] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [logosOpen, setLogosOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const canvas = useRef<HTMLCanvasElement>(null)
   const stage = useRef<HTMLDivElement>(null)
+  const logoButton = useRef<HTMLButtonElement>(null)
   const textarea = useRef<HTMLTextAreaElement>(null)
   const textEdited = useRef(false)
   const gesture = useRef<Gesture | null>(null)
@@ -94,25 +114,45 @@ export function SignatureEditor() {
   }
 
   function editLayer(id: string, change: (layer: Layer) => Layer, remember = true) {
-    commit(current => ({
-      ...current,
-      layers: current.layers.map(layer => layer.id === id ? fitLayer(change(layer), current) : layer),
-    }), remember)
+    commit(current => {
+      let template = current.template
+      const layers = current.layers.map(layer => {
+        if (layer.id !== id) return layer
+        const next = fitLayer(change(layer), current)
+        if (next.x !== layer.x || next.y !== layer.y || next.width !== layer.width || next.height !== layer.height) template = undefined
+        if (next.kind === 'text' && layer.kind === 'text' && next.align !== layer.align) template = undefined
+        return next
+      })
+      return { ...current, template, layers }
+    }, remember)
   }
 
-  function addLayer(layer: Layer) {
+  function addLayer(layer: Layer, afterContent = false) {
     commit(current => {
       if (current.layers.length >= MAX_LAYERS) return current
+      if (afterContent) {
+        if (current.template) {
+          const withLogo = { ...current, layers: [...current.layers, layer] }
+          const arranged = applyTemplate(withLogo, current.template)
+          if (arranged !== withLogo) return arranged
+        }
+        const end = Math.max(0, ...current.layers.map(item => item.y + item.height))
+        const y = current.layers.length ? end + 12 : 24
+        const height = clamp(Math.max(current.height, y + layer.height + 24), 100, 1400)
+        const next = { ...current, height, template: undefined }
+        const placed = fitLayer({ ...layer, x: current.width - layer.width - 24, y }, next)
+        return { ...next, layers: [...current.layers, placed] }
+      }
       const stagger = (current.layers.length % 5) * 12
       const next = fitLayer({ ...layer, x: layer.x + stagger, y: layer.y + stagger }, current)
-      return { ...current, layers: [...current.layers, next] }
+      return { ...current, template: undefined, layers: [...current.layers, next] }
     })
     setSelectedId(layer.id)
     setPreview(false)
   }
 
   function removeLayer(id: string) {
-    commit(current => ({ ...current, layers: current.layers.filter(layer => layer.id !== id) }))
+    commit(current => ({ ...current, template: undefined, layers: current.layers.filter(layer => layer.id !== id) }))
     setSelectedId('')
   }
 
@@ -124,7 +164,7 @@ export function SignatureEditor() {
       if (index < 0 || target < 0 || target >= layers.length) return current
       const [layer] = layers.splice(index, 1)
       layers.splice(target, 0, layer)
-      return { ...current, layers }
+      return { ...current, template: undefined, layers }
     })
   }
 
@@ -195,18 +235,9 @@ export function SignatureEditor() {
     }
   }
 
-  async function upload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file || atLimit) return
+  async function loadImage(url: string, name: string, isLogo = false) {
     setError('')
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      setError('Escolha uma imagem PNG, JPG ou WebP de até 5 MB.')
-      return
-    }
-
     setUploading(true)
-    const url = URL.createObjectURL(file)
     try {
       const image = new Image()
       image.src = url
@@ -222,16 +253,36 @@ export function SignatureEditor() {
       const ctx = source.getContext('2d')
       if (!ctx) throw new Error('Canvas indisponível')
       ctx.drawImage(image, 0, 0, source.width, source.height)
-      const ratio = 104 / Math.max(source.width, source.height)
+      const ratio = (isLogo ? 128 : 104) / Math.max(source.width, source.height)
       addLayer({
-        id: crypto.randomUUID(), kind: 'image', label: file.name, source, x: 28, y: 28,
+        id: crypto.randomUUID(), kind: 'image', label: name, source, x: 28, y: 28,
         width: Math.max(24, Math.round(source.width * ratio)), height: Math.max(18, Math.round(source.height * ratio)),
-      })
+      }, isLogo)
+      if (isLogo) {
+        setLogosOpen(false)
+        logoButton.current?.focus()
+      }
     } catch {
-      setError('Não foi possível abrir a imagem. Tente outro arquivo.')
+      setError(isLogo ? 'Não foi possível carregar o logo. Tente novamente.' : 'Não foi possível abrir a imagem. Tente outro arquivo.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function upload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || atLimit) return
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setError('Escolha uma imagem PNG, JPG ou WebP de até 5 MB.')
+      return
+    }
+
+    const url = URL.createObjectURL(file)
+    try {
+      await loadImage(url, file.name)
     } finally {
       URL.revokeObjectURL(url)
-      setUploading(false)
     }
   }
 
@@ -267,7 +318,7 @@ export function SignatureEditor() {
   })
   const selectedIndex = design.layers.findIndex(layer => layer.id === selected?.id)
   const setSize = (key: 'width' | 'height', value: number) => commit(current => {
-    const next = { ...current, [key]: value }
+    const next = { ...current, [key]: value, template: undefined }
     return { ...next, layers: current.layers.map(layer => fitLayer(layer, next)) }
   })
 
@@ -286,7 +337,7 @@ export function SignatureEditor() {
         <span aria-hidden="true" className={'signature-template-icon ' + template.id}><i /><i /><i /></span>
         <span><strong>{template.label}</strong><small>{template.description}</small></span>
       </button>)}
-      <button type="button" className="signature-blank" disabled={!design.layers.length} onClick={() => { commit(current => ({ ...current, layers: [] })); setSelectedId(''); setPreview(false) }}>Começar em branco</button>
+      <button type="button" className="signature-blank" disabled={!design.layers.length} onClick={() => { commit(current => ({ ...current, template: undefined, layers: [] })); setSelectedId(''); setPreview(false) }}>Começar em branco</button>
     </section>
 
     <div className="signature-workspace">
@@ -306,9 +357,27 @@ export function SignatureEditor() {
             <ImagePlus size={17} />{uploading ? 'Carregando…' : 'Imagem'}
             <input aria-label="Adicionar imagem" type="file" accept="image/png,image/jpeg,image/webp" onChange={upload} disabled={uploading || atLimit} />
           </label>
+          <button ref={logoButton} type="button" aria-expanded={logosOpen} aria-controls="signature-logo-library" onClick={() => setLogosOpen(open => !open)}><ImagePlus size={17} />Logos de empresas</button>
           <button type="button" disabled={atLimit} onClick={() => addLayer(newShape('Divisória', 156, 4, accent))}><Minus size={17} />Divisória</button>
           <button type="button" disabled={atLimit} onClick={() => addLayer(newShape('Retângulo', 135, 56, '#eef1fd'))}><Square size={17} />Retângulo</button>
         </div>
+        <section id="signature-logo-library" className="signature-logo-library" aria-label="Logos de empresas" hidden={!logosOpen}>
+          {logosOpen && <>
+            <p>Escolha um logo para adicionar à prancheta.</p>
+            <div className="signature-logo-grid">
+              {logos.map(logo => <button
+                key={logo.file}
+                className="signature-logo-card"
+                type="button"
+                disabled={uploading || atLimit}
+                onClick={() => void loadImage(logoUrl(logo.file), logo.name, true)}
+              >
+                <span className="signature-logo-image"><img alt="" src={logoUrl(logo.file)} /></span>
+                <span>{logo.name}</span>
+              </button>)}
+            </div>
+          </>}
+        </section>
         {atLimit && <p className="signature-tip" role="status">Limite de {MAX_LAYERS} elementos. Remova um para adicionar outro.</p>}
         <div className="signature-proof" data-grid={showGrid && !preview}>
           <div
