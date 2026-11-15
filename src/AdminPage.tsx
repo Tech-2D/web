@@ -6,6 +6,7 @@ import { signOut } from './sessionActions'
 import { StorageAdminPanel } from './StorageAdminPanel'
 import { RepresentativesPanel } from './RepresentativesPanel'
 import { SiteAccessPanel } from './SiteAccessPanel'
+import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
 import { ATTACHMENTS_ENABLED, deleteActivityWithAttachments, formatAttachmentSize, MAX_ATTACHMENTS, removeAttachment, uploadAttachment, validateAttachment } from './attachments'
 import { addDoc, collection, deleteDoc, doc, knownDocument, onSnapshot, query, serverTimestamp, setDoc, SQL_ENABLED, updateDoc, where, writeBatch } from './dataClient'
@@ -53,7 +54,7 @@ type AdminPageProps = {
 }
 
 type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
-  | 'representatives' | 'classes' | 'updates' | 'announcement' | 'feedback' | 'storage' | 'access' | 'users'
+  | 'representatives' | 'classes' | 'updates' | 'announcement' | 'feedback' | 'storage' | 'access' | 'users' | 'schedules' | 'scheduleImport'
 
 type AdminSection = {
   label: string
@@ -799,6 +800,14 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   ]
   if (isSuperAdmin) adminSections.push(
     {
+      label: 'Professores',
+      icon: Calendar,
+      tabs: [
+        { id: 'schedules', label: 'Grade de horários' },
+        { id: 'scheduleImport', label: 'Importar horários por JSON' },
+      ],
+    },
+    {
       label: 'Turmas e acessos',
       icon: Users,
       tabs: [
@@ -961,6 +970,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                       <button type="button" className="primary-button compact" onClick={startCreate}><Plus size={18} /> Nova atividade</button>
                     )}
                   </div>
+                  {isSuperAdmin && (adminTab === 'schedules' || adminTab === 'scheduleImport') && <SchedulesAdminPanel key={adminTab} view={adminTab === 'scheduleImport' ? 'import' : 'schedules'} classNames={classNames} />}
                   {adminTab === 'activities' && (
                     <>
                       <div className="admin-list-heading"><strong>Atividades cadastradas</strong><input aria-label="Buscar atividades" placeholder="Buscar por título ou descrição" value={adminSearch} onChange={(event) => setAdminSearch(event.target.value)} /></div>

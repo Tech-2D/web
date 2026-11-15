@@ -20,6 +20,8 @@ Passe o mouse sobre um dia com atividades (ou foque nele pelo teclado) para ler 
 
 Depois de entrar como representante ou super-admin, abra um dia no calendário e clique em **Editar atividade**. O representante pode alterar atividades da própria turma, inclusive as publicadas por outro representante da mesma turma. Somente o super-admin pode editar outras turmas e eventos gerais. Ao salvar, a tela volta ao calendário. Editar uma ocorrência semanal não modifica o modelo das próximas semanas.
 
+Na administração, a seção **Professores** permite ao superadministrador criar, editar e excluir aulas em **Grade de horários**, ou importar a grade em **Importar horários por JSON**. A grade abrange todas as turmas, incluindo as que ainda não têm Agenda. O editor usa a mesma API e as permissões existentes.
+
 ## Tecnologias
 
 - React + TypeScript + Vite
