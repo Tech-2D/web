@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, Calendar, CalendarDays, Check, Database, DoorOpen, Edit3, ExternalLink, History, Lightbulb, LoaderCircle, LogOut, Megaphone, MessageSquarePlus, MessagesSquare, Plus, Paperclip, ShieldCheck, Trash2, UserRound, Users, X, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, Calendar, CalendarDays, Check, Database, DoorOpen, Edit3, ExternalLink, History, Lightbulb, LoaderCircle, LogOut, Megaphone, MessageSquarePlus, Plus, Paperclip, ShieldCheck, Trash2, UserRound, Users, X, type LucideIcon } from 'lucide-react'
 import { onAuthStateChanged, reload, sendEmailVerification, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { StorageAdminPanel } from './StorageAdminPanel'
@@ -19,7 +19,6 @@ import { deleteRecurrence } from './deleteRecurrence'
 import { filterFeedback, isFeedbackCompleted, type FeedbackFilter } from './feedbackStatus'
 import { RetentionPanel } from './RetentionPanel'
 import { creditForUpdate, isCreditEligible } from './publicCredit'
-import { FeedbackConversation } from './FeedbackConversation'
 import { canEditCalendarActivity } from './calendarPermissions'
 import { activitySaveError } from './activityErrors'
 import { compareActivities, dateKey, matchesSearch } from './calendar'
@@ -83,7 +82,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   const [feedbackFilter, setFeedbackFilter] = useState<FeedbackFilter>('pending')
   const pendingFeedbackCount = useMemo(() => filterFeedback(feedbackList, 'pending').length, [feedbackList])
   const visibleFeedback = useMemo(() => filterFeedback(feedbackList, feedbackFilter), [feedbackList, feedbackFilter])
-  const [conversation, setConversation] = useState<Feedback | null>(null)
   const [announcement, setAnnouncement] = useState<Announcement | null>(null)
   const [announcementDraft, setAnnouncementDraft] = useState('')
   const [updateTitle, setUpdateTitle] = useState('')
@@ -146,7 +144,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       setSelectedFiles([])
       setEditorAttachments([])
       setClosingSuggestion(null)
-      setConversation(null)
       setNotice('')
       setSaveError('')
       setManagedActivities([])
@@ -1145,7 +1142,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                         <span className="config-hint">{pendingFeedbackCount} pendentes · {feedbackList.length - pendingFeedbackCount} concluídas</span>
                       </div>
                       <label className="feedback-filter">Mostrar sugestões<select value={feedbackFilter} onChange={event => setFeedbackFilter(event.target.value as FeedbackFilter)}><option value="pending">Pendentes</option><option value="completed">Concluídas</option><option value="all">Todas</option></select></label>
-                      {conversation && <><button className="secondary-button" type="button" onClick={() => setConversation(null)}>Fechar conversa</button><FeedbackConversation key={conversation.id} feedback={feedbackList.find(item => item.id === conversation.id) ?? conversation} /></>}
                       <div className="admin-list">
                         {visibleFeedback.length === 0 ? <p className="admin-empty">{feedbackFilter === 'completed' ? 'Nenhuma sugestão concluída.' : feedbackFilter === 'pending' ? 'Nenhuma sugestão pendente.' : 'Nenhum comentário recebido.'}</p> : visibleFeedback.map((item) => (
                           <article key={item.id} className="admin-row compact">
@@ -1154,7 +1150,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                             <div className="admin-row-meta"><span className={`feedback-state${isFeedbackCompleted(item) ? ' completed' : ''}`}>{isFeedbackCompleted(item) ? 'Concluída' : 'Pendente'}</span><span>{item.turmaId ?? 'Geral'}</span><strong>{item.createdAt ? item.createdAt.toDate().toLocaleDateString('pt-BR') : '—'}</strong>{isFeedbackCompleted(item) && item.completedAt && <span>Concluída em {item.completedAt.toDate().toLocaleDateString('pt-BR')}</span>}</div>
                             <div className="row-actions">
                               <button type="button" className="feedback-complete-action" disabled={busy} onClick={() => toggleFeedbackCompleted(item)} aria-label={`${isFeedbackCompleted(item) ? 'Reabrir' : 'Marcar como concluída'} sugestão: ${item.message}`}>{isFeedbackCompleted(item) ? 'Reabrir' : <><Check size={16} /> Concluir</>}</button>
-                              {item.createdBy ? <button onClick={() => setConversation(item)} aria-label={`Conversar sobre a sugestão de ${item.createdByEmail}`}><MessagesSquare /></button> : <button className="danger" onClick={() => discardFeedback(item)} aria-label="Remover comentário"><Trash2 /></button>}
+                              {!item.createdBy && <button className="danger" onClick={() => discardFeedback(item)} aria-label="Remover comentário"><Trash2 /></button>}
                             </div>
                           </article>
                         ))}

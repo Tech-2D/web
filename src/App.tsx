@@ -14,7 +14,7 @@ import { addDoc, collection, doc, getDoc, serverTimestamp } from './dataClient'
 import { auth, db } from './firebase'
 import { CLASS_NAMES } from './classNames'
 import { SUBJECTS } from './subjects'
-import { MyFeedbackConversations } from './FeedbackConversation'
+import { MyFeedbackCredits } from './FeedbackCredits'
 import { canEditCalendarActivity } from './calendarPermissions'
 import { observeCalendarSession } from './calendarSession'
 import { CALENDAR_VIEWS, movePeriod, periodTitle, type CalendarView } from './calendarViews'
@@ -1284,10 +1284,10 @@ function FeedbackDialog({ turmaId, onClose }: { turmaId: string | null; onClose:
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="day-dialog" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
         <div className="dialog-header">
-          <h2 id="feedback-title">Melhorias e conversas</h2>
+          <h2 id="feedback-title">Sugestões de melhoria</h2>
           <button className="icon-button" onClick={onClose} aria-label="Fechar"><X /></button>
         </div>
-        {account && <MyFeedbackConversations userId={account.uid} />}
+        {account && <MyFeedbackCredits userId={account.uid} />}
         {!authChecked ? (
           <div className="feedback-auth-loading"><LoaderCircle className="spin" /><p>Verificando sua conta…</p></div>
         ) : sent ? (
@@ -1327,7 +1327,7 @@ function FeedbackDialog({ turmaId, onClose }: { turmaId: string | null; onClose:
               <div className="feedback-public-credit wide">
                 <label><input type="checkbox" checked={publicCreditAllowed} onChange={(event) => setPublicCreditAllowed(event.target.checked)} /> Autorizo mostrar meu nome e esta sugestão em um aviso público de atualização.</label>
                 {publicCreditAllowed && <label>Nome para o crédito público<input value={publicCreditName} onChange={(event) => setPublicCreditName(event.target.value)} maxLength={60} required placeholder="Como você quer aparecer?" /></label>}
-                <small>Seu e-mail não será publicado. Você também pode decidir isso depois, em suas conversas.</small>
+                <small>Seu e-mail não será publicado. Você também pode decidir isso depois, nesta tela.</small>
               </div>
             </div>
             {error && <p className="form-error">{error}</p>}
