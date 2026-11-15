@@ -1,6 +1,5 @@
-import { sitePaths } from './sitePaths'
 import type { ReactNode } from 'react'
-import { BookOpen, History, KeyRound, Lightbulb, ListChecks, MessageSquarePlus, Plus, Settings, StickyNote, UserRound } from 'lucide-react'
+import { BookOpen, History, Lightbulb, ListChecks, MessageSquarePlus, Plus, Settings, StickyNote } from 'lucide-react'
 import type { MenuShortcutId } from './menuShortcuts'
 
 export type MoreOption = {
@@ -42,7 +41,6 @@ export function menuOptionSections({ hasTurma, actions, hasUnseenUpdate }: {
       title: 'Conta e atalhos',
       items: [
         { id: 'settings', title: 'Configurações', description: 'Ajuste o tema, o tamanho do texto e a acessibilidade.', icon: <Settings />, onClick: actions.settings },
-        { id: 'profiles', title: 'Perfis da comunidade', description: 'Edite seu perfil e conheça outras pessoas.', icon: <UserRound />, onClick: actions.profiles },
       ],
     },
     {
@@ -59,7 +57,6 @@ export function menuOptionSections({ hasTurma, actions, hasUnseenUpdate }: {
       id: 'outros',
       title: 'Outros recursos',
       items: [
-        { id: 'admin', title: 'Painel da Agenda', description: 'Acesse o painel ou solicite acesso de representante.', icon: <KeyRound />, href: sitePaths.admin },
         { id: 'pong', title: 'Liga Germinare Pong', description: 'Conheça a liga de tênis de mesa.', icon: <TableTennisPaddle />, href: 'https://ligagerminare-pong.vercel.app/' },
       ],
     },

@@ -4,7 +4,7 @@ import { agendaMenuUrl, MENU_SHORTCUTS_KEY, readAgendaMenuDialog, readMenuShortc
 afterEach(() => vi.unstubAllGlobals())
 
 it('reuses the existing saved shortcut order across sites', () => {
-  const storage = new Map([[MENU_SHORTCUTS_KEY, '["updates","polls","kanban","notifications","teachers","todayClasses","pegaki","updates","invalid","settings"]']])
+  const storage = new Map([[MENU_SHORTCUTS_KEY, '["updates","polls","kanban","notifications","profiles","admin","teachers","todayClasses","pegaki","updates","invalid","settings"]']])
   vi.stubGlobal('window', { localStorage: { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value) } })
   expect(readMenuShortcuts()).toEqual(['updates', 'settings'])
   storeMenuShortcuts(['settings', 'updates'])

@@ -527,7 +527,7 @@ function App() {
 
   return (
     <div className="app-shell portal-frame">
-      <SiteNavigation active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} notifications={{ onOpen: () => openMenuDialog('notifications'), count: unseenNotifications }} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
+      <SiteNavigation onOpenProfile={() => openMenuDialog('profiles')} active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} notifications={{ onOpen: () => openMenuDialog('notifications'), count: unseenNotifications }} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
       <SyncStatus />
 
       {kanbanOpen ? (

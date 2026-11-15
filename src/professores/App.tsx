@@ -245,11 +245,6 @@ function App() {
       : !dayFilter || weekday.value === dayFilter)
   const timeSlots = [...new Set(visibleSchedules.map((item) => item.startTime))].sort((a, b) => timeToMinutes(a) - timeToMinutes(b))
 
-  const openAdmin = () => {
-    window.location.hash = 'admin'
-    setAdminOpen(true)
-  }
-
   const closeAdmin = () => {
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     setAdminOpen(false)
@@ -257,7 +252,7 @@ function App() {
 
   return (
     <div className="app-shell portal-frame">
-      <AccountSiteNavigation active="professores" menu={{ open: menuOpen, onOpen: () => setMenuOpen(true) }} />
+      <AccountSiteNavigation onOpenProfile={() => setProfilesOpen(true)} active="professores" menu={{ open: menuOpen, onOpen: () => setMenuOpen(true) }} />
 
       <main id="inicio" className="main-content portal-main">
         <div className="professor-controls interface-panel portal-toolbar">
@@ -323,8 +318,6 @@ function App() {
           localLinks={<>
             <a href="#inicio" onClick={() => setMenuOpen(false)}><Search size={18} /> Buscar professores</a>
             {!menuShortcuts.includes('settings') && <button type="button" onClick={() => { setMenuOpen(false); setConfigOpen(true) }}><Settings size={18} /> Configurações <span className="menu-current-theme">{THEME_LABELS[theme]}</span></button>}
-            {!menuShortcuts.includes('profiles') && <button type="button" onClick={() => { setMenuOpen(false); setProfilesOpen(true) }}><UserRound size={18} /> Perfis da comunidade</button>}
-            <button type="button" onClick={() => { setMenuOpen(false); openAdmin() }}><KeyRound size={18} /> Área administrativa</button>
             <a href={agendaMenuUrl()}><CalendarDays size={18} /> Agenda da turma <ArrowRight size={15} className="menu-external-icon" /></a>
           </>}
           options={menuOptionSections({ hasTurma: true, actions: {}, unreadCount: 0, hasUnseenUpdate: false }).flatMap(section => section.items.map(option => {

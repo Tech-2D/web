@@ -6,7 +6,7 @@ export const MENU_SHORTCUT_IDS = [
 
 export type MenuShortcutId = (typeof MENU_SHORTCUT_IDS)[number]
 export const DEFAULT_MENU_SHORTCUTS: readonly MenuShortcutId[] = ['updates', 'notices']
-const RETIRED_SHORTCUTS = new Set<string>(['notifications', 'teachers', 'todayClasses', 'pegaki', 'kanban'])
+const RETIRED_SHORTCUTS = new Set<string>(['notifications', 'profiles', 'admin', 'teachers', 'todayClasses', 'pegaki', 'kanban'])
 export const MENU_SHORTCUTS_KEY = 'agenda:menu-shortcuts:v1'
 
 export function readMenuShortcuts(): MenuShortcutId[] {
