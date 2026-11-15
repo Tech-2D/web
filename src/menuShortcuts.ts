@@ -1,11 +1,12 @@
 export const MENU_SHORTCUT_IDS = [
   'notifications', 'updates', 'notices', 'suggestActivity', 'todayClasses',
   'requestClass', 'feedback', 'mySuggestions', 'admin', 'settings', 'profiles',
-  'help', 'teachers', 'pong', 'kanban', 'pegaki',
+  'help', 'teachers', 'pong', 'kanban', 'pegaki', 'studentPlatform', 'rhPeex', 'signature',
 ] as const
 
 export type MenuShortcutId = (typeof MENU_SHORTCUT_IDS)[number]
-export const DEFAULT_MENU_SHORTCUTS: readonly MenuShortcutId[] = ['notifications', 'updates', 'notices']
+export const DEFAULT_MENU_SHORTCUTS: readonly MenuShortcutId[] = ['updates', 'notices']
+const RETIRED_SHORTCUTS = new Set<string>(['notifications', 'profiles', 'admin', 'teachers', 'todayClasses', 'pegaki', 'kanban'])
 export const MENU_SHORTCUTS_KEY = 'agenda:menu-shortcuts:v1'
 
 export function readMenuShortcuts(): MenuShortcutId[] {
@@ -15,7 +16,7 @@ export function readMenuShortcuts(): MenuShortcutId[] {
     const value: unknown = JSON.parse(saved)
     if (Array.isArray(value)) {
       return [...new Set(value.filter((id): id is MenuShortcutId =>
-        typeof id === 'string' && (MENU_SHORTCUT_IDS as readonly string[]).includes(id),
+        typeof id === 'string' && (MENU_SHORTCUT_IDS as readonly string[]).includes(id) && !RETIRED_SHORTCUTS.has(id),
       ))]
     }
   } catch {
@@ -43,6 +44,7 @@ export function readAgendaMenuDialog(hash: string) {
 export function agendaMenuUrl(id?: MenuShortcutId | 'options') {
   if (!id) return AGENDA_URL
   if (id === 'options') return AGENDA_URL + '#opcoes'
+  if (id === 'profiles') return sitePaths.profile
   if (id === 'admin') return sitePaths.admin
   if (id === 'kanban') return sitePaths.kanban
   return AGENDA_DIALOGS.some(dialog => dialog === id) ? AGENDA_URL + '#menu=' + id : AGENDA_URL

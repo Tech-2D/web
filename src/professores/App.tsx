@@ -25,7 +25,6 @@ import { FirebaseError } from 'firebase/app'
 import { AccountSiteNavigation } from '../AccountSiteNavigation'
 import { PageHeading } from '../PageHeading'
 import { requestPasswordReset } from './passwordReset'
-import { ProfileDialog } from './ProfileDialog'
 import { observeCatalog, invalidateCatalog } from './publicQueries'
 import {
   addDoc,
@@ -94,7 +93,6 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuShortcuts, setMenuShortcuts] = useState(readMenuShortcuts)
   const [configOpen, setConfigOpen] = useState(false)
-  const [profilesOpen, setProfilesOpen] = useState(false)
   const [theme, setThemeState] = useState<Theme>(readStoredTheme)
   const [neon, setNeonState] = useState<NeonColor>(readStoredNeon)
   const [fontScale, setFontScale] = useState(readStoredFontScale)
@@ -245,11 +243,6 @@ function App() {
       : !dayFilter || weekday.value === dayFilter)
   const timeSlots = [...new Set(visibleSchedules.map((item) => item.startTime))].sort((a, b) => timeToMinutes(a) - timeToMinutes(b))
 
-  const openAdmin = () => {
-    window.location.hash = 'admin'
-    setAdminOpen(true)
-  }
-
   const closeAdmin = () => {
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     setAdminOpen(false)
@@ -323,13 +316,10 @@ function App() {
           localLinks={<>
             <a href="#inicio" onClick={() => setMenuOpen(false)}><Search size={18} /> Buscar professores</a>
             {!menuShortcuts.includes('settings') && <button type="button" onClick={() => { setMenuOpen(false); setConfigOpen(true) }}><Settings size={18} /> Configurações <span className="menu-current-theme">{THEME_LABELS[theme]}</span></button>}
-            {!menuShortcuts.includes('profiles') && <button type="button" onClick={() => { setMenuOpen(false); setProfilesOpen(true) }}><UserRound size={18} /> Perfis da comunidade</button>}
-            <button type="button" onClick={() => { setMenuOpen(false); openAdmin() }}><KeyRound size={18} /> Área administrativa</button>
             <a href={agendaMenuUrl()}><CalendarDays size={18} /> Agenda da turma <ArrowRight size={15} className="menu-external-icon" /></a>
           </>}
           options={menuOptionSections({ hasTurma: true, actions: {}, unreadCount: 0, hasUnseenUpdate: false }).flatMap(section => section.items.map(option => {
             if (option.id === 'settings') return { ...option, onClick: () => { setMenuOpen(false); setConfigOpen(true) } }
-            if (option.id === 'profiles') return { ...option, onClick: () => { setMenuOpen(false); setProfilesOpen(true) } }
             if (option.id === 'todayClasses') return { ...option, onClick: () => { setView('today'); setMenuOpen(false) } }
             if (option.id === 'teachers') return { ...option, href: undefined, onClick: () => setMenuOpen(false) }
             return { ...option, href: option.href ?? agendaMenuUrl(option.id) }
@@ -351,7 +341,6 @@ function App() {
           onClose={() => setConfigOpen(false)}
         />
       )}
-      {profilesOpen && <ProfileDialog onClose={() => setProfilesOpen(false)} />}
 
       {adminOpen && (
         <AdminDialog

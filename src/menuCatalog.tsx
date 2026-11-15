@@ -1,6 +1,6 @@
-import { sitePaths } from './sitePaths'
 import type { ReactNode } from 'react'
-import { Bell, BookOpen, CalendarClock, ClipboardList, History, KeyRound, LayoutGrid, Lightbulb, ListChecks, MapPin, MessageSquarePlus, Plus, Settings, StickyNote, UserRound } from 'lucide-react'
+import { sitePaths } from './sitePaths'
+import { BookOpen, Briefcase, GraduationCap, History, Lightbulb, ListChecks, MessageSquarePlus, PenLine, Plus, Settings, StickyNote } from 'lucide-react'
 import type { MenuShortcutId } from './menuShortcuts'
 
 export type MoreOption = {
@@ -15,35 +15,23 @@ export type MoreOption = {
 }
 
 export type MoreOptionSection = {
-  id: 'estudos' | 'turma' | 'conta' | 'ajuda' | 'outros'
+  id: 'turma' | 'conta' | 'ajuda' | 'outros'
   title: string
   items: MoreOption[]
 }
 
-export function menuOptionSections({ hasTurma, actions, todayClassesUrl, unreadCount, hasUnseenUpdate }: {
+export function menuOptionSections({ hasTurma, actions, hasUnseenUpdate }: {
   hasTurma: boolean
   actions: Partial<Record<MenuShortcutId, () => void>>
   todayClassesUrl?: string
   unreadCount: number
   hasUnseenUpdate: boolean
 }): MoreOptionSection[] {
-  const notificationsBadge = unreadCount > 0 ? `${unreadCount} ${unreadCount === 1 ? 'não lida' : 'não lidas'}` : undefined
   return [
-    {
-      id: 'estudos',
-      title: 'Estudos',
-      items: [
-        { id: 'teachers', title: 'Professores', description: 'Busque professores, matérias e salas.', icon: <MapPin />, href: sitePaths.professores },
-        { id: 'todayClasses', title: 'Aulas de hoje', description: hasTurma ? 'Consulte os horários e salas de hoje.' : 'Defina a turma padrão em “Minha turma”.', icon: <CalendarClock />, href: todayClassesUrl, disabled: !hasTurma },
-        { id: 'pegaki', title: 'Notas', description: 'Calcule médias e simule notas.', icon: <ClipboardList />, href: sitePaths.pegaki },
-        { id: 'kanban', title: 'Kanban', description: 'Organize suas tarefas em quadros privados.', icon: <LayoutGrid />, onClick: actions.kanban },
-      ],
-    },
     {
       id: 'turma',
       title: 'Minha turma',
       items: [
-        { id: 'notifications', title: 'Notificações da turma', description: 'Veja atividades novas ou alteradas.', icon: <Bell />, onClick: actions.notifications, pendingLabel: notificationsBadge },
         { id: 'notices', title: 'Quadro de avisos', description: hasTurma ? 'Consulte os comunicados da turma.' : 'Selecione sua turma para ver os comunicados.', icon: <StickyNote />, onClick: actions.notices, disabled: !hasTurma },
         { id: 'suggestActivity', title: 'Sugerir atividade', description: hasTurma ? 'Peça para incluir uma atividade na Agenda.' : 'Selecione sua turma para sugerir uma atividade.', icon: <Lightbulb />, onClick: actions.suggestActivity, disabled: !hasTurma },
         { id: 'requestClass', title: 'Pedir agenda para minha turma', description: 'Solicite uma agenda para uma turma que ainda não aparece.', icon: <Plus />, onClick: actions.requestClass },
@@ -54,7 +42,6 @@ export function menuOptionSections({ hasTurma, actions, todayClassesUrl, unreadC
       title: 'Conta e atalhos',
       items: [
         { id: 'settings', title: 'Configurações', description: 'Ajuste o tema, o tamanho do texto e a acessibilidade.', icon: <Settings />, onClick: actions.settings },
-        { id: 'profiles', title: 'Perfis da comunidade', description: 'Edite seu perfil e conheça outras pessoas.', icon: <UserRound />, onClick: actions.profiles },
       ],
     },
     {
@@ -71,7 +58,9 @@ export function menuOptionSections({ hasTurma, actions, todayClassesUrl, unreadC
       id: 'outros',
       title: 'Outros recursos',
       items: [
-        { id: 'admin', title: 'Painel da Agenda', description: 'Acesse o painel ou solicite acesso de representante.', icon: <KeyRound />, href: sitePaths.admin },
+        { id: 'signature', title: 'Assinatura de e-mail', description: 'Monte uma assinatura para o Outlook e baixe em PNG.', icon: <PenLine />, href: sitePaths.signature },
+        { id: 'studentPlatform', title: 'Plataforma Odette', description: 'Acesse o portal de alunos do Instituto Germinare.', icon: <GraduationCap />, href: 'https://alunos.igerminare.org.br/' },
+        { id: 'rhPeex', title: 'RH Peex', description: 'Acesse a plataforma de RH da Peex Brasil.', icon: <Briefcase />, href: 'https://www.peexbrasil.com.br/rhpeex/' },
         { id: 'pong', title: 'Liga Germinare Pong', description: 'Conheça a liga de tênis de mesa.', icon: <TableTennisPaddle />, href: 'https://ligagerminare-pong.vercel.app/' },
       ],
     },

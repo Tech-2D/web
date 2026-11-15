@@ -2,6 +2,10 @@
 
 Site principal da comunidade Tech 2D. A navegação entre as áreas fica no topo de cada página. [Agenda](https://tech-2d.github.io/web/) · [Professores](https://tech-2d.github.io/web/professores/) · [Notas](https://tech-2d.github.io/web/notas/) · [Kanban](https://tech-2d.github.io/web/#kanban)
 
+O [perfil](https://tech-2d.github.io/web/perfil/) tem uma página própria para editar os dados pessoais e consultar a comunidade. O ícone de perfil no cabeçalho abre essa rota em todas as áreas.
+
+Todas as áreas exigem login. Os formulários de criação de conta usam `src/registration.ts` e a rota de cadastro do servidor. O domínio permitido fica em um secret privado do backend. Endereços recusados recebem uma mensagem genérica, sem informar a regra. Login e recuperação continuam aceitando as contas existentes.
+
 Consulte [a estrutura e a transição dos links antigos](docs/unificacao-site.md). Para desenvolver, execute `npm ci` e `npm run dev`; `/` abre a agenda, `/professores/` abre os horários e `/notas/` abre a calculadora de notas. Um único `npm run build` gera todo o site.
 
 A calculadora de notas foi criada por Arakaki e integrada a partir de `Tech-2D/pegaki`. Sua [licença MIT](docs/pegaki/LICENSE) e [documentação original](docs/pegaki/README.md) estão preservadas. O código fica em `src/pegaki/`, incluindo os testes de cálculo e leitura do boletim. A página **Minhas notas** abre na turma padrão do portal e usa as disciplinas de sua grade. As notas são salvas automaticamente no caderno da conta por ano letivo. A importação das notas locais é explícita e os PDFs continuam no dispositivo.
@@ -15,6 +19,8 @@ Calendário mensal com tarefas, lições, trabalhos e eventos por turma. A leitu
 Passe o mouse sobre um dia com atividades (ou foque nele pelo teclado) para ler o conteúdo completo sem sair do calendário. No celular, toque no dia para abrir os detalhes.
 
 Depois de entrar como representante ou super-admin, abra um dia no calendário e clique em **Editar atividade**. O representante pode alterar atividades da própria turma, inclusive as publicadas por outro representante da mesma turma. Somente o super-admin pode editar outras turmas e eventos gerais. Ao salvar, a tela volta ao calendário. Editar uma ocorrência semanal não modifica o modelo das próximas semanas.
+
+Na administração, a seção **Professores** permite ao superadministrador criar, editar e excluir aulas em **Grade de horários**, ou importar a grade em **Importar horários por JSON**. A grade abrange todas as turmas, incluindo as que ainda não têm Agenda. O editor usa a mesma API e as permissões existentes.
 
 ## Tecnologias
 

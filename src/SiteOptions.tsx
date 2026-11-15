@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { CalendarDays, Settings, UserRound } from 'lucide-react'
+import { CalendarDays, Settings } from 'lucide-react'
 import { readPreferredTurma } from './classPreference'
 import { IntegratedMenu } from './IntegratedMenu'
 import { menuOptionSections } from './menuCatalog'
@@ -52,7 +52,6 @@ export function SiteOptions() {
     .map(option => ({ ...option, disabled: false, href: option.href || agendaMenuUrl(option.id) })) : []
   const localLinks = [
     { id: 'settings', label: 'Configurações', icon: Settings },
-    { id: 'profiles', label: 'Perfis da comunidade', icon: UserRound },
   ] as const
 
   return (

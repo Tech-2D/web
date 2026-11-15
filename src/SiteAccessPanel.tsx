@@ -1,31 +1,16 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { Activity, RefreshCw, TrendingUp } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { SQL_BASE } from './dataBackend'
 import { auth } from './firebase'
+import { SiteAccessChart } from './SiteAccessChart'
+import { accessCount, accessDateLabel, accessSiteIds, accessSiteLabels, accessTimeline, formatAccessCount, type AccessStatistics } from './siteAccess'
 import './siteAccess.css'
-
-type Counts = { authenticated: number; anonymous: number; accounts: number }
-type Site = { total: Counts; daily: (Counts & { date: string })[] }
-const siteLabels = { agenda: 'Agenda', professores: 'Cadê o professor?', pegaki: 'Notas' }
-type SiteId = keyof typeof siteLabels
-const siteIds = Object.keys(siteLabels) as SiteId[]
-
-type Statistics = {
-  today: string
-  professorSince: string | null
-  pegakiSince?: string | null
-  sites: Record<'agenda' | 'professores', Site> & { pegaki?: Site }
-}
-
-const number = new Intl.NumberFormat('pt-BR')
-const count = (value?: Counts) => value ? value.authenticated + value.anonymous : 0
-const labelDate = (date: string) => new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
 export function SiteAccessPanel({ user }: { user: User }) {
   const [days, setDays] = useState(7)
   const [revision, refresh] = useState(0)
-  const [result, setResult] = useState<Statistics | null>(null)
+  const [result, setResult] = useState<AccessStatistics | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -47,7 +32,7 @@ export function SiteAccessPanel({ user }: { user: User }) {
       if (response.status === 401) return setError('Entre novamente para consultar os acessos.')
       if (response.status === 403) return setError('Esta conta não tem acesso às estatísticas.')
       if (!response.ok) throw new Error('ACCESS_STATS_UNAVAILABLE')
-      const data: Statistics = await response.json()
+      const data: AccessStatistics = await response.json()
       if (isCurrent()) setResult(data)
     }
     void load().catch(() => {
@@ -56,61 +41,70 @@ export function SiteAccessPanel({ user }: { user: User }) {
     return () => controller.abort()
   }, [user, days, revision])
 
-  const daily = new Map(siteIds.map(site => [site, new Map(result?.sites[site]?.daily.map(row => [row.date, row]))]))
-  const dates = [...new Set([...daily.values()].flatMap(rows => [...rows.keys()]))].sort().reverse()
-  const hasCoverage = (site: SiteId, date: string) => {
-    if (site === 'pegaki') return result?.pegakiSince && date >= result.pegakiSince
-    if (site === 'professores') return result?.professorSince && date >= result.professorSince
-    return !result?.professorSince || date >= result.professorSince
-  }
+  const timeline = result ? accessTimeline(result, days) : []
+  const total = timeline.reduce((sum, day) => sum + (day.total ?? 0), 0)
+  const today = timeline.at(-1)?.total ?? 0
+  const measured = timeline.filter(day => day.total !== null)
+  const peak = measured.reduce<(typeof timeline)[number] | undefined>((best, day) => !best || day.total! > best.total! ? day : best, undefined)
+  const sites = accessSiteIds.filter(site => result?.sites[site])
 
   return (
     <section className="site-access" aria-labelledby="site-access-heading">
       <div className="site-access-toolbar">
-        <h3 id="site-access-heading">Acessos aos sites</h3>
+        <h3 id="site-access-heading">Acessos ao portal</h3>
         <label>Período
           <select value={days} onChange={event => setDays(Number(event.target.value))}>
             <option value={7}>Últimos 7 dias</option>
             <option value={30}>Últimos 30 dias</option>
           </select>
         </label>
-        <button type="button" className="secondary-button" onClick={() => refresh(n => n + 1)}><RefreshCw size={16} /> Atualizar</button>
+        <button type="button" className="secondary-button" disabled={!result && !error} onClick={() => refresh(n => n + 1)}><RefreshCw size={16} aria-hidden="true" /> Atualizar</button>
       </div>
       {error ? <p role="alert">{error}</p> : !result ? <p role="status">Carregando acessos…</p> : <>
-        <p className="site-access-note">{result.professorSince
-          ? 'O comparativo entre Agenda e Cadê o professor começa no primeiro registro do Cadê o professor (' + labelDate(result.professorSince) + ').'
-          : 'O Cadê o professor ainda não tem acessos registrados. A Agenda mostra seu histórico no período.'}</p>
-        {result.sites.pegaki && <p className="site-access-note">{result.pegakiSince
-          ? 'Os acessos à área de Notas são registrados desde ' + labelDate(result.pegakiSince) + '.'
-          : 'Ainda não há acessos registrados à área de Notas.'}</p>}
+        <div className="access-overview">
+          <div className="access-overview-total"><span><Activity size={17} aria-hidden="true" /> Acessos no período</span><strong>{formatAccessCount(total)}</strong><small>{accessDateLabel(timeline[0].date)} a {accessDateLabel(result.today)}</small></div>
+          <dl>
+            <div><dt>Hoje</dt><dd>{formatAccessCount(today)}</dd></div>
+            <div><dt>Média diária</dt><dd>{measured.length ? new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(total / measured.length) : '—'}</dd><small className="access-average-note">nos dias com cobertura</small></div>
+            <div><dt><TrendingUp size={14} aria-hidden="true" /> Dia com mais acessos</dt><dd>{peak?.total ? <>{accessDateLabel(peak.date)} <small>· {formatAccessCount(peak.total)}</small></> : '—'}</dd></div>
+          </dl>
+        </div>
+        <SiteAccessChart key={days + ':' + revision} rows={timeline} />
         <div className="site-access-summary">
-          {siteIds.map(site => {
+          {sites.map(site => {
             const stats = result.sites[site]
             if (!stats) return null
             const { total, daily } = stats
             return (
-              <div className="site-access-card" key={site}>
-                <h4>{siteLabels[site]}</h4>
-                <strong>{number.format(count(total))} acessos</strong>
-                <small>{number.format(count(daily.find(row => row.date === result.today)))} hoje</small>
-                <small>{number.format(total.authenticated)} com login · {number.format(total.anonymous)} anônimos</small>
-                <small>{number.format(total.accounts)} contas distintas</small>
+              <div className={`site-access-card access-series access-series-${site}`} key={site}>
+                <h4><span className="access-series-mark" aria-hidden="true" />{accessSiteLabels[site]}</h4>
+                <strong>{formatAccessCount(accessCount(total))} <span>acessos</span></strong>
+                <small>{formatAccessCount(accessCount(daily.find(row => row.date === result.today)))} hoje · {formatAccessCount(total.accounts)} contas no período</small>
+                <small>{formatAccessCount(total.authenticated)} com login · {formatAccessCount(total.anonymous)} anônimos no histórico</small>
               </div>
             )
           })}
         </div>
-        {dates.length > 0 && <table className="site-access-table">
-          <caption>Acessos por dia</caption>
-          <thead><tr><th scope="col">Dia</th>{siteIds.filter(site => result.sites[site]).map(site => <th key={site} scope="col">{siteLabels[site]}</th>)}</tr></thead>
-          <tbody>{dates.map(date => <tr key={date}>
-            <th scope="row"><time dateTime={date}>{labelDate(date)}</time></th>
-            {siteIds.filter(site => result.sites[site]).map(site => (
-              <td key={site}>{hasCoverage(site, date) ? number.format(count(daily.get(site)?.get(date))) : '—'}</td>
+        <details className="access-daily-details">
+          <summary>Ver acessos por dia</summary>
+          <div className="access-table-scroll" role="region" aria-label="Tabela de acessos diários" tabIndex={0}>
+          <table className="site-access-table">
+          <caption>Acessos por dia · — indica período sem registros disponíveis</caption>
+          <thead><tr><th scope="col">Dia</th><th scope="col">Total</th>{sites.map(site => <th key={site} scope="col">{accessSiteLabels[site]}</th>)}</tr></thead>
+          <tbody>{[...timeline].reverse().map(row => <tr key={row.date}>
+            <th scope="row"><time dateTime={row.date}>{accessDateLabel(row.date)}</time></th>
+            <td>{row.total === null ? '—' : formatAccessCount(row.total)}</td>
+            {sites.map(site => (
+              <td key={site}>{row.sites[site] === null ? '—' : formatAccessCount(row.sites[site])}</td>
             ))}
           </tr>)}</tbody>
-        </table>}
+          </table>
+          </div>
+        </details>
+        <p className="site-access-note">{result.professorSince && <>Comparativo entre Agenda e Professores disponível desde {accessDateLabel(result.professorSince)}. </>}
+          {result.pegakiSince && <>Notas desde {accessDateLabel(result.pegakiSince)}. </>}A tabela indica os períodos sem registros.</p>
       </>}
-      <p className="site-access-note">A contagem agrupa acessos da mesma conta em intervalos de 30 minutos por site. Os acessos anônimos são do histórico. Datas e horários seguem Brasília.</p>
+      <p className="site-access-note">Uma conta pode gerar um acesso a cada 30 minutos em cada área. Datas seguem Brasília. Kanban é contabilizado junto à Agenda.</p>
     </section>
   )
 }
