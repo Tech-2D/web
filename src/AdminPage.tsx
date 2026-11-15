@@ -413,7 +413,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       } else {
         await updateDoc(doc(db, 'representativeRequests', item.id), { status: 'rejeitada', reviewedAt: serverTimestamp() })
       }
-      setNotice(approved ? 'E-mail aprovado. A pessoa já pode criar a conta com uma senha.' : 'Solicitação recusada.')
+      setNotice(approved ? 'E-mail aprovado. A pessoa tem 7 dias para criar a conta e ativar o acesso.' : 'Solicitação recusada.')
     } catch {
       setNotice('Não foi possível avaliar a solicitação. Tente novamente.')
     } finally {
@@ -858,7 +858,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                 <p className="request-code">Código da solicitação: <code>{requestRecord.id}</code></p>
                 {requestRecord.status === 'pendente' && <p>Seu pedido está em análise. Esta tela atualiza quando o administrador responder.</p>}
                 {requestRecord.status === 'rejeitada' && <p>Esta solicitação não foi aprovada. Se necessário, envie uma nova com os dados corretos.</p>}
-                {requestRecord.status === 'aprovada' && <p>Solicitação aprovada. Confirme o e-mail da sua conta para ativar o acesso.</p>}
+                {requestRecord.status === 'aprovada' && <p>Solicitação aprovada. Entre com o e-mail aprovado e confirme esse endereço para ativar o acesso em até 7 dias após a aprovação. Se o prazo vencer, faça outra solicitação.</p>}
                 <button type="button" className="access-switch" onClick={() => { storeRepresentativeRequestId(''); setRequestId(''); setRequestRecord(null); setRequestError('') }}>Fazer outra solicitação</button>
               </div>
             ) : (
@@ -1059,7 +1059,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                     <>
                       <RepresentativesPanel key={user.uid} />
                       <div className="admin-list-heading"><strong>Pedidos para representar uma turma</strong></div>
-                      <p className="representative-hint">Confira o e-mail e a turma antes de aprovar. Depois da aprovação, a pessoa poderá criar a conta e entrar diretamente.</p>
+                      <p className="representative-hint">Confira o e-mail e a turma antes de aprovar. Depois da aprovação, a pessoa terá 7 dias para criar a conta e ativar o acesso de representante.</p>
                       <div className="admin-list">
                         {representativeRequests.length === 0 ? <p className="admin-empty">Nenhuma solicitação pendente.</p> : representativeRequests.map((item) => (
                           <article key={item.id} className="admin-row compact representative-row">

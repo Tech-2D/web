@@ -3,6 +3,7 @@ export type ApprovedRepresentative = {
   email: string
   turmaId: string
   approvedAt: Date | null
+  expiresAt?: Date | null
 }
 
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim()
