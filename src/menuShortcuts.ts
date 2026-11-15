@@ -1,7 +1,7 @@
 export const MENU_SHORTCUT_IDS = [
   'notifications', 'updates', 'notices', 'suggestActivity', 'todayClasses',
   'requestClass', 'feedback', 'mySuggestions', 'admin', 'settings', 'profiles',
-  'help', 'teachers', 'pong', 'kanban', 'pegaki', 'studentPlatform',
+  'help', 'teachers', 'pong', 'kanban', 'pegaki', 'studentPlatform', 'rhPeex',
 ] as const
 
 export type MenuShortcutId = (typeof MENU_SHORTCUT_IDS)[number]
