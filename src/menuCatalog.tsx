@@ -57,7 +57,7 @@ export function menuOptionSections({ hasTurma, actions, hasUnseenUpdate }: {
       id: 'outros',
       title: 'Outros recursos',
       items: [
-        { id: 'studentPlatform', title: 'Plataforma de alunos', description: 'Acesse o portal de alunos do Instituto Germinare.', icon: <GraduationCap />, href: 'https://alunos.igerminare.org.br/' },
+        { id: 'studentPlatform', title: 'Plataforma Odette', description: 'Acesse o portal de alunos do Instituto Germinare.', icon: <GraduationCap />, href: 'https://alunos.igerminare.org.br/' },
         { id: 'pong', title: 'Liga Germinare Pong', description: 'Conheça a liga de tênis de mesa.', icon: <TableTennisPaddle />, href: 'https://ligagerminare-pong.vercel.app/' },
       ],
     },
