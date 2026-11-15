@@ -1,22 +1,25 @@
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react'
-import { ArrowDown, ArrowUp, Copy, Download, Grid2X2, ImagePlus, Layers, LoaderCircle, Minus, PenLine, Redo2, Save, Square, Trash2, Type, Undo2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Copy, Download, Grid2X2, ImagePlus, Layers, LoaderCircle, Minus, PenLine, Redo2, RotateCw, Save, Square, Trash2, Type, Undo2 } from 'lucide-react'
 import { PageHeading } from './PageHeading'
 import { auth } from './firebase'
 import { loadSignatureDraft, saveSignatureDraft, signatureDraftKey, type SignatureDraft } from './signatureDraft'
-import { accent, applyTemplate, clamp, drawSignature, fitLayer, initialDesign, MAX_LAYERS, newShape, newText, type Design, type Font, type Layer, type Template } from './signatureCanvas'
+import { accent, applyTemplate, clamp, drawSignature, fitLayer, initialDesign, MAX_LAYERS, newShape, newText, normalizeRotation, resizeLayer, type Design, type Font, type Layer, type Template } from './signatureCanvas'
 import './signatureEditor.css'
 
 type History = { current: Design; past: Design[]; future: Design[] }
 type Gesture = {
   id: string
   pointerId: number
-  mode: 'move' | 'resize'
+  mode: 'move' | 'resize' | 'rotate'
   layer: Layer
   result: Layer
   startX: number
   startY: number
   scaleX: number
   scaleY: number
+  left: number
+  top: number
+  startAngle: number
 }
 
 const templates: { id: Template; label: string; description: string }[] = [
@@ -171,7 +174,7 @@ export function SignatureEditor() {
       const layers = current.layers.map(layer => {
         if (layer.id !== id) return layer
         const next = fitLayer(change(layer), current)
-        if (next.x !== layer.x || next.y !== layer.y || next.width !== layer.width || next.height !== layer.height) template = undefined
+        if (next.x !== layer.x || next.y !== layer.y || next.width !== layer.width || next.height !== layer.height || next.rotation !== layer.rotation) template = undefined
         if (next.kind === 'text' && layer.kind === 'text' && next.align !== layer.align) template = undefined
         return next
       })
@@ -243,6 +246,8 @@ export function SignatureEditor() {
       id: layer.id, pointerId: event.pointerId, mode, layer, result: layer,
       startX: event.clientX, startY: event.clientY,
       scaleX: design.width / rect.width, scaleY: design.height / rect.height,
+      left: rect.left, top: rect.top,
+      startAngle: Math.atan2((event.clientY - rect.top) * design.height / rect.height - layer.y - layer.height / 2, (event.clientX - rect.left) * design.width / rect.width - layer.x - layer.width / 2),
     }
     setSelectedId(layer.id)
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -254,9 +259,13 @@ export function SignatureEditor() {
     const dx = (event.clientX - action.startX) * action.scaleX
     const dy = (event.clientY - action.startY) * action.scaleY
     const layer = action.layer
-    action.result = action.mode === 'move'
+    const angle = Math.atan2((event.clientY - action.top) * action.scaleY - layer.y - layer.height / 2, (event.clientX - action.left) * action.scaleX - layer.x - layer.width / 2)
+    const degrees = (layer.rotation ?? 0) + (angle - action.startAngle) * 180 / Math.PI
+    action.result = action.mode === 'rotate'
+      ? { ...layer, rotation: normalizeRotation(event.shiftKey ? Math.round(degrees / 15) * 15 : degrees) }
+      : action.mode === 'move'
       ? fitLayer({ ...layer, x: layer.x + dx, y: layer.y + dy }, design)
-      : { ...layer, width: clamp(layer.width + dx, layer.kind === 'shape' ? 2 : 24, design.width - layer.x), height: clamp(layer.height + dy, layer.kind === 'shape' ? 2 : 18, design.height - layer.y) }
+      : resizeLayer(layer, dx, dy, design)
     setMoving(action.result)
   }
 
@@ -266,8 +275,8 @@ export function SignatureEditor() {
     gesture.current = null
     setMoving(null)
     const { result, layer } = action
-    if (!canceled && (result.x !== layer.x || result.y !== layer.y || result.width !== layer.width || result.height !== layer.height)) {
-      editLayer(action.id, current => ({ ...current, x: result.x, y: result.y, width: result.width, height: result.height }))
+    if (!canceled && (result.x !== layer.x || result.y !== layer.y || result.width !== layer.width || result.height !== layer.height || result.rotation !== layer.rotation)) {
+      editLayer(action.id, current => ({ ...current, x: result.x, y: result.y, width: result.width, height: result.height, rotation: result.rotation }))
     }
   }
 
@@ -277,14 +286,23 @@ export function SignatureEditor() {
     const delta = deltas[event.key]
     if (delta) {
       event.preventDefault()
-      editLayer(layer.id, current => resize
-        ? { ...current, width: clamp(current.width + delta[0], current.kind === 'shape' ? 2 : 24, design.width - current.x), height: clamp(current.height + delta[1], current.kind === 'shape' ? 2 : 18, design.height - current.y) }
-        : { ...current, x: current.x + delta[0], y: current.y + delta[1] })
+      editLayer(layer.id, current => {
+        if (!resize) return { ...current, x: current.x + delta[0], y: current.y + delta[1] }
+        const angle = (current.rotation ?? 0) * Math.PI / 180
+        return resizeLayer(current, Math.cos(angle) * delta[0] - Math.sin(angle) * delta[1], Math.sin(angle) * delta[0] + Math.cos(angle) * delta[1], design)
+      })
     }
     if (!resize && (event.key === 'Delete' || event.key === 'Backspace')) {
       event.preventDefault()
       removeLayer(layer.id)
     }
+  }
+
+  function rotateWithKey(event: KeyboardEvent<HTMLButtonElement>, layer: Layer) {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
+    event.preventDefault()
+    const direction = event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1
+    editLayer(layer.id, current => ({ ...current, rotation: normalizeRotation((current.rotation ?? 0) + direction * (event.shiftKey ? 15 : 1)) }))
   }
 
   async function loadImage(url: string, name: string, isLogo = false) {
@@ -365,6 +383,7 @@ export function SignatureEditor() {
   }
 
   const bounds = (layer: Layer) => ({
+    transform: `rotate(${layer.rotation ?? 0}deg)`,
     left: (layer.x / design.width * 100) + '%', top: (layer.y / design.height * 100) + '%',
     width: (layer.width / design.width * 100) + '%', height: (layer.height / design.height * 100) + '%',
   })
@@ -468,6 +487,16 @@ export function SignatureEditor() {
             })}
             {!preview && selected && <div className="signature-selection" style={bounds(selected)}>
               <button
+                type="button" className="signature-rotate" aria-label="Girar elemento" title="Arraste para girar. Shift ajusta em passos de 15°"
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
+                onPointerDown={event => startGesture(event, selected, 'rotate')}
+                onPointerMove={moveGesture}
+                onPointerUp={event => stopGesture(event)}
+                onPointerCancel={event => stopGesture(event, true)}
+                onLostPointerCapture={event => stopGesture(event, true)}
+                onKeyDown={event => rotateWithKey(event, selected)}
+              ><RotateCw size={16} /></button>
+              <button
                 type="button" className="signature-resize" aria-label="Redimensionar elemento" title="Arraste para redimensionar"
                 aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
                 onPointerDown={event => startGesture(event, selected, 'resize')}
@@ -480,7 +509,7 @@ export function SignatureEditor() {
             </div>}
           </div>
         </div>
-        <div className="signature-board-footer"><span>{design.width} × {design.height} px</span><span>{preview ? 'Visual da imagem exportada' : 'Arraste para mover. Use o canto para redimensionar.'}</span></div>
+        <div className="signature-board-footer"><span>{design.width} × {design.height} px</span><span>{preview ? 'Visual da imagem exportada' : 'Arraste para mover, use o canto para redimensionar e a alça circular para girar.'}</span></div>
         <p className="signature-tip">Ctrl+Z desfaz · Ctrl+Shift+Z ou Ctrl+Y refaz</p>
       </section>
 
@@ -511,6 +540,10 @@ export function SignatureEditor() {
               </div>
             </>}
             {selected.kind !== 'image' && <label className="signature-color"><input type="color" value={selected.color} onChange={event => editLayer(selected.id, layer => layer.kind === 'image' ? layer : { ...layer, color: event.target.value })} /> Cor do elemento</label>}
+            <div className="signature-properties">
+              <NumberField label="Rotação (°)" value={selected.rotation ?? 0} min={0} max={360} onChange={rotation => editLayer(selected.id, layer => ({ ...layer, rotation: normalizeRotation(rotation) }))} />
+              <button className="signature-reset-rotation" type="button" disabled={!selected.rotation} onClick={() => editLayer(selected.id, layer => ({ ...layer, rotation: 0 }))}>Zerar rotação</button>
+            </div>
             <div className="signature-properties">
               <NumberField label="Posição X" value={selected.x} min={0} max={design.width - selected.width} onChange={x => editLayer(selected.id, layer => ({ ...layer, x }))} />
               <NumberField label="Posição Y" value={selected.y} min={0} max={design.height - selected.height} onChange={y => editLayer(selected.id, layer => ({ ...layer, y }))} />

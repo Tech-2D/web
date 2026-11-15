@@ -24,10 +24,25 @@ describe('local signature drafts', () => {
     name.font = 'Georgia'
     name.x = 80
     name.size = 35
+    name.rotation = 315
     const key = signatureDraftKey('alice')
     const savedAt = saveSignatureDraft(store, key, draft)
     expect(await loadSignatureDraft(store, key)).toEqual({ design: draft, savedAt })
     expect(await loadSignatureDraft(store, signatureDraftKey('bob'))).toBeNull()
+  })
+
+  it('restores older drafts without rotation and rejects invalid angles', async () => {
+    const store = storage()
+    const key = signatureDraftKey('alice')
+    const draft = initialDesign()
+    saveSignatureDraft(store, key, draft)
+    const restored = await loadSignatureDraft(store, key)
+    expect(restored?.design.layers[0].rotation ?? 0).toBe(0)
+    expect(restored?.design.layers).toEqual(draft.layers)
+    const saved = JSON.parse(store.getItem(key)!)
+    saved.design.layers[0].rotation = 450
+    store.setItem(key, JSON.stringify(saved))
+    await expect(loadSignatureDraft(store, key)).rejects.toThrow()
   })
 
   it('keeps the previous draft when the storage quota is exceeded', () => {

@@ -11,7 +11,7 @@
   border: 1px solid var(--line); border-radius: .85rem; background: var(--paper);
 }
 .signature-templates h2 { grid-row: 1; grid-column: 1 / -2; align-self: center; margin: 0 .2rem; font-size: .87rem; }
-.signature-templates > button, .signature-button-group button, .signature-add :is(button,label), .signature-layers button {
+.signature-templates > button, .signature-button-group button, .signature-add :is(button,label), .signature-layers button, .signature-reset-rotation {
   display: inline-flex; align-items: center; gap: .4rem; padding: .46rem .65rem; min-height: 36px;
   border: 1px solid var(--line); border-radius: .48rem; background: var(--paper); color: var(--text);
   font: inherit; font-size: .78rem; cursor: pointer;
@@ -89,6 +89,13 @@
 .signature-hit:hover, .signature-hit:focus-visible { outline: 1px dashed #2846d6; }
 .signature-hit:active { cursor: grabbing; }
 .signature-selection { z-index: 2; pointer-events: none; outline: 1.5px solid #355bf5; }
+.signature-selection::before { content: ''; position: absolute; left: 50%; top: -20px; height: 20px; border-left: 1.5px solid #355bf5; }
+.signature-rotate {
+  position: absolute; left: 50%; top: -36px; transform: translateX(-50%); width: 28px; height: 28px;
+  display: grid; place-items: center; padding: 0; border: 1.5px solid #355bf5; border-radius: 50%;
+  color: #355bf5; background: var(--paper); cursor: grab; pointer-events: auto; touch-action: none;
+}
+.signature-rotate:active { cursor: grabbing; }
 .signature-resize {
   position: absolute; right: 0; bottom: 0; transform: translate(38%,38%); width: 16px; height: 16px;
   padding: 0; border: 2px solid #fff; border-radius: 2px; background: #355bf5; cursor: nwse-resize; pointer-events: auto; touch-action: none;

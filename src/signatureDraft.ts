@@ -77,11 +77,13 @@ function parseDraft(raw: string): StoredDraft {
       || !integer(layer.height, shape ? 2 : 18, design.height as number)
       || !integer(layer.x, 0, (design.width as number) - (layer.width as number))
       || !integer(layer.y, 0, (design.height as number) - (layer.height as number))
+      || (layer.rotation !== undefined && !integer(layer.rotation, 0, 359))
     ) throw new Error('INVALID_SIGNATURE_DRAFT')
     ids.add(layer.id)
     const bounds = {
       id: layer.id, label: layer.label,
       x: layer.x, y: layer.y, width: layer.width, height: layer.height,
+      rotation: layer.rotation as number | undefined,
     }
     if (layer.kind === 'image') {
       if (!integer(layer.imageIndex, 0, images.length - 1)) throw new Error('INVALID_SIGNATURE_DRAFT')

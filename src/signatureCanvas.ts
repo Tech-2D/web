@@ -1,7 +1,7 @@
 export type Font = 'Arial' | 'Georgia' | 'Verdana'
 export type Bounds = { x: number; y: number; width: number; height: number }
 
-type LayerBase = Bounds & { id: string; label: string }
+type LayerBase = Bounds & { id: string; label: string; rotation?: number }
 export type TextLayer = LayerBase & {
   kind: 'text'
   value: string
@@ -30,6 +30,26 @@ const ink = '#202e47'
 
 export function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(Math.max(Math.round(value), minimum), maximum)
+}
+
+export function normalizeRotation(angle: number) {
+  return ((Math.round(angle) % 360) + 360) % 360
+}
+
+export function resizeLayer(layer: Layer, dx: number, dy: number, design: Pick<Design, 'width' | 'height'>): Layer {
+  const angle = (layer.rotation ?? 0) * Math.PI / 180
+  const cosine = Math.cos(angle)
+  const sine = Math.sin(angle)
+  const width = clamp(layer.width + cosine * dx + sine * dy, layer.kind === 'shape' ? 2 : 24, angle === 0 ? design.width - layer.x : design.width)
+  const height = clamp(layer.height - sine * dx + cosine * dy, layer.kind === 'shape' ? 2 : 18, angle === 0 ? design.height - layer.y : design.height)
+  // Keep the rotated top-left corner anchored as the opposite corner moves.
+  const dw = width - layer.width
+  const dh = height - layer.height
+  return fitLayer({
+    ...layer, width, height,
+    x: layer.x + ((cosine - 1) * dw - sine * dh) / 2,
+    y: layer.y + (sine * dw + (cosine - 1) * dh) / 2,
+  }, design)
 }
 
 export function fitLayer<T extends Layer>(layer: T, design: Pick<Design, 'width' | 'height'>): T {
@@ -176,7 +196,12 @@ export function drawSignature(canvas: HTMLCanvasElement, design: Design, preview
     ctx.fillRect(0, 0, design.width, design.height)
   }
   for (const layer of design.layers) {
+    if (layer.kind === 'text' && !layer.value.trim() && !preview) continue
     const { x, y, width, height } = layer
+    ctx.save()
+    ctx.translate(x + width / 2, y + height / 2)
+    ctx.rotate((layer.rotation ?? 0) * Math.PI / 180)
+    ctx.translate(-x - width / 2, -y - height / 2)
     if (layer.kind === 'shape') {
       ctx.fillStyle = layer.color
       ctx.fillRect(x, y, width, height)
@@ -187,7 +212,6 @@ export function drawSignature(canvas: HTMLCanvasElement, design: Design, preview
       ctx.drawImage(layer.source, x + (width - w) / 2, y + (height - h) / 2, w, h)
     } else {
       const placeholder = !layer.value.trim()
-      if (placeholder && !preview) continue
       ctx.save()
       ctx.beginPath()
       ctx.rect(x, y, width, height)
@@ -203,6 +227,7 @@ export function drawSignature(canvas: HTMLCanvasElement, design: Design, preview
       lines.forEach((line, index) => ctx.fillText(line, anchor, y + lineHeight * (index + .5), width - 2))
       ctx.restore()
     }
+    ctx.restore()
   }
   return true
 }
