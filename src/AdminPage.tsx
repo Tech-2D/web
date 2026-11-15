@@ -550,7 +550,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
           ...(repeatCustom ? { weekdays: [...repeatDays].sort((a, b) => a - b), intervalWeeks: repeatInterval } : {}),
           active: true,
           createdBy: user?.uid,
-          createdByEmail: user?.email ?? null,
           createdAt: serverTimestamp(),
         })
         setAdminTab('recurrences')
@@ -869,7 +868,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
               </div>
             ) : (
               <>
-                <p>Escolha a turma que deseja representar. A solicitação será enviada com o e-mail da sua conta.</p>
+                <p>Escolha a turma que deseja representar. A solicitação será enviada com o e-mail da sua conta e ficará disponível por 7 dias.</p>
                 <form className="access-form" onSubmit={submitRepresentativeRequest}>
                   <p><strong>{user.email}</strong></p>
                   <label htmlFor="representative-class">Sua turma</label>

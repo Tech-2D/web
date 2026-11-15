@@ -59,7 +59,6 @@ export type RecurringActivity = {
   endDate: string | null
   active: boolean
   createdBy: string
-  createdByEmail: string | null
 }
 
 export type AdminRole = 'representante' | 'superadmin'
