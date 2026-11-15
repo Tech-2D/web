@@ -3,6 +3,10 @@ import { CLASS_NAMES } from './classNames'
 const SHARED_KEY = 'tech-2d:preferredClass'
 const LEGACY_AGENDA_KEY = 'agenda:turma'
 
+export function isClassPreferenceChange(event: StorageEvent): boolean {
+  return event.key === null || event.key === SHARED_KEY || event.key === LEGACY_AGENDA_KEY
+}
+
 const PROFESSOR_CLASS_BY_AGENDA_CLASS: Record<(typeof CLASS_NAMES)[number], string> = {
   '2° TECH D': '2º Tec D',
   '2° TECH E': '2º Tec E',

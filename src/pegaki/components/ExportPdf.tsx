@@ -4,25 +4,10 @@ import { FileDown, GraduationCap, X } from "lucide-react";
 import type { NotesResult } from "../lib/grades";
 import formulas from "../assets/boletim-formulas.png";
 import { SITUATION } from "./SubjectRow";
-import { CLASSROOMS_BY_YEAR, type Year } from "../data/subjects";
-import { Segmented } from "./Segmented";
 
 const STUDENT_KEY = "aprovae:student";
 
-interface Student {
-  name: string;
-  /** Sala (D, E, F...) e número de chamada, nos anos com lista de salas. */
-  sala: string;
-  numero: string;
-  /** Turma em texto livre, nos anos sem lista de salas. */
-  turma: string;
-}
-
-/** Texto da turma como sai no boletim, ex.: "2ª Tec D - Nº 3". */
-export function turmaText(year: Year, s: Student): string {
-  if (!CLASSROOMS_BY_YEAR[year]) return s.turma;
-  return `${year}ª Tec${s.sala ? ` ${s.sala}` : ""}${s.numero ? ` - Nº ${s.numero}` : ""}`;
-}
+type Student = { name: string; numero: string };
 
 export interface ReportRow {
   name: string;
@@ -31,18 +16,13 @@ export interface ReportRow {
   rec: number | null;
 }
 
-function readStudent(year: Year): Student {
-  const empty: Student = { name: "", sala: "", numero: "", turma: `${year}ª Tec` };
+function readStudent(): Student {
   try {
-    const saved = JSON.parse(localStorage.getItem(STUDENT_KEY) ?? "null") as Partial<Student> | null;
-    if (!saved) return empty;
-    // Versão anterior guardava só o texto da turma ("2ª Tec D - Nº 3"): tira a sala e o número dele.
-    const old = /Tec\s+([A-Z])\b(?:\s*-\s*Nº\s*(\d+))?/.exec(saved.turma ?? "");
-    const rooms = CLASSROOMS_BY_YEAR[year] ?? [];
-    const sala = saved.sala ?? (old && rooms.includes(old[1]) ? old[1] : "");
-    return { name: saved.name ?? "", sala: rooms.includes(sala) ? sala : "", numero: saved.numero ?? old?.[2] ?? "", turma: saved.turma ?? empty.turma };
+    const saved = JSON.parse(localStorage.getItem(STUDENT_KEY) ?? "null")
+    const legacyNumber = /Nº\s*(\d+)/.exec(saved?.turma ?? "")?.[1]
+    return { name: saved?.name ?? "", numero: saved?.numero ?? legacyNumber ?? "" }
   } catch {
-    return empty;
+    return { name: "", numero: "" }
   }
 }
 
@@ -185,11 +165,11 @@ function Report({ rows, student, issued }: { rows: ReportRow[]; student: { name:
 }
 
 /** Botão "Exportar PDF": pede nome e turma, e abre a impressão já com o boletim montado. */
-export function ExportPdf({ year, rows }: { year: Year; rows: ReportRow[] }) {
+export function ExportPdf({ className, rows }: { className: string; rows: ReportRow[] }) {
   const [open, setOpen] = useState(false);
   // Cada clique em "Gerar PDF" é um pedido novo; o boletim fica montado (escondido na tela) depois do primeiro.
   const [job, setJob] = useState(0);
-  const [student, setStudent] = useState<Student>(() => readStudent(year));
+  const [student, setStudent] = useState(readStudent);
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -236,7 +216,7 @@ export function ExportPdf({ year, rows }: { year: Year; rows: ReportRow[] }) {
   };
 
   const issued = new Date().toLocaleDateString("pt-BR");
-  const rooms = CLASSROOMS_BY_YEAR[year];
+  const classLabel = student.numero ? `${className} - Nº ${student.numero}` : className;
   const field =
     "h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm outline-none transition-shadow focus:border-brand focus:ring-4 focus:ring-brand/15";
 
@@ -300,48 +280,17 @@ export function ExportPdf({ year, rows }: { year: Year; rows: ReportRow[] }) {
                   onChange={(e) => setStudent((s) => ({ ...s, name: e.target.value }))}
                 />
               </label>
-              {rooms ? (
-                <div className="grid grid-cols-[1fr_auto] gap-3">
-                  <fieldset className="min-w-0">
-                    <legend className="mb-1 text-xs font-medium text-muted">Sala</legend>
-                    <Segmented
-                      ariaLabel="Sala"
-                      options={rooms.map((r) => ({ value: r, label: r, ariaLabel: `Sala ${r}` }))}
-                      value={student.sala}
-                      onChange={(r) => setStudent((s) => ({ ...s, sala: s.sala === r ? "" : r }))}
-                      className="gap-1 rounded-xl bg-page p-1"
-                      indicatorClassName="rounded-lg bg-brand shadow-lift"
-                      buttonClassName="h-9 flex-1 rounded-lg text-sm font-semibold"
-                    />
-                  </fieldset>
-                  <label className="w-20">
-                    <span className="mb-1 block text-xs font-medium text-muted">Nº</span>
-                    <input
-                      className={`${field} text-center`}
-                      inputMode="numeric"
-                      placeholder="-"
-                      value={student.numero}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, 2);
-                        setStudent((s) => ({ ...s, numero: v }));
-                      }}
-                    />
-                  </label>
-                  <p className="col-span-2 -mt-1 text-xs text-muted">
-                    No boletim: <span className="font-medium text-ink">{turmaText(year, student)}</span>
-                  </p>
+              <div className="flex items-end gap-3">
+                <div className="min-w-0 flex-1">
+                  <span className="block text-xs font-medium text-muted">Turma</span>
+                  <p className="mt-1 text-sm font-medium">{className}</p>
                 </div>
-              ) : (
-                <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-muted">Turma</span>
-                  <input
-                    className={field}
-                    value={student.turma}
-                    placeholder={`${year}ª Tec D - Nº 3`}
-                    onChange={(e) => setStudent((s) => ({ ...s, turma: e.target.value }))}
-                  />
+                <label className="w-20">
+                  <span className="mb-1 block text-xs font-medium text-muted">Nº</span>
+                  <input className={`${field} text-center`} inputMode="numeric" value={student.numero}
+                    onChange={e => setStudent(s => ({ ...s, numero: e.target.value.replace(/\D/g, "").slice(0, 2) }))} />
                 </label>
-              )}
+              </div>
               <button
                 type="submit"
                 className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-brand text-sm font-medium text-on-brand outline-none transition-[background-color,transform] hover:bg-brand-dark active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
@@ -353,7 +302,7 @@ export function ExportPdf({ year, rows }: { year: Year; rows: ReportRow[] }) {
           document.body,
         )}
 
-      {job > 0 && createPortal(<Report rows={rows} student={{ name: student.name, turma: turmaText(year, student) }} issued={issued} />, document.body)}
+      {job > 0 && createPortal(<Report rows={rows} student={{ name: student.name, turma: classLabel }} issued={issued} />, document.body)}
     </>
   );
 }

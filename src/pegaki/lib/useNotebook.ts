@@ -38,7 +38,7 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
   const [ready, setReady] = useState(!user)
   const [error, setError] = useState('')
   const [conflict, setConflict] = useState(false)
-  const [revision, reload] = useState(0)
+  const [revision, setRevision] = useState(0)
   const version = useRef(0)
   const latest = useRef(draft)
   const confirmed = useRef(saved)
@@ -178,9 +178,10 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
     setGrades: (value: SetStateAction<Record<string, Grades>>) => change(current => ({ ...current, grades: typeof value === 'function' ? value(current.grades) : value })),
     setModes: (value: SetStateAction<Modes>) => change(current => ({ ...current, modes: typeof value === 'function' ? value(current.modes) : value })),
     dirty, loading, ready, saving, error, conflict, save: saveBeforeLeaving,
+    retry: () => setRevision(value => value + 1),
     reload: () => {
       try { localStorage.removeItem(pendingKey) } catch { /* Reload can still read the account. */ }
-      reload(value => value + 1)
+      setRevision(value => value + 1)
     },
     canImport: Boolean(user) && ready && !error && !dirty && Object.keys(draft.grades).length === 0 && Object.keys(localDraft(year).grades).length > 0,
     importLocal: () => change(() => localDraft(year)),
