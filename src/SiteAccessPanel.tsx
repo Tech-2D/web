@@ -7,7 +7,6 @@ import './siteAccess.css'
 
 type Counts = { authenticated: number; anonymous: number; accounts: number }
 type Site = { total: Counts; daily: (Counts & { date: string })[] }
-type RecentAccount = { uid: string; email: string | null; lastSeen: string }
 const siteLabels = { agenda: 'Agenda', professores: 'Cadê o professor?', pegaki: 'Notas' }
 type SiteId = keyof typeof siteLabels
 const siteIds = Object.keys(siteLabels) as SiteId[]
@@ -17,11 +16,9 @@ type Statistics = {
   professorSince: string | null
   pegakiSince?: string | null
   sites: Record<'agenda' | 'professores', Site> & { pegaki?: Site }
-  pegakiRecent?: RecentAccount[]
 }
 
 const number = new Intl.NumberFormat('pt-BR')
-const localTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' })
 const count = (value?: Counts) => value ? value.authenticated + value.anonymous : 0
 const labelDate = (date: string) => new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
@@ -112,23 +109,8 @@ export function SiteAccessPanel({ user }: { user: User }) {
             ))}
           </tr>)}</tbody>
         </table>}
-        {result.pegakiRecent && <RecentAccounts title="Contas que acessaram a área de Notas" accounts={result.pegakiRecent} />}
       </>}
       <p className="site-access-note">A contagem agrupa acessos da mesma conta em intervalos de 30 minutos por site. Os acessos anônimos são do histórico. Datas e horários seguem Brasília.</p>
     </section>
-  )
-}
-
-function RecentAccounts({ title, accounts }: { title: string; accounts: RecentAccount[] }) {
-  return (
-    <details className="site-access-recent">
-      <summary>{title}</summary>
-      {accounts.length ? <ul>
-        {accounts.map(({ uid, email, lastSeen }) => (
-          <li key={uid}><span>{email || uid}</span><time dateTime={lastSeen}>{localTime.format(new Date(lastSeen))}</time></li>
-        ))}
-      </ul> : <p className="site-access-note">Nenhum acesso com login neste período.</p>}
-      {accounts.length === 50 && <p className="site-access-note">Mostrando as 50 contas com acesso mais recente.</p>}
-    </details>
   )
 }

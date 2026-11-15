@@ -14,8 +14,3 @@
 .site-access-table caption { padding-bottom: 6px; font-weight: 700; text-align: left; }
 .site-access-table :is(th, td) { padding: 8px 4px; border-bottom: 1px solid var(--line); text-align: right; }
 .site-access-table th:first-child { text-align: left; }
-.site-access-recent summary { color: var(--ink); font-size: .8125rem; font-weight: 700; cursor: pointer; }
-.site-access-recent ul { padding: 0; margin: 6px 0 0; list-style: none; }
-.site-access-recent li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 8px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; font-size: .8125rem; }
-.site-access-recent time { color: var(--ink-soft); }
-.site-access-recent .site-access-note { margin-top: 8px; }

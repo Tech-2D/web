@@ -4,13 +4,13 @@ import { ArrowLeft, RefreshCw, ShieldBan, ShieldCheck } from 'lucide-react'
 import { SQL_BASE } from './dataBackend'
 import { auth } from './firebase'
 
-type AgendaAccount = { uid: string; email: string | null; lastSeen: string | null; protected: boolean; emailBlocked: boolean; emailBlockId?: string | null; networkBlocked: boolean; networkBlockId?: string | null; hasNetwork: boolean }
-type Block = { id: string; kind: 'email' | 'ip'; label: string; createdAt: string }
+type AgendaAccount = { uid: string; email: string | null; lastVisitDay: string | null; protected: boolean; emailBlocked: boolean; emailBlockId?: string | null }
+type Block = { id: string; label: string; createdAt: string }
 type UsersResult = { users: AgendaAccount[]; hasMore: boolean; blocks: Block[]; hasMoreBlocks: boolean }
-type Kind = 'email' | 'ip' | 'recent-network'
-type Change = { action: 'block'; kind: Kind; value: string } | { action: 'unblock'; id: string }
+type Change = { action: 'block'; kind: 'email'; value: string } | { action: 'unblock'; id: string }
 const endpoint = SQL_BASE + '/api/admin/agenda-users'
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' })
+const visitDate = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'UTC' })
 
 async function request(user: User, path: string, signal: AbortSignal, change?: Change) {
   const token = await user.getIdToken()
@@ -39,7 +39,6 @@ export function AgendaUsersPanel({ user }: { user: User }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
-  const [kind, setKind] = useState<'email' | 'ip'>('email')
   const [target, setTarget] = useState('')
   const usersHeading = useRef<HTMLHeadingElement>(null)
   const blocksHeading = useRef<HTMLHeadingElement>(null)
@@ -73,9 +72,10 @@ export function AgendaUsersPanel({ user }: { user: User }) {
     }
   }
 
-  function block(nextKind: Kind, value: string, label: string) {
-    const explanation = nextKind === 'email' ? 'Bloquear o acesso com esse e-mail?' : 'Bloquear esta rede na Agenda? Outros usuários no mesmo IP também podem perder o acesso.'
-    if (window.confirm(explanation + '\n\n' + label)) void changeAccess({ action: 'block', kind: nextKind, value })
+  function block(email: string) {
+    if (window.confirm('Bloquear o acesso com esse e-mail?\n\n' + email)) {
+      void changeAccess({ action: 'block', kind: 'email', value: email })
+    }
   }
 
   function unblock(id: string, label: string) {
@@ -91,7 +91,7 @@ export function AgendaUsersPanel({ user }: { user: User }) {
   return (
     <section className="storage-admin agenda-users" aria-labelledby="agenda-users-title">
       <div className="storage-admin-heading">
-        <div><h3 id="agenda-users-title" tabIndex={-1} ref={usersHeading}>Usuários e bloqueios</h3><p>Todos os usuários cadastrados. O último acesso mostra quando a conta abriu a Agenda, quando houver registro.</p></div>
+        <div><h3 id="agenda-users-title" tabIndex={-1} ref={usersHeading}>Usuários e bloqueios</h3><p>Consulte as contas cadastradas, a data da última visita à Agenda e os bloqueios ativos.</p></div>
         <div className="agenda-user-actions">
           <button type="button" className="secondary-button" onClick={() => blocksHeading.current?.focus()}><ShieldBan size={16} /> Ver bloqueios ativos</button>
           <button type="button" className="secondary-button" disabled={busy} onClick={() => refresh(n => n + 1)}><RefreshCw size={16} /> Atualizar</button>
@@ -112,16 +112,13 @@ export function AgendaUsersPanel({ user }: { user: User }) {
               <div className="agenda-user-details">
                 <strong>{item.email || 'Conta sem e-mail registrado'}</strong>
                 <small>UID {item.uid}</small>
-                <small>{item.lastSeen ? <>Último acesso <time dateTime={item.lastSeen}>{date.format(new Date(item.lastSeen))}</time></> : 'Sem acesso registrado na Agenda'}</small>
+                <small>{item.lastVisitDay ? <>Última visita em <time dateTime={item.lastVisitDay}>{visitDate.format(new Date(item.lastVisitDay))}</time></> : 'Sem visita registrada na Agenda'}</small>
                 {item.emailBlocked && <small>E-mail bloqueado</small>}
-                {item.networkBlocked && <small>Última rede bloqueada</small>}
               </div>
               <div className="agenda-user-actions">
                 {item.protected && <small>Superadministrador</small>}
                 {item.emailBlockId && <button type="button" className="secondary-button" disabled={busy} onClick={() => unblock(item.emailBlockId!, item.email || 'e-mail desta conta')}><ShieldCheck size={16} /> Desbloquear e-mail</button>}
-                {item.networkBlockId && <button type="button" className="secondary-button" disabled={busy} onClick={() => unblock(item.networkBlockId!, 'última rede desta conta')}><ShieldCheck size={16} /> Desbloquear última rede</button>}
-                {!item.protected && item.email && !item.emailBlocked && <button type="button" className="secondary-button" disabled={busy} onClick={() => block('email', item.email!, item.email!)}>Bloquear e-mail</button>}
-                {!item.protected && item.hasNetwork && !item.networkBlocked && <button type="button" className="secondary-button" disabled={busy} onClick={() => block('recent-network', item.uid, item.email || item.uid)}>Bloquear última rede</button>}
+                {!item.protected && item.email && !item.emailBlocked && <button type="button" className="secondary-button" disabled={busy} onClick={() => block(item.email!)}>Bloquear e-mail</button>}
               </div>
             </article>
           ))}
@@ -136,18 +133,14 @@ export function AgendaUsersPanel({ user }: { user: User }) {
           <h4 id="agenda-blocks-title" tabIndex={-1} ref={blocksHeading}>Bloqueios ativos</h4>
           <button type="button" className="secondary-button" onClick={() => usersHeading.current?.focus()}><ArrowLeft size={16} /> Voltar aos usuários</button>
         </div>
-        <form className="agenda-users-form" onSubmit={event => { event.preventDefault(); block(kind, target, target) }}>
-          <label>Bloquear por<select value={kind} onChange={event => { setKind(event.target.value as typeof kind); setTarget('') }}>
-            <option value="email">E-mail</option><option value="ip">Endereço IP</option>
-          </select></label>
-          <label>{kind === 'email' ? 'E-mail da conta' : 'Endereço IPv4 ou IPv6'}<input type={kind === 'email' ? 'email' : 'text'} value={target} onChange={event => setTarget(event.target.value)} maxLength={254} required /></label>
-          <button className="secondary-button" disabled={busy || !target.trim()}><ShieldBan size={16} /> Bloquear</button>
+        <form className="agenda-users-form" onSubmit={event => { event.preventDefault(); block(target.trim()) }}>
+          <label>E-mail da conta<input type="email" value={target} onChange={event => setTarget(event.target.value)} maxLength={254} required /></label>
+          <button className="secondary-button" disabled={busy || !target.trim()}><ShieldBan size={16} /> Bloquear e-mail</button>
         </form>
-        <p className="storage-admin-note">O bloqueio por IP vale para a rede inteira. A lista usa um código em vez de mostrar o endereço.</p>
         {result && <div className="storage-admin-list">
           {result.blocks.length === 0 && <p className="admin-empty">Nenhum bloqueio nesta página.</p>}
           {result.blocks.map(item => <article className="storage-admin-file" key={item.id}>
-            <div className="agenda-user-details"><strong>{item.label}</strong><small>{item.kind === 'ip' ? 'IP' : 'E-mail'} · {date.format(new Date(item.createdAt))}</small></div>
+            <div className="agenda-user-details"><strong>{item.label}</strong><small>Bloqueado em {date.format(new Date(item.createdAt))}</small></div>
             <button type="button" className="secondary-button" disabled={busy} onClick={() => unblock(item.id, item.label)}><ShieldCheck size={16} /> Desbloquear</button>
           </article>)}
         </div>}
