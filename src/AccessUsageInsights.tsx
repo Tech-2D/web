@@ -31,7 +31,17 @@ export function AccessUsageInsights({ data, total, days }: { data: UsageAnalytic
       <div className="access-chart-heading"><div><h4 id="access-users-title">Quem mais usa o sistema</h4><p>Até 10 contas, ordenadas por acessos e depois por dias de uso.</p></div></div>
       {!data.topUsers.length ? <p className="admin-empty">Nenhuma conta com acesso no período.</p> : <div className="access-table-scroll" role="region" aria-label="Usuários mais ativos" tabIndex={0}><table className="site-access-table access-users-table">
         <thead><tr><th scope="col">Pessoa / turma</th><th scope="col">Acessos</th><th scope="col">Dias ativos</th>{accessSiteIds.map(site => <th scope="col" key={site}>{accessSiteLabels[site]}</th>)}<th scope="col">Último acesso</th></tr></thead>
-        <tbody>{data.topUsers.map((row,index) => <tr key={row.uid}><th scope="row"><strong>{index+1}. {row.name || 'Conta sem nome no perfil'}</strong><small>{row.className}</small><small>UID: {row.uid}</small></th><td>{count(row.accesses)}</td><td>{count(row.activeDays)}</td>{accessSiteIds.map(site => <td key={site}>{count(row.sites[site])}</td>)}<td><time dateTime={row.lastVisit}>{accessDateLabel(row.lastVisit)}</time></td></tr>)}</tbody>
+        <tbody>{data.topUsers.map((row,index) => <tr key={row.uid}>
+          <th scope="row">
+            <strong>{index + 1}. {row.name || row.email || 'Conta sem identificação no perfil'}</strong>
+            {row.name && row.email && <small>{row.email}</small>}
+            <small>{row.className}</small>
+            {!row.email && <small>UID: {row.uid}</small>}
+          </th>
+          <td>{count(row.accesses)}</td><td>{count(row.activeDays)}</td>
+          {accessSiteIds.map(site => <td key={site}>{count(row.sites[site])}</td>)}
+          <td><time dateTime={row.lastVisit}>{accessDateLabel(row.lastVisit)}</time></td>
+        </tr>)}</tbody>
       </table></div>}
       <p className="site-access-note">Frequência de acesso indica uso, sem medir tempo de permanência ou resultado nos estudos. A lista considera somente contas autenticadas e fica restrita aos superadministradores.</p>
     </section>

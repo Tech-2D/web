@@ -16,7 +16,7 @@ export type AccessStatistics = {
 export type UsageAnalytics = {
   activeUsers: number; returningUsers: number; authenticatedAccesses: number
   previous: { accesses: number; accounts: number; available: boolean }
-  topUsers: { uid: string; name: string | null; className: string; accesses: number; activeDays: number; lastVisit: string; sites: Record<AccessSiteId, number> }[]
+  topUsers: { uid: string; name: string | null; email?: string | null; className: string; accesses: number; activeDays: number; lastVisit: string; sites: Record<AccessSiteId, number> }[]
   classes: { className: string; accesses: number; accounts: number; activeDays: number; sites: Record<AccessSiteId, number> }[]
 }
 
