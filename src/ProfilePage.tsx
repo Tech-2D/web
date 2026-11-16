@@ -1,5 +1,5 @@
 import { registerAccount } from './registration'
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { auth } from './firebase'
@@ -37,6 +37,7 @@ export function ProfilePage() {
   const [directoryError, setDirectoryError] = useState('')
   const [loadError, setLoadError] = useState('')
   const [profileReload, setProfileReload] = useState(0)
+  const photoInput = useRef<HTMLInputElement>(null)
   useEffect(() => onAuthStateChanged(auth, setUser), [])
   useEffect(() => {
     let active = true
@@ -120,14 +121,22 @@ export function ProfilePage() {
         <aside className="profiles-identity">
           <ProfileAvatar profile={preview} large />
           <h3>{fields.displayName.trim() || 'Seu nome no portal'}</h3>
-          <p>{[fields.company, fields.className].filter(Boolean).join(' · ') || 'Complete seu perfil para se apresentar à comunidade.'}</p>
-          <span className="profiles-published">{mine ? <><CheckCircle2 size={15} />Perfil publicado</> : 'Ainda não publicado'}</span>
+          {(fields.company || fields.className) && <p>{[fields.company, fields.className].filter(Boolean).join(' · ')}</p>}
+          {!loading && !loadError && <span className="profiles-published">{mine ? <><CheckCircle2 size={15} />Perfil publicado</> : 'Ainda não publicado'}</span>}
           {user && <>
-            <div className="profiles-photo">
-              <label className="profiles-file"><Camera size={16} />{mine?.photoUrl ? 'Trocar foto' : 'Adicionar foto'}<input type="file" aria-label="Foto de perfil" accept="image/jpeg,image/png,image/webp" disabled={busy || !mine || loading} onChange={e => { void changePhoto(e.target.files?.[0] || null); e.target.value = '' }} /></label>
-              {mine?.photoUrl && <button type="button" className="profiles-link" disabled={busy} onClick={removePhoto}>Remover foto</button>}
-              <small>{mine ? 'JPG, PNG ou WebP · até 2 MB' : 'Salve seu perfil antes de adicionar uma foto.'}</small>
-            </div>
+            {!loading && !loadError && <div className="profiles-photo">
+              {mine ? <>
+                <button type="button" className="profiles-file" disabled={busy} onClick={() => photoInput.current?.click()} aria-describedby="profiles-photo-help">
+                  <Camera size={16} aria-hidden="true" />{mine.photoUrl ? 'Trocar foto' : 'Adicionar foto'}
+                </button>
+                <input ref={photoInput} type="file" hidden accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => {
+                  void changePhoto(e.target.files?.[0] ?? null)
+                  e.target.value = ''
+                }} />
+                {mine.photoUrl && <button type="button" className="profiles-link" disabled={busy} onClick={removePhoto}>Remover foto</button>}
+                <small id="profiles-photo-help">JPG, PNG ou WebP · até 2 MB</small>
+              </> : <small>Publique seu perfil para adicionar uma foto.</small>}
+            </div>}
             <div className="profiles-account"><span>Sua conta</span><strong>{user.email}</strong><button type="button" className="profiles-link" disabled={busy} onClick={() => void signOut(auth).catch(() => setError('Não foi possível sair. Tente novamente.'))}><LogOut size={15} />Sair da conta</button></div>
           </>}
         </aside>
