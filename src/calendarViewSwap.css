@@ -1,0 +1,47 @@
+/* Seletor Dia/Semana/Mês: o fundo da opção escolhida é um elemento só, que desliza (ver CalendarViewSwitch). */
+.app-shell .liquid-switch { position: relative; isolation: isolate; }
+.liquid-switch-indicator {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: .4375rem;
+  background: var(--interface-accent);
+  box-shadow: 0 1px 3px rgb(18 34 77 / .12);
+}
+.app-shell .interface-segments.liquid-switch button { position: relative; cursor: pointer; white-space: nowrap; transition: color .3s, transform .3s; }
+.app-shell .interface-segments.liquid-switch button[aria-pressed="true"] { background: transparent; box-shadow: none; }
+.app-shell .interface-segments.liquid-switch button:active { transform: scale(.95); }
+.liquid-switch-pop { display: inline-block; animation: liquid-switch-pop 300ms cubic-bezier(.34, 1.56, .64, 1) 120ms both; }
+
+@keyframes liquid-switch-pop {
+  from { opacity: 0; transform: scale(.85); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Troca de visão: mesmas curvas da troca N1/N2 ↔ Média das Notas. */
+.view-swap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.view-swap-pane { flex: 1 0 auto; min-height: 0; display: flex; flex-direction: column; }
+.view-swap-leaving { position: absolute; inset: 0 0 auto; pointer-events: none; }
+.view-swap-in-left { animation: view-swap-in-left 560ms cubic-bezier(.3, 1.4, .55, 1) 110ms both; }
+.view-swap-in-right { animation: view-swap-in-right 560ms cubic-bezier(.3, 1.4, .55, 1) 110ms both; }
+.view-swap-out-left { animation: view-swap-out-left 260ms cubic-bezier(.5, 0, .75, 0) both; }
+.view-swap-out-right { animation: view-swap-out-right 260ms cubic-bezier(.5, 0, .75, 0) both; }
+
+@keyframes view-swap-in-left { from { opacity: 0; transform: translateX(-36px) scale(.85); filter: blur(6px); } }
+@keyframes view-swap-in-right { from { opacity: 0; transform: translateX(36px) scale(.85); filter: blur(6px); } }
+@keyframes view-swap-out-left { to { opacity: 0; transform: translateX(-36px) scale(.85); filter: blur(6px); } }
+@keyframes view-swap-out-right { to { opacity: 0; transform: translateX(36px) scale(.85); filter: blur(6px); } }
+
+/*
+ * Como nas Notas, toca mesmo com "reduzir movimento" do sistema (é curto e só acontece no clique), vencendo a regra
+ * global de styles.css. A opção "Reduzir movimento" do próprio site continua desligando tudo.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="reduzido"]) :is(.view-swap-in-left, .view-swap-in-right) { animation-duration: 560ms !important; }
+  :root:not([data-motion="reduzido"]) :is(.view-swap-out-left, .view-swap-out-right) { animation-duration: 260ms !important; }
+  :root:not([data-motion="reduzido"]) .liquid-switch-pop { animation-duration: 300ms !important; }
+  :root:not([data-motion="reduzido"]) .liquid-switch-indicator { transition-duration: 300ms, 520ms, 200ms !important; }
+}
+
+/* O painel que desliza não pode criar rolagem horizontal (ela faria a página tremer de novo). */
+.app-shell { overflow-x: clip; }

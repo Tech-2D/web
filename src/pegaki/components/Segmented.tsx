@@ -27,9 +27,9 @@ interface Props<T extends string> {
 
 // Efeito "líquido": a borda da frente sai rápido e a de trás vem depois, com um quique no fim.
 // Toca mesmo com "reduzir movimento" ligado: é curto, só acontece no clique e foi pedido assim.
-const LEAD = "300ms cubic-bezier(0.3, 1.35, 0.6, 1)";
-const TRAIL = "520ms cubic-bezier(0.3, 1.25, 0.55, 1) 70ms";
-const FADE = "opacity 200ms ease-out";
+export const LEAD = "300ms cubic-bezier(0.3, 1.35, 0.6, 1)";
+export const TRAIL = "520ms cubic-bezier(0.3, 1.25, 0.55, 1) 70ms";
+export const FADE = "opacity 200ms ease-out";
 
 /**
  * Controle segmentado em que o fundo da opção escolhida desliza até a nova opção.
