@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import type { Firestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyCscvBCfXJJhOd1B0ySY1g2hbwjNkWUdvo',
@@ -13,5 +13,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 
-export const db = getFirestore(app)
+// Placeholder passed to collection()/doc(). Data goes through the SQL API (src/dataClient.ts);
+// the Firestore SDK is not loaded.
+export const db = Object.freeze({}) as unknown as Firestore
 export const auth = getAuth(app)

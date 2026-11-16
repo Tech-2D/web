@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('./firebase', () => ({ auth: { currentUser: null } }))
-vi.mock('./dataBackend', () => ({ SQL_ENABLED: false })) // Explicitly exercise the legacy transport in this suite.
 import { observeCatalog } from './publicQueries'
 
 const response = (title = 'Tarefa', stale = false, generatedAt = '2026-09-30T10:00:00Z') => ({
@@ -48,7 +47,7 @@ describe('public catalog polling', () => {
   })
 
   it('publishes identical content after recovery so connection warnings can clear', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response()).mockRejectedValueOnce(new Error('offline')).mockRejectedValueOnce(new Error('offline')).mockResolvedValue(response()))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response()).mockRejectedValueOnce(new Error('offline')).mockResolvedValue(response()))
     const change = vi.fn()
     const error = vi.fn()
     stop = observeCatalog('agenda', change, error)

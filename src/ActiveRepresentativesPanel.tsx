@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { User } from 'firebase/auth'
 import { LoaderCircle, UserRound } from 'lucide-react'
-import { SQL_BASE } from './dataBackend'
+import { API_BASE } from './apiBase'
 import { auth } from './firebase'
 import { filterRepresentatives } from './representatives'
 
@@ -21,7 +21,7 @@ export function ActiveRepresentativesPanel({ user }: { user: User }) {
       try {
         const token = await user.getIdToken()
         if (auth.currentUser?.uid !== user.uid || controller.signal.aborted) return
-        const response = await fetch(SQL_BASE + '/api/admin/agenda-users?view=representatives', {
+        const response = await fetch(API_BASE + '/api/admin/agenda-users?view=representatives', {
           headers: { Authorization: 'Bearer ' + token },
           cache: 'no-store',
           redirect: 'error',

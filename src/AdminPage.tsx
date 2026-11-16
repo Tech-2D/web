@@ -10,7 +10,7 @@ import { SiteAccessPanel } from './SiteAccessPanel'
 import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
 import { ATTACHMENTS_ENABLED, deleteActivityWithAttachments, formatAttachmentSize, MAX_ATTACHMENTS, removeAttachment, uploadAttachment, validateAttachment } from './attachments'
-import { addDoc, collection, deleteDoc, doc, knownDocument, onSnapshot, query, serverTimestamp, setDoc, SQL_ENABLED, updateDoc, where, writeBatch } from './dataClient'
+import { addDoc, collection, deleteDoc, doc, knownDocument, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from './dataClient'
 import { enqueueDocument, mergeQueuedActivities, pendingActivityStates, queuedDocument, QUEUED_CHANGED } from './queuedWrites'
 import { auth, db } from './firebase'
 import { CLASS_NAMES } from './classNames'
@@ -520,7 +520,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       return
     }
     // Uploads and permission changes still await the server. Ordinary tasks can be staged immediately.
-    if(SQL_ENABLED && !repeatWeekly && selectedFiles.length===0) {
+    if(!repeatWeekly && selectedFiles.length===0) {
       const target=editing ? doc(db,'activities',editing.id) : doc(collection(db,'activities'))
       if(!editing || knownDocument(target) || queuedDocument(target)?.pending) {
         try {
@@ -827,7 +827,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       tabs: [
         { id: 'representatives', label: 'Representantes', count: representativeRequests.length },
         { id: 'classes', label: 'Pedidos de novas turmas', count: classRequests.length },
-        ...(SQL_ENABLED ? [{ id: 'users' as const, label: 'Contas de usuários' }] : []),
+        { id: 'users' as const, label: 'Contas de usuários' },
       ],
     },
     {
@@ -837,7 +837,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
         { id: 'updates', label: 'Atualizações do sistema' },
         { id: 'announcement', label: 'Aviso geral' },
         { id: 'feedback', label: 'Feedback do portal', count: pendingFeedbackCount },
-        ...(SQL_ENABLED ? [{ id: 'access' as const, label: 'Estatísticas de acesso' }] : []),
+        { id: 'access' as const, label: 'Estatísticas de acesso' },
       ],
     },
   )
@@ -1082,7 +1082,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   )}
                   {isSuperAdmin && adminTab === 'representatives' && (
                     <>
-                      {SQL_ENABLED && <ActiveRepresentativesPanel key={`active-${user.uid}`} user={user} />}
+                      <ActiveRepresentativesPanel key={`active-${user.uid}`} user={user} />
                       <RepresentativesPanel key={user.uid} />
                       <div className="admin-list-heading"><strong>Pedidos para representar uma turma</strong></div>
                       <p className="representative-hint">Confira o e-mail e a turma antes de aprovar. Depois da aprovação, a pessoa terá 7 dias para criar a conta e ativar o acesso de representante.</p>
@@ -1121,8 +1121,8 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                     </>
                   )}
                   {isSuperAdmin && adminTab === 'storage' && <StorageAdminPanel />}
-                  {SQL_ENABLED && isSuperAdmin && adminTab === 'access' && <SiteAccessPanel key={user.uid} user={user} />}
-                  {SQL_ENABLED && isSuperAdmin && adminTab === 'users' && <AgendaUsersPanel key={user.uid} user={user} />}
+                  {isSuperAdmin && adminTab === 'access' && <SiteAccessPanel key={user.uid} user={user} />}
+                  {isSuperAdmin && adminTab === 'users' && <AgendaUsersPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'updates' && (
                     <>
                       <form className="system-update-editor" onSubmit={publishSystemUpdate}>

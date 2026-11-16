@@ -1,12 +1,12 @@
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase'
-import { SQL_BASE } from './dataBackend'
+import { apiUrl } from './apiBase'
 import { SQL_DATA_CHANGED } from './dataClient'
 
 type Catalog = { notices: Record<string, unknown>[] }
 
 export function observeClassNotices(turma: string, change: (data: Catalog) => void, error: () => void) {
-  const url = new URL(SQL_BASE + '/api/catalog/notices')
+  const url = apiUrl('/api/catalog/notices')
   url.searchParams.set('class', turma)
   let activeRequest: AbortController | undefined
   let timer: ReturnType<typeof setTimeout>

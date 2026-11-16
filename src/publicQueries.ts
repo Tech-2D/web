@@ -1,6 +1,5 @@
 import { auth } from './firebase'
-import { SQL_ENABLED } from './dataBackend'
-import { catalogWriteEndpoint, fetchCatalog } from './catalogTransport'
+import { fetchCatalog } from './catalogTransport'
 import { mergeQueuedActivities, pendingActivityStates, QUEUED_CHANGED } from './optimisticActivities'
 import type { Activity } from './types'
 
@@ -92,18 +91,7 @@ export function observeCatalog<T>(resource: 'schedules' | 'agenda' | 'updates', 
 }
 
 export async function invalidateCatalog(target: 'schedules' | 'agenda'): Promise<boolean> {
-  if (SQL_ENABLED) { window.dispatchEvent(new Event(CHANGED)); return true }
-  try {
-    const token = await auth.currentUser?.getIdToken()
-    if (!token) return false
-    const result = await fetch(`${catalogWriteEndpoint()}/invalidate`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target }),
-      signal: AbortSignal.timeout(15000),
-    })
-    if (!result.ok) return false
-    window.dispatchEvent(new Event(CHANGED))
-    return true
-  } catch { return false }
+  // The SQL API always serves current data; open views only need to reload.
+  window.dispatchEvent(new CustomEvent(CHANGED, { detail: { target } }))
+  return true
 }

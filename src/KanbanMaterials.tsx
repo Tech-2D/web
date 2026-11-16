@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { CalendarDays, Download, FileText, Link2, Paperclip, Trash2, Upload, X } from 'lucide-react'
 import { formatAttachmentSize, validateAttachment } from './attachments'
 import { auth } from './firebase'
-import { SQL_BASE, SQL_ENABLED } from './dataBackend'
+import { apiUrl } from './apiBase'
 import type { Activity } from './types'
 
 type FileTarget = { scope: 'personal' | 'shared'; board: string; task: string }
@@ -15,7 +15,7 @@ async function requestFile(target: FileTarget, method = 'GET', file?: StudyFile,
   if (!account) throw Error('Entre na sua conta para acessar os arquivos.')
   const token = await account.getIdToken()
   if (account !== auth.currentUser) throw Error('Sua conta mudou. Abra a tarefa novamente.')
-  const url = new URL('/api/kanban/files', SQL_BASE)
+  const url = apiUrl('/api/kanban/files')
   for (const [key, value] of Object.entries(target)) url.searchParams.set(key, value)
   if (file) url.searchParams.set('file', file.id)
   const response = await fetch(url, {
@@ -43,7 +43,6 @@ export function KanbanFiles({scope, board, task}: FileTarget) {
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
   useEffect(() => {
-    if (!SQL_ENABLED) return
     const controller = new AbortController()
     void requestFile({scope, board, task}, 'GET', undefined, undefined, controller.signal)
       .then(response => response.json())
@@ -52,7 +51,6 @@ export function KanbanFiles({scope, board, task}: FileTarget) {
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
   }, [scope, board, task, reload])
-  if (!SQL_ENABLED) return null
 
   async function upload(file: File) {
     validateAttachment(file)

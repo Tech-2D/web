@@ -12,7 +12,7 @@ it('public SQL transport never falls back to the old Redis/Firestore backend',as
 const mocks=vi.hoisted(()=>({account:{uid:'owner',getIdToken:async()=> 'id-token'} as {uid:string;getIdToken:()=>Promise<string>} | null}))
 vi.mock('./firebase',()=>({auth:{get currentUser(){return mocks.account}}}))
 beforeEach(()=>{
-  vi.resetModules();vi.stubEnv('VITE_DATA_BACKEND','sql')
+  vi.resetModules()
   mocks.account={uid:'owner',getIdToken:async()=> 'id-token'}
   vi.stubGlobal('window',new EventTarget())
   vi.stubGlobal('document',Object.assign(new EventTarget(),{hidden:false}))

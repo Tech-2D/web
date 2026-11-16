@@ -1,7 +1,7 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest'
 const mocks=vi.hoisted(()=>({account:{uid:'one'} as {uid:string}|null,known:null as unknown,send:vi.fn()}))
 vi.mock('./firebase',()=>({auth:{get currentUser(){return mocks.account}}}))
-vi.mock('./dataClient',()=>({SQL_ENABLED:true,knownDocument:()=>mocks.known,encodeDocumentData:(v:unknown)=>v,decodeDocumentData:(v:unknown)=>v,sendQueuedCommit:mocks.send,clearDataSession:vi.fn()}))
+vi.mock('./dataClient',()=>({knownDocument:()=>mocks.known,encodeDocumentData:(v:unknown)=>v,decodeDocumentData:(v:unknown)=>v,sendQueuedCommit:mocks.send,clearDataSession:vi.fn()}))
 import {enqueueDocument,queuedDocument,queuedWrites,resetQueuedSession,pendingActivityStates} from './queuedWrites'
 beforeEach(()=>{vi.useFakeTimers();vi.stubGlobal('window',new EventTarget());mocks.account={uid:'one'};mocks.known=null;mocks.send.mockReset();resetQueuedSession()})
 afterEach(()=>{resetQueuedSession();vi.useRealTimers();vi.unstubAllGlobals()})
