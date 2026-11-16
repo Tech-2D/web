@@ -5,6 +5,7 @@ import { onAuthStateChanged, reload, sendEmailVerification, type User } from 'fi
 import { signOut } from './sessionActions'
 import { StorageAdminPanel } from './StorageAdminPanel'
 import { RepresentativesPanel } from './RepresentativesPanel'
+import { ActiveRepresentativesPanel } from './ActiveRepresentativesPanel'
 import { SiteAccessPanel } from './SiteAccessPanel'
 import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
@@ -1063,6 +1064,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   )}
                   {isSuperAdmin && adminTab === 'representatives' && (
                     <>
+                      {SQL_ENABLED && <ActiveRepresentativesPanel key={`active-${user.uid}`} user={user} />}
                       <RepresentativesPanel key={user.uid} />
                       <div className="admin-list-heading"><strong>Pedidos para representar uma turma</strong></div>
                       <p className="representative-hint">Confira o e-mail e a turma antes de aprovar. Depois da aprovação, a pessoa terá 7 dias para criar a conta e ativar o acesso de representante.</p>
