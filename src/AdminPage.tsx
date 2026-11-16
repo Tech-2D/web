@@ -107,6 +107,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   const [hasTime, setHasTime] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [notice, setNotice] = useState('')
+  const [suggestionError, setSuggestionError] = useState('')
   const [closingSuggestion, setClosingSuggestion] = useState<Suggestion | null>(null)
   const [resolution, setResolution] = useState<SuggestionResolution>('feito')
   const [reviewComment, setReviewComment] = useState('')
@@ -633,34 +634,50 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   }
 
   async function approveSuggestion(suggestion: Suggestion) {
+    if (!user || busy) return
+    setBusy(true)
+    setSuggestionError('')
+    setNotice('')
     try {
-      await addDoc(collection(db, 'activities'), {
+      const batch = writeBatch(db)
+      batch.set(doc(collection(db, 'activities')), {
         title: suggestion.title,
         description: suggestion.description,
         type: suggestion.type,
         subject: suggestion.subject ?? null,
         date: suggestion.date,
-        time: suggestion.time,
+        time: suggestion.time ?? null,
         turmaId: suggestion.turmaId,
-        createdBy: user?.uid,
-        createdByEmail: user?.email ?? null,
+        createdBy: user.uid,
+        createdByEmail: user.email,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })
+      batch.update(doc(db, 'suggestions', suggestion.id), { status: 'aprovada', updatedAt: serverTimestamp() })
+      await batch.commit()
       await invalidateCatalog('agenda')
-      await updateDoc(doc(db, 'suggestions', suggestion.id), { status: 'aprovada', updatedAt: serverTimestamp() })
       setNotice('Sugestão aprovada e adicionada à agenda.')
       window.setTimeout(() => setNotice(''), 2800)
-    } catch {
-      setNotice('Não foi possível aprovar a sugestão.')
+    } catch (error) {
+      const code = error && typeof error === 'object' && 'code' in error ? error.code : null
+      setSuggestionError(code === 'aborted' || code === 'not-found'
+        ? 'O estado da sugestão mudou. Confira a lista antes de tentar novamente.'
+        : 'Não foi possível aprovar a sugestão. Tente novamente.')
+    } finally {
+      setBusy(false)
     }
   }
 
   async function rejectSuggestion(suggestion: Suggestion) {
+    if (busy) return
+    setBusy(true)
+    setSuggestionError('')
     try {
       await updateDoc(doc(db, 'suggestions', suggestion.id), { status: 'rejeitada', updatedAt: serverTimestamp() })
     } catch {
-      setNotice('Não foi possível rejeitar a sugestão.')
+      setSuggestionError('Não foi possível rejeitar a sugestão. Tente novamente.')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -1030,6 +1047,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                         <strong>Sugestões dos alunos</strong>
                         {pendingSuggestions.length > 0 && <span className="soon-badge pending">{pendingSuggestions.length} pendente{pendingSuggestions.length === 1 ? '' : 's'}</span>}
                       </div>
+                      {suggestionError && <p className="form-error" role="alert">{suggestionError}</p>}
                       <div className="admin-list">
                         {pendingSuggestions.length === 0 ? <p className="admin-empty">Nenhuma sugestão pendente.</p> : pendingSuggestions.map((suggestion) => (
                           <article key={suggestion.id} className="admin-row compact">
@@ -1037,8 +1055,8 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                             <div className="admin-row-main"><strong>{suggestion.title}</strong><span>{ACTIVITY_TYPE_LABELS[suggestion.type]}{suggestion.subject ? ` · ${suggestion.subject}` : ''} · {parseDateLabel(suggestion.date)}{suggestion.time ? ` · ${suggestion.time}` : ''}</span></div>
                             <div className="admin-row-meta"><span>{suggestion.description}</span></div>
                             <div className="row-actions">
-                              <button onClick={() => approveSuggestion(suggestion)} aria-label={`Aprovar ${suggestion.title}`}><Check /></button>
-                              <button className="danger" onClick={() => rejectSuggestion(suggestion)} aria-label={`Rejeitar ${suggestion.title}`}><X /></button>
+                              <button type="button" disabled={busy} onClick={() => approveSuggestion(suggestion)} aria-label={`Aprovar ${suggestion.title}`}><Check /></button>
+                              <button type="button" className="danger" disabled={busy} onClick={() => rejectSuggestion(suggestion)} aria-label={`Rejeitar ${suggestion.title}`}><X /></button>
                             </div>
                           </article>
                         ))}
