@@ -43,6 +43,7 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
   const latest = useRef(draft)
   const confirmed = useRef(saved)
   const inFlight = useRef<Promise<boolean> | null>(null)
+  const rejected = useRef<string | null>(null)
   const alive = useRef(false)
   const flush = useRef<() => Promise<boolean>>(async () => false)
   latest.current = draft
@@ -65,6 +66,7 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
     setReady(false)
     setError('')
     setConflict(false)
+    rejected.current = null
     void notebookRequest(user, academicYear, year).then(notebook => {
       if (!active) return
       const remote = notebook ? { grades: notebook.grades, modes: notebook.modes } : empty()
@@ -72,7 +74,7 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
       version.current = notebook?.version ?? 0
       const recovering = pending && serialize(pending.draft) !== serialize(remote)
       const next = recovering ? pending.draft : remote
-      if (recovering && pending.version !== version.current) {
+      if (recovering && notebook && pending.version !== version.current) {
         setConflict(true)
         setError('Há um rascunho neste navegador e notas alteradas em outro acesso. Recarregue as notas da conta para usar a versão salva.')
       }
@@ -95,6 +97,7 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
     const snapshot = latest.current
     const content = serialize(snapshot)
     if (content === confirmed.current) return Promise.resolve(true)
+    if (content === rejected.current) return Promise.resolve(false)
     persist(snapshot)
     if (alive.current) {
       setSaving(true)
@@ -118,11 +121,14 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
         completed = true
         return true
       } catch (error) {
+        const invalid = error instanceof NotebookError && error.status === 400
+        if (invalid) rejected.current = content
         if (alive.current) {
           const collided = error instanceof NotebookError && error.status === 409
           setConflict(collided)
           setError(collided ? 'As notas mudaram em outro acesso. Seu rascunho foi mantido neste navegador.' :
-            'Não foi possível salvar agora. Seu rascunho será reenviado quando a conexão voltar.')
+            invalid ? `${error.message} Seu rascunho está neste navegador.` :
+              'Não foi possível salvar agora. Seu rascunho será reenviado automaticamente.')
         }
         return false
       } finally {
@@ -154,7 +160,7 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
   }, [])
 
   useEffect(() => {
-    if (!dirty || !ready || saving || conflict || loading) return
+    if (!dirty || !ready || saving || conflict || loading || serialize(draft) === rejected.current) return
     const timer = window.setTimeout(() => { void save() }, error ? 10000 : 1200)
     return () => window.clearTimeout(timer)
   }, [dirty, ready, saving, conflict, loading, draft, error, save])
@@ -162,6 +168,10 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
   function change(update: (current: Draft) => Draft) {
     if (user && !ready) return
     const next = update(latest.current)
+    if (rejected.current && serialize(next) !== rejected.current) {
+      rejected.current = null
+      setError('')
+    }
     latest.current = next
     persist(next)
     setDraft(next)
