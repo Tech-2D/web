@@ -4,7 +4,7 @@
 .sync-status{position:fixed;right:18px;bottom:18px;z-index:400;width:min(410px,calc(100vw - 36px));padding:14px 16px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--paper);color:var(--text);box-shadow:var(--shadow);font-size:.8rem}.sync-status>div{display:flex;gap:10px;align-items:flex-start}.sync-status strong{display:block;font-size:.83rem}.sync-status small{display:block;color:var(--ink-soft);line-height:1.6;margin-top:4px}.sync-status summary{margin-top:10px;cursor:pointer;color:var(--ink);font-size:.75rem}.sync-status ul{list-style:none;padding:0;margin:12px 0;max-height:180px;overflow-y:auto}.sync-status li{border-top:1px solid var(--line);padding:8px 0;overflow-wrap:anywhere}.sync-status-failed{border-left-color:#d15c48}.sync-actions{display:flex;gap:8px;flex-wrap:wrap}.sync-actions button{border:1px solid var(--line);border-radius:5px;background:var(--surface-alt);color:var(--text);padding:6px 9px;font-size:.72rem;cursor:pointer}.sync-status details p{font-size:.75rem;line-height:1.6}.sync-status svg{flex-shrink:0;color:var(--ink)}
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scrollbar-gutter: stable; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); color: var(--text); transition: background-color .2s ease, color .2s ease; }
 button, input, select, textarea { font: inherit; }
 button { color: inherit; }
@@ -51,7 +51,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .calendar-view-switch { display: flex; padding: 3px; gap: 3px; background: var(--surface-alt); border: 1px solid var(--line); border-radius: 8px; }
 .calendar-view-switch button { padding: 7px 12px; border: 0; border-radius: 5px; background: transparent; color: var(--ink-soft); font-size: 12px; font-weight: 700; cursor: pointer; }
 .calendar-view-switch button[aria-pressed="true"] { color: var(--accent-contrast); background: var(--accent); }
-.period-agenda { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: start; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: var(--shadow); overflow: hidden; }
+.period-agenda { flex: 1 0 auto; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: stretch; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: var(--shadow); overflow: hidden; }
 .period-agenda.day { grid-template-columns: minmax(0, 1fr); }
 .period-day { min-width: 0; min-height: 240px; border-right: 1px solid var(--line); }
 .period-day:last-child { border-right: 0; }

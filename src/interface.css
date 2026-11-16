@@ -10,7 +10,7 @@
 .agenda-toolbar .calendar-view-tools { gap: .625rem; flex-wrap: nowrap; min-width: 0; }
 .agenda-toolbar .month-nav { gap: .375rem; }
 .agenda-toolbar .month-nav-title { gap: .5rem; }
-.agenda-toolbar .month-nav-title strong { min-width: 0; font-size: .75rem; }
+.agenda-toolbar .month-nav-title strong { min-width: 19.5em; font-size: .75rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .agenda-toolbar .month-nav > button { width: 1.875rem; height: 1.875rem; }
 .agenda-toolbar .month-nav > button svg { width: 1rem; height: 1rem; }
 .agenda-toolbar .agenda-actions { gap: .375rem; }
@@ -29,6 +29,7 @@
   .agenda-toolbar .calendar-view-tools { width: 100%; gap: .5rem; }
   .agenda-toolbar .calendar-view-tools .month-nav { flex: 1 0 100%; width: 100%; }
   .agenda-toolbar .calendar-view-tools .month-nav-title { flex: 1; flex-wrap: wrap; justify-content: center; }
+  .agenda-toolbar .month-nav-title strong { min-width: 0; white-space: normal; }
   .agenda-toolbar .agenda-actions { width: 100%; justify-content: flex-end; }
   .agenda-toolbar .agenda-actions .action-button { width: 2.5rem; height: 2.5rem; padding: 0; }
 }
