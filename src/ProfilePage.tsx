@@ -71,11 +71,23 @@ export function ProfilePage() {
 
   async function save(event: FormEvent) {
     event.preventDefault(); if (!user) return
+    const profile = {
+      displayName: fields.displayName.trim(),
+      company: fields.company.trim(),
+      className: fields.className.trim(),
+      room: fields.room.trim(),
+      floor: fields.floor.trim(),
+    }
+    if (profile.displayName.length < 2) {
+      setError('Informe um nome com pelo menos dois caracteres.')
+      setNotice('')
+      return
+    }
     setBusy(true); setError(''); setNotice('')
     try {
       const token = await user.getIdToken()
-      const data = await request('/api/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(fields) })
-      setMine(data.profile); setNotice('Alterações salvas no seu perfil.'); setRefresh(value => value + 1)
+      const data = await request('/api/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(profile) })
+      setFields(profile); setMine(data.profile); setNotice('Alterações salvas no seu perfil.'); setRefresh(value => value + 1)
     } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível salvar.') }
     finally { setBusy(false) }
   }
