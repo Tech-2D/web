@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, DoorOpen, LoaderCircle, X } from 'lucide-react'
 import { WEEKDAY_LABELS, compareActivities, dateKey, getMonthMatrix, isToday } from './calendar'
-import { CALENDAR_VIEWS, movePeriod, periodTitle, type CalendarView } from './calendarViews'
+import { movePeriod, periodTitle, type CalendarView } from './calendarViews'
+import { CalendarViewSwap, CalendarViewSwitch } from './CalendarViewSwap'
 import { PeriodAgenda } from './PeriodAgenda'
 import { observeCatalog } from './publicQueries'
 import { readCompareTurmas, saveCompareTurmas, shortTurmaLabel, toggleTurma } from './compareTurmas'
@@ -99,9 +100,7 @@ export function CompareCalendar({ classNames, currentTurmaId, onBack }: { classN
 
       <div className="agenda-controls">
         <div className="calendar-view-tools">
-          <div className="calendar-view-switch" role="group" aria-label="Visualização da agenda">
-            {CALENDAR_VIEWS.map((view) => <button key={view.id} type="button" aria-pressed={calendarView === view.id} onClick={() => setCalendarView(view.id)}>{view.label}</button>)}
-          </div>
+          <CalendarViewSwitch value={calendarView} onChange={setCalendarView} />
           <div className="month-nav">
             <button type="button" onClick={() => setMonthCursor((current) => movePeriod(current, calendarView, -1))} aria-label={calendarView === 'month' ? 'Mês anterior' : calendarView === 'week' ? 'Semana anterior' : 'Dia anterior'}><ChevronLeft /></button>
             <div className="month-nav-title">
@@ -122,8 +121,9 @@ export function CompareCalendar({ classNames, currentTurmaId, onBack }: { classN
           <div className="state-card"><LoaderCircle className="spin" /><p>Consultando as atividades…</p></div>
         ) : loadError ? (
           <div className="state-card error"><DoorOpen /><p>{loadError}</p></div>
-        ) : calendarView !== 'month' ? (
-          <PeriodAgenda cursor={monthCursor} view={calendarView} activitiesByDay={activitiesByDay} profile={null} turmaId={null} showTurmaLabel onAdd={() => {}} onEdit={() => {}} onOpenDay={setSelectedDay} />
+        ) : (
+          <CalendarViewSwap view={calendarView}>{view => view !== 'month' ? (
+          <PeriodAgenda cursor={monthCursor} view={view} activitiesByDay={activitiesByDay} profile={null} turmaId={null} showTurmaLabel onAdd={() => {}} onEdit={() => {}} onOpenDay={setSelectedDay} />
         ) : (
           <div className="calendar-grid">
             <div className="calendar-weekdays">{WEEKDAY_LABELS.map((label) => <span key={label}>{label}</span>)}</div>
@@ -159,6 +159,7 @@ export function CompareCalendar({ classNames, currentTurmaId, onBack }: { classN
               </div>
             ))}
           </div>
+        )}</CalendarViewSwap>
         )}
       </section>
 

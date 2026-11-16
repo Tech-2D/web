@@ -18,7 +18,8 @@ import { SUBJECTS } from './subjects'
 import { MyFeedbackCredits } from './FeedbackCredits'
 import { canEditCalendarActivity } from './calendarPermissions'
 import { observeCalendarSession } from './calendarSession'
-import { CALENDAR_VIEWS, movePeriod, periodTitle, type CalendarView } from './calendarViews'
+import { movePeriod, periodTitle, type CalendarView } from './calendarViews'
+import { CalendarViewSwap, CalendarViewSwitch } from './CalendarViewSwap'
 import { PeriodAgenda } from './PeriodAgenda'
 import { WEEKDAY_LABELS, compareActivities, dateKey, getMonthMatrix, isToday } from './calendar'
 import { ACTIVITY_TYPES, ACTIVITY_TYPE_COLORS, ACTIVITY_TYPE_LABELS, SUGGESTION_STATUS_LABELS, type Activity, type ActivityInput, type ActivityType, type AdminProfile, type Announcement, type Suggestion, type SuggestionInput } from './types'
@@ -581,9 +582,7 @@ function App() {
 
           <div className="agenda-controls">
           <div className="calendar-view-tools">
-          <div className="calendar-view-switch interface-segments" role="group" aria-label="Visualização da agenda">
-            {CALENDAR_VIEWS.map(view => <button key={view.id} type="button" aria-pressed={calendarView === view.id} onClick={() => { setCalendarView(view.id); setDayPreview(null) }}>{view.label}</button>)}
-          </div>
+          <CalendarViewSwitch value={calendarView} onChange={view => { setCalendarView(view); setDayPreview(null) }} />
           <div className="month-nav">
             <button type="button" onClick={() => { setDayPreview(null); setMonthCursor((current) => movePeriod(current, calendarView, -1)) }} aria-label={calendarView === 'month' ? 'Mês anterior' : calendarView === 'week' ? 'Semana anterior' : 'Dia anterior'}><ChevronLeft /></button>
             <div className="month-nav-title">
@@ -619,8 +618,9 @@ function App() {
             <div className="state-card"><LoaderCircle className="spin" /><p>Consultando a agenda…</p></div>
           ) : loadError ? (
             <div className="state-card error"><DoorOpen /><p>{loadError}</p></div>
-          ) : calendarView !== 'month' ? (
-            <PeriodAgenda cursor={monthCursor} view={calendarView} activitiesByDay={activitiesByDay} profile={calendarProfile} turmaId={turmaId} onAdd={openAdminForDay} onEdit={openCalendarEdit} onOpenDay={setSelectedDay} />
+          ) : (
+            <CalendarViewSwap view={calendarView}>{view => view !== 'month' ? (
+            <PeriodAgenda cursor={monthCursor} view={view} activitiesByDay={activitiesByDay} profile={calendarProfile} turmaId={turmaId} onAdd={openAdminForDay} onEdit={openCalendarEdit} onOpenDay={setSelectedDay} />
           ) : (
             <div className="calendar-grid">
               <div className="calendar-weekdays">{WEEKDAY_LABELS.map((label) => <span key={label}>{label}</span>)}</div>
@@ -661,6 +661,7 @@ function App() {
                 </div>
               ))}
             </div>
+          )}</CalendarViewSwap>
           )}
         </section>
       </main>
