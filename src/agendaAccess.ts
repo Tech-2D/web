@@ -1,6 +1,6 @@
 import type { User } from 'firebase/auth'
 import { auth } from './firebase'
-import { SQL_BASE, SQL_ENABLED } from './dataBackend'
+import { API_BASE } from './apiBase'
 
 export async function recordCalendarAreaAccess(site: 'agenda' | 'kanban', account: User) {
   const response = await recordSiteAccess(site, account)
@@ -9,11 +9,10 @@ export async function recordCalendarAreaAccess(site: 'agenda' | 'kanban', accoun
 }
 
 export async function recordSiteAccess(site: 'agenda' | 'professor' | 'pegaki' | 'kanban', account: User | null) {
-  if (!SQL_ENABLED) return
   try {
     const token = await account?.getIdToken()
     if (auth.currentUser?.uid !== account?.uid) return
-    return await fetch(SQL_BASE + '/api/' + site + '-access', {
+    return await fetch(API_BASE + '/api/' + site + '-access', {
       method: 'POST',
       ...(token ? { headers: { Authorization: 'Bearer ' + token } } : {}),
       credentials: 'omit',

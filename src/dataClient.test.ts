@@ -1,13 +1,5 @@
 import {beforeEach,afterEach,it,expect,vi} from 'vitest'
-vi.mock('firebase/firestore',()=>{
-  const blocked=()=>{throw Error('SQL tests must never call Firestore')}
-  class Timestamp {
-    constructor(private date:Date){}
-    static fromDate(date:Date){return new Timestamp(date)}
-    toDate(){return this.date}
-  }
-  return {Timestamp,doc:blocked,collection:blocked,query:blocked,where:blocked,orderBy:blocked,limit:blocked,serverTimestamp:blocked,getDoc:blocked,getDocs:blocked,addDoc:blocked,setDoc:blocked,updateDoc:blocked,deleteDoc:blocked,writeBatch:blocked,onSnapshot:blocked}
-})
+vi.mock('firebase/firestore',()=>{throw Error('The Firestore SDK must not be loaded at runtime')})
 it('public SQL transport never falls back to the old Redis/Firestore backend',async()=>{
   const fetch=vi.fn().mockResolvedValue(new Response('{}',{status:503}))
   vi.stubGlobal('fetch',fetch)
@@ -21,7 +13,7 @@ it('public SQL transport never falls back to the old Redis/Firestore backend',as
 const mocks=vi.hoisted(()=>({account:{uid:'owner',getIdToken:async()=> 'id-token'} as {uid:string;getIdToken:()=>Promise<string>} | null}))
 vi.mock('./firebase',()=>({auth:{get currentUser(){return mocks.account}}}))
 beforeEach(()=>{
-  vi.resetModules();vi.stubEnv('VITE_DATA_BACKEND','sql')
+  vi.resetModules()
   mocks.account={uid:'owner',getIdToken:async()=> 'id-token'}
   vi.stubGlobal('window',new EventTarget())
   vi.stubGlobal('document',Object.assign(new EventTarget(),{hidden:false}))

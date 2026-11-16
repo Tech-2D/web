@@ -1,5 +1,5 @@
 import type { User } from 'firebase/auth'
-import { SQL_BASE } from '../../dataBackend'
+import { API_BASE } from '../../apiBase'
 import type { Grades } from '../components/SubjectRow'
 import type { Modes } from './grades'
 
@@ -9,7 +9,7 @@ export class NotebookError extends Error {
 }
 export async function notebookRequest(user: User, academicYear: number, gradeYear: number, draft?: Omit<Notebook,'academicYear'|'gradeYear'>): Promise<Notebook | null> {
   const token = await user.getIdToken()
-  const response = await fetch(`${SQL_BASE}/api/pegaki?academicYear=${academicYear}&gradeYear=${gradeYear}`, {
+  const response = await fetch(`${API_BASE}/api/pegaki?academicYear=${academicYear}&gradeYear=${gradeYear}`, {
     method: draft ? 'POST' : 'GET',
     headers: { Authorization: `Bearer ${token}`, ...(draft ? { 'Content-Type': 'application/json' } : {}) },
     ...(draft ? { body: JSON.stringify({ academicYear, gradeYear, expectedVersion: draft.version, grades: draft.grades, modes: draft.modes }) } : {}),

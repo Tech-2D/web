@@ -39,7 +39,6 @@ import {
   writeBatch,
 } from './dataClient'
 import { auth, db } from './firebase'
-import { SQL_ENABLED } from './dataBackend'
 import { SiteAccessPanel } from '../SiteAccessPanel'
 import { recordSiteAccess } from '../agendaAccess'
 import { CLASS_NAMES } from './classNames'
@@ -347,7 +346,7 @@ function App() {
           schedules={schedules}
           user={user}
           isAdmin={isAdmin}
-          canViewAccess={SQL_ENABLED && adminRole === 'superadmin'}
+          canViewAccess={adminRole === 'superadmin'}
           authChecked={authChecked}
           onClose={closeAdmin}
         />

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Activity, RefreshCw, TrendingUp } from 'lucide-react'
 import type { User } from 'firebase/auth'
-import { SQL_BASE } from './dataBackend'
+import { API_BASE } from './apiBase'
 import { auth } from './firebase'
 import { SiteAccessChart } from './SiteAccessChart'
 import { AccessUsageInsights } from './AccessUsageInsights'
@@ -23,7 +23,7 @@ export function SiteAccessPanel({ user }: { user: User }) {
     async function load() {
       const token = await user.getIdToken()
       if (!isCurrent()) return
-      const response = await fetch(SQL_BASE + '/api/admin/site-access?days=' + days, {
+      const response = await fetch(API_BASE + '/api/admin/site-access?days=' + days, {
         headers: { Authorization: 'Bearer ' + token },
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
         redirect: 'error',

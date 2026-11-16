@@ -12,13 +12,10 @@ import { observeStoredAppearance } from "../appearance";
 
 import { auth } from "../firebase";
 import { recordSiteAccess } from "../agendaAccess";
-import { SQL_ENABLED } from "../dataBackend";
 
 observeStoredAppearance();
 
-if (SQL_ENABLED) {
-  onAuthStateChanged(auth, user => { if (user && !user.isAnonymous) void recordSiteAccess("pegaki", user); });
-}
+onAuthStateChanged(auth, user => { if (user && !user.isAnonymous) void recordSiteAccess("pegaki", user); });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

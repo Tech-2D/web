@@ -1,6 +1,6 @@
 import type { DocumentReference } from 'firebase/firestore'
 import { auth } from './firebase'
-import { clearDataSession, decodeDocumentData, encodeDocumentData, knownDocument, sendQueuedCommit, SQL_ENABLED, type DataRow } from './dataClient'
+import { clearDataSession, decodeDocumentData, encodeDocumentData, knownDocument, sendQueuedCommit, type DataRow } from './dataClient'
 import { WriteQueue, type QueueDocument, type QueueFailure, type QueueKind, type QueueView } from './writeQueue'
 import { QUEUED_CHANGED, setActivityDrafts } from './optimisticActivities'
 export { QUEUED_CHANGED, mergeQueuedActivities, pendingActivityStates } from './optimisticActivities'
@@ -57,7 +57,7 @@ export function subscribeQueuedDocument(ref:DocumentReference,change:(state:Queu
   const stop=queuedWrites.subscribe(publish);publish();return stop
 }
 export function enqueueDocument(ref:DocumentReference,kind:QueueKind,data:unknown,label:string,expectedVersion?:string | null) {
-  if(!SQL_ENABLED || !auth.currentUser)throw queueError('unauthenticated','Entre novamente para salvar.')
+  if(!auth.currentUser)throw queueError('unauthenticated','Entre novamente para salvar.')
   if(kind==='personal' && ref.path!=='personalKanban/'+auth.currentUser.uid)throw queueError('permission-denied','Quadro de outra conta.')
   const prefix=kind==='shared' ? 'sharedKanban/' : kind.startsWith('activity') ? 'activities/' : 'personalKanban/'
   if(!ref.path.startsWith(prefix))throw queueError('invalid-argument','Tipo de alteração inválido.')

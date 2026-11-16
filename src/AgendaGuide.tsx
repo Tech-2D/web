@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { ArrowRight, CalendarDays, LayoutGrid, Settings, StickyNote, Users, X } from 'lucide-react'
-import { SQL_ENABLED } from './dataBackend'
 
 export type GuideFeature = 'kanban' | 'settings' | 'admin' | 'notices'
 
@@ -59,10 +58,8 @@ export function AgendaGuide({ hasClass, onClose, onCalendar, onFeature }: {
           <details className="agenda-guide-data">
             <summary>Seus dados</summary>
             <p>O navegador guarda preferências como a turma selecionada, o tema e os ajustes de acessibilidade.</p>
-            {SQL_ENABLED && <>
-              <p>Para medir o uso da Agenda, registramos o ID da conta quando você entra.</p>
-              <p>Superadministradores podem consultar o e-mail e o UID das contas cadastradas, a data da última visita à Agenda e gerenciar bloqueios temporários por conta, selecionada pelo e-mail ou UID. Os registros de acesso são removidos após 90 dias, e o bloqueio expira no prazo definido pelo administrador. Também é possível liberar a conta antes.</p>
-            </>}
+            <p>Para medir o uso da Agenda, registramos o ID da conta quando você entra.</p>
+            <p>Superadministradores podem consultar o e-mail e o UID das contas cadastradas, a data da última visita à Agenda e gerenciar bloqueios temporários por conta, selecionada pelo e-mail ou UID. Os registros de acesso são removidos após 90 dias, e o bloqueio expira no prazo definido pelo administrador. Também é possível liberar a conta antes.</p>
           </details>
         </div>
       </section>

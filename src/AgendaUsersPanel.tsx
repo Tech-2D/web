@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { User } from 'firebase/auth'
 import { ArrowLeft, RefreshCw, ShieldBan, ShieldCheck } from 'lucide-react'
-import { SQL_BASE } from './dataBackend'
+import { API_BASE } from './apiBase'
 import { auth } from './firebase'
 
 type AgendaAccount = { uid: string; email: string | null; lastVisitDay: string | null; protected: boolean; blocked: boolean; blockId: string | null; blockedUntil: string | null }
 type Block = { id: string; label: string; createdAt: string; expiresAt: string }
 type UsersResult = { totalUsers?: number | null; matchedUsers?: number | null; users: AgendaAccount[]; hasMore: boolean; blocks: Block[]; hasMoreBlocks: boolean }
 type Change = { action: 'block'; kind: 'email' | 'uid'; value: string; durationSeconds: number } | { action: 'unblock'; id: string }
-const endpoint = SQL_BASE + '/api/admin/agenda-users'
+const endpoint = API_BASE + '/api/admin/agenda-users'
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' })
 const visitDate = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'UTC' })
 
