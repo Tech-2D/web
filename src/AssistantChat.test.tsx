@@ -85,6 +85,25 @@ describe('contrato do chat integrado', () => {
     await waitFor(() => expect(requestIds).toHaveLength(4))
   })
 
+  it('confirma a prévia com o botão e usa o endpoint de gravação explícito', async () => {
+    const posts: { path:string; body:Record<string,unknown> }[] = []
+    vi.stubGlobal('fetch', async (input: string, init: RequestInit) => {
+      if (init.method === 'DELETE') return new Response(null, { status: 204 })
+      const path = new URL(input).pathname
+      posts.push({ path, body: JSON.parse(String(init.body)) })
+      if (path === '/api/chat') return Response.json({ answer: 'Confira a prévia.', kanban: draft })
+      return Response.json({ answer: 'Card criado.', kanban: null })
+    })
+    chat()
+    send('Crie um card')
+    await screen.findByText('Confira a prévia.')
+    fireEvent.click(screen.getByText('Prévia do card'))
+    fireEvent.click(screen.getByRole('button', { name: 'Criar card', exact: true }))
+    await screen.findByText('Card criado.')
+    expect(posts[1]).toMatchObject({ path: '/api/kanban', body: { action: 'create',
+      confirmation_source: 'button', draft_id: 'draft' } })
+  })
+
   it('rejeita uma prévia sem campos, um resultado inválido e uma cota malformada', () => {
     expect(() => parseAssistantResponse({ answer: 'texto', kanban: { state: 'draft', id: 'draft' } })).toThrow()
     expect(() => parseAssistantResponse({ answer: 'texto', cards: [null] })).toThrow()
