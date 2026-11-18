@@ -18,6 +18,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: path => path.replace(/^\/tech2d-api/, ''),
       },
+      '/tech2d-qa-api': {
+        target: 'https://tech-2d-agenda-qa.tech-2d-auth-email.workers.dev',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/tech2d-qa-api/, ''),
+        configure: proxy => proxy.on('proxyReq', request => request.setHeader('Origin', 'https://tech-2d.github.io')),
+      },
     },
   },
   test: {
