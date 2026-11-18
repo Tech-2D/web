@@ -5,6 +5,7 @@ import App from "./App";
 import { SiteSession } from "../SiteSession";
 import { onAuthStateChanged } from "firebase/auth";
 import { AccountSiteNavigation } from "../AccountSiteNavigation";
+import { SiteAssistant } from "../SiteAssistant";
 import "../siteNavigation.css";
 import "../sitePalette.css";
 import "../portalInterface.css";
@@ -23,6 +24,7 @@ createRoot(document.getElementById("root")!).render(
       <div className="app-shell portal-frame">
         <AccountSiteNavigation active="pegaki" />
         <App />
+        <SiteAssistant />
       </div>
     </SiteSession>
   </StrictMode>,

@@ -505,6 +505,9 @@ function App() {
     <div className="app-shell portal-frame admin-shell">
       <SiteNavigation active="admin" role={calendarProfile?.role} />
       <SyncStatus />
+      {ASSISTANT_ENDPOINT && calendarUser &&
+        <Suspense fallback={null}><AssistantChat key={calendarUser.uid} account={calendarUser}
+          preferredClass={preferredTurma} endpoint={ASSISTANT_ENDPOINT} /></Suspense>}
       <DialogLoadBoundary>
         <Suspense fallback={<main className="main-content"><p role="status">Carregando painel…</p></main>}>
           <AdminPage publicTurmaId={turmaId} classNames={classNames} quickCreateDate={quickCreateDate} quickEditActivity={quickEditActivity} systemUpdates={systemUpdates} onReturnToCalendar={closeAdmin} />

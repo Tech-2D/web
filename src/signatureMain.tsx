@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { AccountSiteNavigation } from './AccountSiteNavigation'
 import { SignatureEditor } from './SignatureEditor'
+import { SiteAssistant } from './SiteAssistant'
 import { SiteSession } from './SiteSession'
 import { observeStoredAppearance } from './appearance'
 import './styles.css'
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
       <div className="app-shell portal-frame">
         <AccountSiteNavigation />
         <SignatureEditor />
+        <SiteAssistant />
       </div>
     </SiteSession>
   </StrictMode>,

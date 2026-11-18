@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ProfilePage } from './ProfilePage'
+import { SiteAssistant } from './SiteAssistant'
 import { AccountSiteNavigation } from './AccountSiteNavigation'
 import { SiteSession } from './SiteSession'
 import { observeStoredAppearance } from './appearance'
@@ -12,5 +13,5 @@ import './sitePalette.css'
 
 observeStoredAppearance()
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><SiteSession destination="seu perfil"><div className="app-shell portal-frame"><AccountSiteNavigation active="profile" /><ProfilePage /></div></SiteSession></StrictMode>,
+  <StrictMode><SiteSession destination="seu perfil"><div className="app-shell portal-frame"><AccountSiteNavigation active="profile" /><ProfilePage /><SiteAssistant /></div></SiteSession></StrictMode>,
 )
