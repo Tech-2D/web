@@ -1,10 +1,12 @@
 import { registerAccount } from './registration'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth'
+import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { ArrowRight, CalendarDays, ClipboardList, Columns3, Eye, EyeOff, MapPin, ShieldCheck } from 'lucide-react'
 import { auth } from './firebase'
 import { requestPasswordReset } from './passwordReset'
+import { API_BASE } from './apiBase'
+import { signOut } from './sessionActions'
 import './siteSession.css'
 
 type Mode = 'login' | 'register' | 'reset'
@@ -22,9 +24,66 @@ function accountError(error: unknown, mode: Mode) {
 }
 
 export function SiteSession({ destination, children }: { destination: string; children: ReactNode }) {
-  const [session, setSession] = useState<string | null | undefined>()
-  useEffect(() => onAuthStateChanged(auth, user => setSession(user && !user.isAnonymous ? user.uid : null), () => setSession(null)), [])
-  if (session === undefined) return (
+  const [session, setSession] = useState<User | null | undefined>()
+  useEffect(() => onAuthStateChanged(auth, user => setSession(user && !user.isAnonymous ? user : null), () => setSession(null)), [])
+  return session === undefined ? <SessionLoading /> : session
+    ? <PortalAccess key={session.uid} user={session}>{children}</PortalAccess>
+    : <AccountEntry destination={destination} />
+}
+
+function PortalAccess({ user, children }: { user: User; children: ReactNode }) {
+  const [status, setStatus] = useState<'checking' | 'allowed' | 'blocked' | 'unavailable'>('checking')
+  useEffect(() => {
+    const controller = new AbortController()
+    let checking = false
+    async function checkAccess() {
+      if (checking || document.hidden) return
+      checking = true
+      try {
+        const token = await user.getIdToken()
+        if (controller.signal.aborted || auth.currentUser?.uid !== user.uid) return
+        const response = await fetch(API_BASE + '/api/session/access', {
+          headers: { Authorization: 'Bearer ' + token },
+          cache: 'no-store',
+          redirect: 'error',
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
+        })
+        const blocked = response.status === 403 && (await response.json().catch(() => null))?.code === 'agenda-access-blocked'
+        if (!controller.signal.aborted) setStatus(blocked ? 'blocked' : response.status === 204 ? 'allowed' : 'unavailable')
+      } catch {
+        if (!controller.signal.aborted) setStatus('unavailable')
+      } finally {
+        checking = false
+      }
+    }
+    void checkAccess()
+    const timer = window.setInterval(checkAccess, 30000)
+    document.addEventListener('visibilitychange', checkAccess)
+    window.addEventListener('focus', checkAccess)
+    window.addEventListener('online', checkAccess)
+    return () => {
+      controller.abort()
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', checkAccess)
+      window.removeEventListener('focus', checkAccess)
+      window.removeEventListener('online', checkAccess)
+    }
+  }, [user])
+
+  if (status === 'allowed') return <>{children}</>
+  if (status === 'checking') return <SessionLoading />
+  return <main className="site-entry-check">
+    <section className="site-entry-check-card" aria-live="polite">
+      <h1>{status === 'blocked' ? 'Acesso ao portal bloqueado' : 'Não foi possível verificar seu acesso'}</h1>
+      {status === 'blocked' && <p>Fale com a administração do portal para obter ajuda.</p>}
+      <button type="button" className="site-entry-link" onClick={() => window.location.reload()}>Verificar novamente</button>
+      <button type="button" className="site-entry-link" onClick={() => void signOut(auth)}>Sair da conta</button>
+    </section>
+  </main>
+}
+
+function SessionLoading() {
+  return (
     <main className="site-entry-check">
       <div className="site-entry-check-card" role="status">
         <span className="site-entry-check-icon" aria-hidden="true"><ShieldCheck size={28} strokeWidth={1.8} /></span>
@@ -33,7 +92,6 @@ export function SiteSession({ destination, children }: { destination: string; ch
       </div>
     </main>
   )
-  return session ? <div key={session}>{children}</div> : <AccountEntry destination={destination} />
 }
 
 function AccountEntry({ destination }: { destination: string }) {
