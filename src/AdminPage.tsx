@@ -9,6 +9,7 @@ import { ActiveRepresentativesPanel } from './ActiveRepresentativesPanel'
 import { SiteAccessPanel } from './SiteAccessPanel'
 import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
+import { AdministratorsPanel } from './AdministratorsPanel'
 import { ATTACHMENTS_ENABLED, deleteActivityWithAttachments, formatAttachmentSize, MAX_ATTACHMENTS, removeAttachment, uploadAttachment, validateAttachment } from './attachments'
 import { addDoc, collection, deleteDoc, doc, knownDocument, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from './dataClient'
 import { enqueueDocument, mergeQueuedActivities, pendingActivityStates, queuedDocument, QUEUED_CHANGED } from './queuedWrites'
@@ -54,7 +55,7 @@ type AdminPageProps = {
 }
 
 type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
-  | 'representatives' | 'classes' | 'updates' | 'announcement' | 'feedback' | 'storage' | 'access' | 'users' | 'schedules' | 'scheduleImport'
+  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'announcement' | 'feedback' | 'storage' | 'access' | 'users' | 'schedules' | 'scheduleImport'
 
 type AdminSection = {
   label: string
@@ -826,6 +827,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       icon: Users,
       tabs: [
         { id: 'representatives', label: 'Representantes', count: representativeRequests.length },
+        { id: 'administrators', label: 'Administradores' },
         { id: 'classes', label: 'Pedidos de novas turmas', count: classRequests.length },
         { id: 'users' as const, label: 'Contas de usuários' },
       ],
@@ -1123,6 +1125,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   {isSuperAdmin && adminTab === 'storage' && <StorageAdminPanel />}
                   {isSuperAdmin && adminTab === 'access' && <SiteAccessPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'users' && <AgendaUsersPanel key={user.uid} user={user} />}
+                  {isSuperAdmin && adminTab === 'administrators' && <AdministratorsPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'updates' && (
                     <>
                       <form className="system-update-editor" onSubmit={publishSystemUpdate}>
