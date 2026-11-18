@@ -8,6 +8,7 @@ import { useAssistantTransport, type AssistantRoute } from './useAssistantTransp
 export type { AssistantActivityReference } from './assistantContract'
 import { ACTIVITY_TYPE_COLORS, type ActivityType } from './types'
 import { canCreateActivityCard } from './activityFuture'
+import { sitePaths } from './sitePaths'
 import './kanban.css'
 import './assistantChat.css'
 
@@ -16,7 +17,7 @@ type Turn = { text: string; user?: boolean; cards?: Activity[] }
 const examples = ['Qual a próxima prova?', 'Cria um card falando para estudar matemática', 'Onde tá a Lisete?']
 const kanbanDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
 
-export default function AssistantChat({ account, preferredClass, endpoint, prefill, covered, onViewKanban, agendaPath = '' }: {
+export default function AssistantChat({ account, preferredClass, endpoint, prefill, covered, onViewKanban, agendaPath = sitePaths.agenda }: {
   account: User; preferredClass: string | null; endpoint: string; prefill?: AssistantActivityReference | null; covered?: boolean
   onViewKanban?: () => void
   agendaPath?: string

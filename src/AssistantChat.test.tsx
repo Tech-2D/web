@@ -26,10 +26,12 @@ function send(text: string) {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  window.history.replaceState(null, '', '/')
 })
 
 describe('contrato do chat integrado', () => {
   it('encaminha o “sim” ao chat e inclui os campos da prévia para o servidor decidir se deve gravar', async () => {
+    window.history.replaceState(null, '', `${import.meta.env.BASE_URL}admin/`)
     const posts: { path: string; body: Record<string, unknown> }[] = []
     vi.stubGlobal('fetch', async (input: string, init: RequestInit) => {
       if (init.method === 'DELETE') return new Response(null, { status: 204 })
@@ -56,6 +58,8 @@ describe('contrato do chat integrado', () => {
     expect(posts[2]).toMatchObject({ path: '/api/chat', body: { message: 'sim', draft: { draft_id: 'draft' } } })
     send('cria o card')
     await screen.findByText('Card criado no Kanban.')
+    const kanbanLink = screen.getByRole('link', { name: 'Ver no Kanban' })
+    expect(kanbanLink.getAttribute('href')).toBe(`${import.meta.env.BASE_URL}#kanban`)
     expect(posts[3]).toMatchObject({ path: '/api/chat',
       body: { message: 'cria o card', draft: { draft_id: 'draft', fields: { title: 'Título revisado' } } } })
   })
