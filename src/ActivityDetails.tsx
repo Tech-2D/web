@@ -1,12 +1,15 @@
 import type { CSSProperties } from 'react'
-import { BookOpen, Clock3, Edit3, FileText, Paperclip, Repeat2, Users } from 'lucide-react'
+import { BookOpen, Clock3, Edit3, FileText, Paperclip, Repeat2, Sparkles, Users } from 'lucide-react'
 import { AttachmentLinks } from './AttachmentLinks'
 import { ActivityShareButton } from './ActivityShareButton'
 import { ATTACHMENTS_ENABLED } from './attachments'
+import { canCreateActivityCard } from './activityFuture'
 import { ACTIVITY_TYPE_COLORS, ACTIVITY_TYPE_LABELS, type Activity } from './types'
 import './activityDetails.css'
 
-export function ActivityDetails({ activity, onEdit }: { activity: Activity; onEdit?: () => void }) {
+export function ActivityDetails({ activity, onEdit, onCreateCard }: {
+  activity: Activity; onEdit?: () => void; onCreateCard?: (activity: Activity) => void
+}) {
   const [year, month, day] = activity.date.split('-').map(Number)
   const date = new Date(year, month - 1, day)
   const files = ATTACHMENTS_ENABLED ? activity.attachments || [] : []
@@ -26,6 +29,12 @@ export function ActivityDetails({ activity, onEdit }: { activity: Activity; onEd
     </dl>
     <section className="activity-sheet-section" aria-label="Orientações da atividade"><h4><FileText size={17} /> Orientações</h4>{paragraphs.length ? paragraphs.map((text, index) => <p key={index}>{text}</p>) : <p className="activity-sheet-empty">Não foram adicionadas orientações para esta atividade.</p>}</section>
     {files.length > 0 && <section className="activity-sheet-section activity-sheet-files" aria-label="Materiais e anexos"><h4><Paperclip size={17} /> Materiais e anexos <span>{files.length}</span></h4><AttachmentLinks activityId={activity.id} attachments={files} showTitle={false} /></section>}
-    <footer className="activity-sheet-actions"><ActivityShareButton activityId={activity.id} />{onEdit && <button type="button" className="secondary-button" onClick={onEdit} aria-label={`Editar ${activity.title}`}><Edit3 size={16} /> Editar atividade</button>}</footer>
+    <footer className="activity-sheet-actions">
+      <ActivityShareButton activityId={activity.id} />
+      {onCreateCard && canCreateActivityCard(activity) && <button type="button" className="secondary-button" onClick={() => onCreateCard(activity)}>
+        <Sparkles size={16} aria-hidden="true" /> Criar card com IA
+      </button>}
+      {onEdit && <button type="button" className="secondary-button" onClick={onEdit} aria-label={`Editar ${activity.title}`}><Edit3 size={16} /> Editar atividade</button>}
+    </footer>
   </article>
 }

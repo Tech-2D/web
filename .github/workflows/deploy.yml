@@ -55,6 +55,7 @@ jobs:
           VITE_ATTACHMENTS_ENABLED: ${{ vars.VITE_ATTACHMENTS_ENABLED }}
           VITE_PEGAKI_CLOUD_GRADES: ${{ vars.VITE_PEGAKI_CLOUD_GRADES }}
           VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_ASSISTANT_API_URL: ${{ vars.VITE_ASSISTANT_API_URL }}
 
       - name: Preparar arquivos
         uses: actions/upload-pages-artifact@v3

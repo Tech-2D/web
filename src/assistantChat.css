@@ -1,0 +1,171 @@
+.agenda-assistant {
+  --chat-visible-height: 100dvh;
+  --chat-left: max(1rem, env(safe-area-inset-left));
+  --chat-right: max(1rem, env(safe-area-inset-right));
+  --chat-bottom: max(1rem, env(safe-area-inset-bottom));
+  position: fixed;
+  right: var(--chat-right);
+  bottom: var(--chat-bottom);
+  z-index: 90;
+}
+.agenda-assistant-toggle { display: flex; align-items: center; gap: .55rem; margin-left: auto; }
+.agenda-assistant-panel {
+  position: absolute;
+  bottom: calc(100% + .65rem);
+  right: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  width: min(max(22rem, 33.333vw), calc(100vw - var(--chat-left) - var(--chat-right)));
+  height: min(39rem, calc(100dvh - var(--chat-bottom) - 5rem));
+  overflow: hidden;
+  color: var(--text);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: .9rem;
+  box-shadow: var(--shadow);
+}
+.agenda-assistant[data-expanded="true"] .agenda-assistant-toggle { visibility: hidden; }
+.agenda-assistant[data-expanded="true"] .agenda-assistant-panel {
+  position: fixed;
+  right: var(--chat-right);
+  bottom: var(--chat-bottom);
+  width: min(max(52rem, 66.666vw), calc(100vw - var(--chat-left) - var(--chat-right)));
+  height: min(55rem, calc(100dvh - max(.75rem, env(safe-area-inset-top)) - var(--chat-bottom)));
+}
+.agenda-assistant[data-keyboard] .agenda-assistant-toggle { visibility: hidden; }
+.agenda-assistant[data-keyboard] .agenda-assistant-panel {
+  position: fixed;
+  right: var(--chat-right);
+  bottom: calc(var(--chat-viewport-bottom) + .4rem);
+  height: min(39rem, calc(var(--chat-visible-height) - .8rem));
+}
+@media (max-width: 640px) {
+  .agenda-assistant-panel { width: calc(100vw - var(--chat-left) - var(--chat-right)); }
+}
+.agenda-assistant-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .65rem .75rem;
+  border-bottom: 1px solid var(--line);
+}
+.agenda-assistant-controls { display: flex; flex: none; gap: .25rem; }
+.agenda-assistant-controls button { width: 2.15rem; height: 2.15rem; }
+.agenda-assistant-controls .assistant-new-chat { display: inline-flex; align-items: center; justify-content: center; gap: .3rem; width: auto; padding-inline: .55rem; color: var(--text); background: var(--paper); border: 1px solid var(--line); border-radius: .5rem; font: inherit; font-size: .75rem; white-space: nowrap; cursor: pointer; }
+.agenda-assistant-controls .assistant-new-chat:hover { border-color: var(--accent); color: var(--accent); }
+.agenda-assistant-turns { display: flex; flex-direction: column; gap: .65rem; padding: .75rem 1rem; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
+.assistant-message, .assistant-result-turn { display: flex; flex-direction: column; min-width: 0; gap: .5rem; }
+.assistant-welcome, .assistant-examples { display: grid; gap: .5rem; }
+.assistant-examples button { text-align: left; color: var(--accent); background: var(--paper); border: 1px solid var(--line); border-radius: .65rem; padding: .65rem .8rem; cursor: pointer; }
+.assistant-examples button:hover { border-color: var(--accent); }
+.assistant-turn { align-self: flex-start; max-width: 88%; background: var(--surface-alt); padding: .65rem .8rem; border-radius: .7rem; white-space: pre-wrap; }
+.assistant-turn.user { align-self: flex-end; background: var(--accent); color: var(--on-accent, #fff); }
+.assistant-result-list { display: grid; gap: .5rem; min-width: 0; }
+.assistant-activity-card {
+  display: grid;
+  gap: .35rem;
+  padding: .65rem .75rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-inline-start: .2rem solid var(--accent);
+  border-radius: .6rem;
+}
+.assistant-activity-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem .6rem; }
+.assistant-activity-type, .assistant-activity-date { display: inline-flex; gap: .3rem; align-items: center; color: var(--ink-soft); font-size: .75rem; }
+.assistant-activity-type { font-weight: 700; }
+.assistant-activity-type i { width: .46rem; height: .46rem; border-radius: 50%; }
+.assistant-activity-title { color: var(--text); font-weight: 750; }
+a.assistant-activity-title:hover { color: var(--accent); }
+.assistant-activity-meta { color: var(--ink-soft); font-size: .78rem; }
+.assistant-activity-meta:empty { display: none; }
+.assistant-activity-meta small { display: block; }
+.assistant-activity-action {
+  display: inline-flex;
+  gap: .35rem;
+  align-items: center;
+  justify-self: start;
+  color: var(--accent);
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  border-radius: .45rem;
+  padding: .3rem .55rem;
+  font-size: .76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.assistant-activity-action:hover { border-color: var(--accent); }
+.agenda-assistant-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: .5rem;
+  margin: 0;
+  padding: .75rem;
+  border-top: 1px solid var(--line);
+}
+.agenda-assistant-compose textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.8rem;
+  max-height: min(9rem, calc(var(--chat-visible-height) * .26));
+  padding: .5rem .65rem;
+  resize: none;
+  overflow-y: auto;
+  font: inherit;
+  color: var(--text);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: .5rem;
+}
+.agenda-assistant[data-expanded="true"] .agenda-assistant-compose textarea { max-height: min(13rem, calc(var(--chat-visible-height) * .32)); }
+.agenda-assistant-compose > button { width: auto; padding-inline: .85rem; white-space: nowrap; }
+.agenda-assistant-quota { padding: 0 .75rem .55rem; color: var(--ink-soft); font-size: .75rem; }
+.assistant-compose-reference {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: .4rem;
+  align-items: center;
+  padding: .2rem .45rem;
+  color: var(--ink-soft);
+  background: var(--surface-alt);
+  border-radius: .45rem;
+  font-size: .75rem;
+}
+.assistant-compose-reference span { flex: 1; min-width: 0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+.assistant-kanban { min-width: 0; border: 1px solid var(--line); border-radius: .7rem; background: var(--paper); }
+.assistant-kanban > summary {
+  display: flex;
+  gap: .65rem;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+  padding: .65rem .75rem;
+  cursor: pointer;
+}
+.assistant-kanban > summary::-webkit-details-marker { display: none; }
+.assistant-kanban > summary small { display: block; }
+.assistant-kanban > summary svg { flex: none; }
+.assistant-kanban[open] > summary svg { transform: rotate(180deg); }
+.assistant-kanban-static-heading { display: flex; gap: .65rem; align-items: center; justify-content: space-between; padding: .65rem .75rem; }
+.assistant-kanban-static-heading small { display: block; }
+.assistant-kanban-body { display: grid; gap: .65rem; padding: .75rem; border-top: 1px solid var(--line); }
+.assistant-kanban .kb-card { margin: 0; }
+.assistant-kanban .kb-card-face { padding: .6rem; }
+.assistant-kanban .kb-form fieldset { gap: .65rem; }
+.assistant-kanban .kb-form { display: grid; gap: .75rem; }
+.assistant-batch { display: grid; gap: .65rem; min-width: 0; }
+.assistant-batch.kb-form fieldset { gap: .65rem; }
+.assistant-kanban small { color: var(--ink-soft); }
+.assistant-kanban-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; }
+.agenda-assistant button:disabled { opacity: .6; }
+.agenda-assistant :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (any-pointer: coarse) {
+  .agenda-assistant .agenda-assistant-controls button,
+  .agenda-assistant .assistant-compose-reference button { width: 44px; height: 44px; }
+  .agenda-assistant .agenda-assistant-controls .assistant-new-chat { width: auto; min-width: 44px; height: 44px; }
+  .assistant-activity-action { min-height: 44px; }
+  .agenda-assistant-compose textarea,
+  .assistant-kanban .kb-form :is(input, textarea, select) { font-size: max(1rem, 16px); }
+}

@@ -5,11 +5,13 @@ import { loadLinkedActivity } from './activityLinks'
 import { ActivityDetails } from './ActivityDetails'
 import type { Activity } from './types'
 
-export function LinkedActivityDetails({ activity }: { activity: Activity }) {
-  return <ActivityDetails activity={activity} />
+export function LinkedActivityDetails({ activity, onCreateCard }: { activity: Activity; onCreateCard?: (activity: Activity) => void }) {
+  return <ActivityDetails activity={activity} onCreateCard={onCreateCard} />
 }
 
-export function ActivityLinkDialog({ id, onClose, onViewCalendar }: { id: string; onClose: () => void; onViewCalendar: (activity: Activity) => void }) {
+export function ActivityLinkDialog({ id, onClose, onViewCalendar, onCreateCard }: {
+  id: string; onClose: () => void; onViewCalendar: (activity: Activity) => void; onCreateCard?: (activity: Activity) => void
+}) {
   const [activity, setActivity] = useState<Activity | null>(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [retry, setRetry] = useState(0)
   const close = useRef(onClose), button = useRef<HTMLButtonElement>(null), panel = useRef<HTMLElement>(null)
   close.current = onClose
@@ -42,7 +44,7 @@ export function ActivityLinkDialog({ id, onClose, onViewCalendar }: { id: string
     <section ref={panel} className="day-dialog activity-link-dialog" role="dialog" aria-modal="true" aria-labelledby="linked-activity-title">
       <div className="dialog-header"><h2 id="linked-activity-title">Detalhes da atividade</h2><button ref={button} className="icon-button" aria-label="Fechar detalhes da atividade" onClick={onClose}><X /></button></div>
       <div className="day-dialog-list">
-        {loading ? <p className="linked-activity-state" role="status"><LoaderCircle size={20} className="spin" />Carregando atividade…</p> : error ? <div role="alert"><p>{error}</p><button className="secondary-button" onClick={() => setRetry(n => n + 1)}>Tentar novamente</button></div> : activity ? <LinkedActivityDetails activity={activity} /> : <p role="status">Esta atividade não está mais disponível. Ela pode ter sido excluída.</p>}
+        {loading ? <p className="linked-activity-state" role="status"><LoaderCircle size={20} className="spin" />Carregando atividade…</p> : error ? <div role="alert"><p>{error}</p><button className="secondary-button" onClick={() => setRetry(n => n + 1)}>Tentar novamente</button></div> : activity ? <LinkedActivityDetails activity={activity} onCreateCard={onCreateCard} /> : <p role="status">Esta atividade não está mais disponível. Ela pode ter sido excluída.</p>}
       </div>
       <div className="activity-link-footer">{activity && <button className="primary-button" onClick={() => onViewCalendar(activity)}>Ver na agenda</button>}<button className="secondary-button" onClick={onClose}>{activity ? 'Fechar' : 'Voltar para a agenda'}</button></div>
     </section>

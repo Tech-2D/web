@@ -3,9 +3,9 @@ import { createPortal } from 'react-dom'
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, closestCenter, pointerWithin, rectIntersection, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragOverEvent, type DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy, verticalListSortingStrategy, sortableKeyboardCoordinates, useSortable, defaultAnimateLayoutChanges } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowLeft, ArrowRight, CalendarDays, CheckSquare, GripVertical, Link2, Plus, Settings2, UserRound } from 'lucide-react'
-import { dateKey } from './calendar'
-import { moveTask, reorder, taskMatches, taskOverdue, PRIORITIES, type KanbanBoard, type KanbanColumn, type KanbanTask } from './kanban'
+import { ArrowLeft, ArrowRight, CheckSquare, GripVertical, Plus, Settings2 } from 'lucide-react'
+import { KanbanCardFace } from './KanbanCardFace'
+import { moveTask, reorder, taskMatches, type KanbanBoard, type KanbanColumn, type KanbanTask } from './kanban'
 
 type Item = { kind:'task' | 'column'; id:string; columnId:string }
 const columnKey=(id:string)=>'column:'+id, taskKey=(id:string)=>'task:'+id
@@ -59,7 +59,7 @@ export function KanbanBoardView({board,disabled,search,priority,canAddTask,onCha
   const activeColumn=active?.kind==='column' ? view.columns.find(c=>c.id===active.id) : null
   const activeTask=active?.kind==='task' ? view.tasks.find(t=>t.id===active.id) : null
   const overlay=<DragOverlay zIndex={500} dropAnimation={reduce ? null : {duration:230,easing:'cubic-bezier(.2,.8,.2,1)'}}>{active && <div aria-hidden="true" className={`kb-drag-preview${view.compact ? ' kb-compact' : ''}`} style={{width:active.width}}>
-    {activeColumn ? <div className={`kb-column kb-color-${activeColumn.color}`}><header className="kb-column-heading"><GripVertical size={16}/><h3>{activeColumn.name}</h3><span className="kb-count">{view.tasks.filter(t=>t.columnId===activeColumn.id).length}</span></header><div className="kb-cards">{view.tasks.filter(t=>t.columnId===activeColumn.id).slice(0,4).map(t=><div className="kb-card" key={t.id}><CardFace assignees={assignees} task={t} column={activeColumn}/></div>)}</div></div> : activeTask ? <div className="kb-card"><CardFace assignees={assignees} task={activeTask} column={view.columns.find(c=>c.id===activeTask.columnId)!}/></div> : null}
+    {activeColumn ? <div className={`kb-column kb-color-${activeColumn.color}`}><header className="kb-column-heading"><GripVertical size={16}/><h3>{activeColumn.name}</h3><span className="kb-count">{view.tasks.filter(t=>t.columnId===activeColumn.id).length}</span></header><div className="kb-cards">{view.tasks.filter(t=>t.columnId===activeColumn.id).slice(0,4).map(t=><div className="kb-card" key={t.id}><KanbanCardFace assignees={assignees} task={t} column={activeColumn}/></div>)}</div></div> : activeTask ? <div className="kb-card"><KanbanCardFace assignees={assignees} task={activeTask} column={view.columns.find(c=>c.id===activeTask.columnId)!}/></div> : null}
   </div>}</DragOverlay>
   return <DndContext sensors={sensors} collisionDetection={collisions} onDragStart={start} onDragOver={over} onDragCancel={cancel} onDragEnd={event=>void end(event)} accessibility={{screenReaderInstructions:{draggable:'Pressione espaço para arrastar. Use as setas para mover. Pressione espaço novamente para soltar ou Escape para cancelar.'},announcements:{onDragStart:()=> 'Item selecionado para mover.',onDragOver:({over})=>over ? 'Nova posição disponível. Solte para confirmar.' : 'Fora do quadro. Soltar aqui cancela a alteração.',onDragEnd:()=> 'Movimento finalizado.',onDragCancel:()=> 'Movimento cancelado. Nada foi alterado.'}}}>
     <div className={`kb-board${view.compact ? ' kb-compact' : ''}${active ? ' kb-sorting' : ''}`}>
@@ -72,7 +72,7 @@ export function KanbanBoardView({board,disabled,search,priority,canAddTask,onCha
           </>}>
             <SortableContext items={visible.map(t=>taskKey(t.id))} strategy={verticalListSortingStrategy}>
               <div className="kb-cards">{visible.map((task,index)=><SortableCard key={task.id} task={task} disabled={dragDisabled || !!search || !!priority} reduce={reduce}>
-                <button className="kb-card-open" disabled={disabled} onClick={()=>onEditTask(task)}><CardFace assignees={assignees} task={task} column={column}/></button>
+                <button className="kb-card-open" disabled={disabled} onClick={()=>onEditTask(task)}><KanbanCardFace assignees={assignees} task={task} column={column}/></button>
                 <div className="kb-card-actions"><label><span className="sr-only">Mover {task.title} para</span><select aria-label={`Mover ${task.title} para`} disabled={disabled} value={column.id} onChange={e=>void onChange(moveTask(board,task.id,e.target.value))}>{view.columns.map(c=><option key={c.id} value={c.id}>Mover para: {c.name}</option>)}</select></label><button className="kb-icon" aria-label={`Subir ${task.title}`} disabled={disabled || !!search || !!priority || index===0} onClick={()=>void onChange({...board,tasks:reorder(board.tasks,task.id,visible[index-1].id)})}>↑</button><button className="kb-icon" aria-label={`Descer ${task.title}`} disabled={disabled || !!search || !!priority || index===visible.length-1} onClick={()=>void onChange({...board,tasks:reorder(board.tasks,task.id,visible[index+1].id)})}>↓</button></div>
               </SortableCard>)}{!visible.length && <p className="kb-column-empty">{active?.kind==='task' && overColumn===column.id ? 'Solte a tarefa aqui' : tasks.length ? 'Nenhuma tarefa com esse filtro.' : 'Nenhuma tarefa por aqui.'}</p>}</div>
             </SortableContext>
@@ -93,8 +93,4 @@ function SortableColumn({column,disabled,reduce,targeted,header,children}:{colum
 function SortableCard({task,disabled,reduce,children}:{task:KanbanTask;disabled:boolean;reduce:boolean;children:ReactNode}) {
   const {setNodeRef,setActivatorNodeRef,attributes,listeners,transform,transition,isDragging}=useSortable({id:taskKey(task.id),data:{kind:'task',id:task.id,columnId:task.columnId},disabled,transition:{duration:200,easing:'cubic-bezier(.2,.8,.2,1)'},animateLayoutChanges:args=>defaultAnimateLayoutChanges({...args,wasDragging:true})})
   return <article ref={setNodeRef} style={{transform:CSS.Translate.toString(transform),transition:reduce ? 'none' : transition}} className={`kb-card${isDragging ? ' kb-drag-source' : ''}`}><button type="button" ref={setActivatorNodeRef} className="kb-grab kb-card-grab kb-drag-handle" disabled={disabled} {...attributes} {...listeners} aria-label={`Arrastar tarefa ${task.title}`}><GripVertical size={15}/></button>{children}</article>
-}
-function CardFace({task,column,assignees}:{task:KanbanTask;column:KanbanColumn;assignees:{uid:string;name:string}[]}) {
-  const overdue=taskOverdue(task,column,dateKey(new Date()))
-  return <div className="kb-card-face"><span className="kb-card-labels">{task.labels.map((label,i)=><span key={i}>{label}</span>)}</span><strong>{task.title}</strong>{task.description && <p>{task.description}</p>}<span className="kb-card-meta">{task.assigneeId && <span className="kb-assignee"><UserRound size={13}/>{assignees.find(p=>p.uid===task.assigneeId)?.name || 'Participante indisponível'}</span>}{task.priority!=='none' && <span className={`kb-priority kb-priority-${task.priority}`}>{PRIORITIES[task.priority]}</span>}{task.dueDate && <span className={overdue ? 'kb-overdue' : ''}><CalendarDays size={13}/>{new Date(task.dueDate+'T12:00:00').toLocaleDateString('pt-BR')}{overdue ? ' · atrasada' : ''}</span>}{Boolean(task.activityIds?.length) && <span><Link2 size={13}/>{task.activityIds!.length} {task.activityIds!.length===1 ? 'atividade vinculada' : 'atividades vinculadas'}</span>}{task.checklist.length>0 && <span><CheckSquare size={13}/>{task.checklist.filter(i=>i.done).length}/{task.checklist.length}</span>}</span></div>
 }
