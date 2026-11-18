@@ -98,7 +98,7 @@ describe('contrato do chat integrado', () => {
     send('Crie um card')
     await screen.findByText('Confira a prévia.')
     fireEvent.click(screen.getByText('Prévia do card'))
-    fireEvent.click(screen.getByRole('button', { name: 'Criar card', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: /^Criar card$/ }))
     await screen.findByText('Card criado.')
     expect(posts[1]).toMatchObject({ path: '/api/kanban', body: { action: 'create',
       confirmation_source: 'button', draft_id: 'draft' } })
