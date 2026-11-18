@@ -41,7 +41,7 @@ import { IntegratedMenu } from './IntegratedMenu'
 import { menuOptionSections, type MoreOption, type MoreOptionSection } from './menuCatalog'
 import './integratedMenu.css'
 import { SyncStatus } from './SyncStatus'
-import { recordCalendarAreaAccess } from './agendaAccess'
+import { recordSiteAccess } from './agendaAccess'
 import './agendaAccess.css'
 import { ActivityDetails } from './ActivityDetails'
 import { AgendaGuide, type GuideFeature } from './AgendaGuide'
@@ -109,7 +109,6 @@ function App() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [noticesOpen, setNoticesOpen] = useState(false)
   const [calendarUser, setCalendarUser] = useState<User | null>(null)
-  const [accessBlocked, setAccessBlocked] = useState(false)
   const [docsOpen, setDocsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [notificationsSeenAt, setNotificationsSeenAt] = useState(0)
@@ -151,14 +150,11 @@ function App() {
   }
 
   useEffect(() => {
-    let previousUid: string | null | undefined
     const stop = observeCalendarSession({
       subscribeAccount: change => onAuthStateChanged(auth, account => {
         const uid = account?.uid ?? null
         setCalendarUser(account)
         change(uid)
-        if (uid !== previousUid) setAccessBlocked(false)
-        previousUid = uid
       }),
       subscribeProfile: subscribeAdminProfile,
       publish: setCalendarProfile,
@@ -168,12 +164,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!calendarUser) return
-    let current = true
-    void recordCalendarAreaAccess(kanbanOpen ? 'kanban' : 'agenda', calendarUser).then(blocked => {
-      if (current && auth.currentUser?.uid === calendarUser.uid) setAccessBlocked(blocked)
-    })
-    return () => { current = false }
+    if (calendarUser) void recordSiteAccess(kanbanOpen ? 'kanban' : 'agenda', calendarUser)
   }, [calendarUser, kanbanOpen])
 
 
@@ -498,21 +489,6 @@ function App() {
     setMenuShortcuts(next)
     storeMenuShortcuts(next)
   }
-
-  if (accessBlocked) return (
-    <main className="main-content">
-      <SyncStatus />
-      <section className="state-card error" aria-labelledby="agenda-blocked-title">
-        <DoorOpen aria-hidden="true" />
-        <div>
-          <h1 id="agenda-blocked-title">Acesso à Agenda bloqueado</h1>
-          <p>Se precisar de ajuda, fale com a administração da Agenda.</p>
-          <button type="button" className="secondary-button" onClick={() => window.location.reload()}>Verificar novamente</button>
-          {calendarUser && <button type="button" className="text-button" onClick={() => void signOut(auth)}>Sair da conta</button>}
-        </div>
-      </section>
-    </main>
-  )
 
   if (adminOpen) return (
     <div className="app-shell portal-frame admin-shell">

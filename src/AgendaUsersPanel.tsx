@@ -91,7 +91,7 @@ export function AgendaUsersPanel({ user }: { user: User }) {
   function block(kind: 'email' | 'uid', value: string, label = value) {
     if (!validDuration) { setError('Escolha uma duração entre 1 minuto e 365 dias.'); return }
     const end = date.format(new Date(Date.now() + durationSeconds * 1000))
-    if (window.confirm('Bloquear o acesso de ' + label + ' até ' + end + '?')) {
+    if (window.confirm('Bloquear o acesso de ' + label + ' a todo o portal até ' + end + '?')) {
       void changeAccess({ action:'block', kind, value, durationSeconds })
     }
   }
@@ -125,7 +125,7 @@ export function AgendaUsersPanel({ user }: { user: User }) {
           <option value={60}>Minutos</option><option value={3600}>Horas</option><option value={86400}>Dias</option>
         </select></label>
       </div>
-      <p className="storage-admin-note">A duração escolhida vale para os botões abaixo. O acesso é liberado automaticamente ao fim do prazo.</p>
+      <p className="storage-admin-note">O bloqueio vale para todo o portal. O acesso é liberado automaticamente ao fim do prazo.</p>
       {notice && <p className="storage-admin-success" role="status">{notice}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
       <form className="agenda-users-form" onSubmit={searchUsers}>
