@@ -2,40 +2,16 @@ import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type Reac
 import { CalendarDays, ChevronDown, Maximize2, MessageCircle, Minimize2, Plus, Sparkles, X } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { KanbanCardFace } from './KanbanCardFace'
-import { PRIORITIES, type KanbanTask } from './kanban'
+import { PRIORITIES } from './kanban'
+import type { Activity, AssistantActivityReference, Batch, BatchInput, CardInput, Draft, Fields, Kanban } from './assistantContract'
+import { useAssistantTransport, type AssistantRoute } from './useAssistantTransport'
+export type { AssistantActivityReference } from './assistantContract'
 import { ACTIVITY_TYPE_COLORS, type ActivityType } from './types'
 import { canCreateActivityCard } from './activityFuture'
 import './kanban.css'
 import './assistantChat.css'
 
-type Column = { id: string; name: string; done: boolean }
-type Board = { id: string; name: string; columns: Column[]; suggested_column_id?: string | null }
-type Fields = { title: string; description: string; due_date: string | null; priority: KanbanTask['priority'] }
-type Draft = { state: 'draft'; id: string; boards: Board[]; board_id: string | null; column_id: string | null; fields: Fields; activity_ids: string[]; activity_title: string | null; activity_date?: string | null; retry_only?: boolean }
-type Saved = { state: 'saved'; task: KanbanTask; board: Pick<Board, 'id' | 'name'>; column: Column; activity_title: string | null }
-type Batch = { state: 'batch'; id: string; drafts: Draft[]; retry_only?: boolean }
-type Kanban = Draft | Saved | Batch | { state: 'batch_saved'; cards: Saved[] } | { state: 'missing' }
-export type AssistantActivityReference = { id: string; title: string; date: string; type: string }
-type Activity = Omit<AssistantActivityReference, 'id'> & {
-  id: string | null
-  type_label: string
-  subject?: string | null
-  teacher?: string | null
-  time?: string | null
-  is_general?: boolean
-  recurrence_summary?: string | null
-  was_overridden?: boolean
-}
-type Response = {
-  answer: string
-  kanban?: Kanban | null
-  cards?: Activity[]
-  remaining_messages?: number | null
-  unlimited_messages?: boolean
-}
 type Turn = { text: string; user?: boolean; cards?: Activity[] }
-type CardInput = Fields & { board_id: string; column_id: string }
-type BatchInput = CardInput & { draft_id: string }
 
 const examples = ['Qual a próxima prova?', 'Cria um card falando para estudar matemática', 'Onde tá a Lisete?']
 const kanbanDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
@@ -56,22 +32,15 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const [submission, setSubmission] = useState<{ id: string; fields: CardInput } | null>(null)
   const [batchSubmission, setBatchSubmission] = useState<{ id: string; items: BatchInput[] } | null>(null)
   const [retryOnly, setRetryOnly] = useState(false)
+  const [retryMessage, setRetryMessage] = useState<Record<string, unknown> | null>(null)
   const [quotaText, setQuotaText] = useState('')
-  const session = useRef<{ id: string; token?: string } | null>(null)
-  const request = useRef<AbortController | null>(null)
+  const transport = useAssistantTransport(account, endpoint)
+  const request = transport.inFlight
   const chat = useRef<HTMLDivElement>(null)
   const transcript = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const toggle = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => () => {
-    request.current?.abort()
-    const current = session.current
-    session.current = null
-    if (current?.token) void fetch(endpoint + '/api/session/' + current.id, {
-      method: 'DELETE', headers: { Authorization: 'Bearer ' + current.token }, keepalive: true,
-    }).catch(() => {})
-  }, [endpoint])
   useEffect(() => {
     if (transcript.current) transcript.current.scrollTop = transcript.current.scrollHeight
   }, [turns, kanban, open])
@@ -138,40 +107,37 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     return () => cancelAnimationFrame(frame)
   }, [prefill])
 
-  async function send(path: string, body: Record<string, unknown>, userText?: string) {
+  async function send(path: AssistantRoute, body: Record<string, unknown>, userText?: string) {
     if (request.current) return
     const controller = new AbortController()
     request.current = controller
-    const current = session.current ?? { id: crypto.randomUUID() }
-    session.current = current
+    const payload = path === '/api/chat' && !body.request_id ? { ...body, request_id: crypto.randomUUID() } : body
     setBusy(true)
     setError('')
+    setRetryMessage(null)
     if (userText) setTurns(old => [...old, { text: userText, user: true }])
     try {
-      const token = await account.getIdToken()
+      const response = await transport.send(path, payload, controller.signal)
       if (controller.signal.aborted) return
-      current.token = token
-      const response = await fetch(endpoint + path, {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, session_id: current.id }),
-        signal: controller.signal,
-      })
-      const data = await response.json() as Response & { detail?: string }
       if (!response.ok) {
-        if (path === '/api/chat' && response.status === 429) setQuotaText('0 mensagens restantes hoje')
-        if (path === '/api/kanban') {
+        const { data } = response
+        if (data.code === 'daily_quota') setQuotaText('0 mensagens restantes hoje')
+        if (path === '/api/chat' && (response.status >= 500 || response.status === 429 && data.code !== 'daily_quota')) {
+          setRetryMessage(payload)
+        }
+        if (path === '/api/kanban' || data.operation === 'kanban_confirmation') {
           if (response.status === 404 || response.status === 409) {
             setKanban(null)
             setRetryOnly(false)
-          } else if (body.action === 'create') {
+          } else if (body.action === 'create' || data.operation === 'kanban_confirmation') {
             if (response.status >= 500) setRetryOnly(true)
             else if (response.status === 422) setRetryOnly(false)
           }
         }
-        setError(typeof data.detail === 'string' ? data.detail : 'Confira os dados e tente novamente.')
+        setError(data.detail ?? 'Confira os dados e tente novamente.')
         return
       }
+      const { data } = response
       if (path === '/api/chat') {
         setQuotaText(data.unlimited_messages
           ? 'Sem limite diário'
@@ -189,6 +155,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     } catch {
       if (!controller.signal.aborted) {
         if (body.action === 'create') setRetryOnly(true)
+        if (path === '/api/chat') setRetryMessage(payload)
         setError('Não consegui confirmar a resposta. Tente novamente.')
       }
     } finally {
@@ -203,40 +170,29 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     event.preventDefault()
     if (!message.trim() || request.current) return
     const text = message.trim()
-    if (isCreateConfirmation(text) && kanban?.state === 'draft') {
-      const fields = submission?.id === kanban.id ? submission.fields : initialCardInput(kanban)
-      setSubmission({ id: kanban.id, fields })
-      setMessage('')
-      setLinkedActivity(null)
-      void send('/api/kanban', { action: 'create', draft_id: kanban.id, fields }, text)
-      return
-    }
-    if (isCreateConfirmation(text) && kanban?.state === 'batch') {
-      const items = batchSubmission?.id === kanban.id
-        ? batchSubmission.items
-        : kanban.drafts.map(draft => ({ ...initialCardInput(draft), draft_id: draft.id }))
-      setBatchSubmission({ id: kanban.id, items })
-      setMessage('')
-      setLinkedActivity(null)
-      void send('/api/kanban', { action: 'create', draft_id: kanban.id, items }, text)
-      return
-    }
+    const draft = kanban?.state === 'draft'
+      ? { draft_id: kanban.id, fields: submission?.id === kanban.id ? submission.fields : initialCardInput(kanban) }
+      : kanban?.state === 'batch'
+        ? { draft_id: kanban.id, items: batchSubmission?.id === kanban.id
+          ? batchSubmission.items
+          : kanban.drafts.map(item => ({ ...initialCardInput(item), draft_id: item.id })) }
+        : undefined
     const activityId = linkedActivity?.id
     setMessage('')
     setLinkedActivity(null)
     void send('/api/chat', {
-      message: text, preferred_class: preferredClass, ...(activityId ? { activity_id: activityId } : {}),
+      message: text, preferred_class: preferredClass, ...(activityId ? { activity_id: activityId } : {}), draft,
     }, text)
   }
   function act(action: 'create' | 'cancel', fields?: CardInput) {
     if (request.current || kanban?.state !== 'draft') return
     if (fields) setSubmission({ id: kanban.id, fields })
-    void send('/api/kanban', { action, draft_id: kanban.id, ...(fields ? { fields } : {}) })
+    void send('/api/kanban', { action, draft_id: kanban.id, confirmation_source: 'button', ...(fields ? { fields } : {}) })
   }
   function actBatch(action: 'create' | 'cancel', items?: BatchInput[]) {
     if (request.current || kanban?.state !== 'batch') return
     if (items) setBatchSubmission({ id: kanban.id, items })
-    void send('/api/kanban', { action, draft_id: kanban.id, ...(items ? { items } : {}) })
+    void send('/api/kanban', { action, draft_id: kanban.id, confirmation_source: 'button', ...(items ? { items } : {}) })
   }
   function close() {
     setOpen(false)
@@ -244,11 +200,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   }
   function startNewChat() {
     if (request.current) return
-    const current = session.current
-    session.current = null
-    if (current?.token) void fetch(endpoint + '/api/session/' + current.id, {
-      method: 'DELETE', headers: { Authorization: 'Bearer ' + current.token }, keepalive: true,
-    }).catch(() => {})
+    transport.forget()
     setTurns([])
     setMessage('')
     setLinkedActivity(null)
@@ -257,6 +209,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     setSubmission(null)
     setBatchSubmission(null)
     setRetryOnly(false)
+    setRetryMessage(null)
     requestAnimationFrame(() => input.current?.focus())
   }
   function prepareFromResult(activity: Activity) {
@@ -320,6 +273,8 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
         {kanban?.state === 'missing' && <a href={agendaPath + '#kanban'} onClick={close}>Abrir Kanban</a>}
         {busy && <p role="status">Aguarde…</p>}
         {error && <p className="kb-error" role="alert">{error}</p>}
+        {retryMessage && <button type="button" className="kb-link" disabled={busy}
+          onClick={() => void send('/api/chat', retryMessage)}>Reenviar mensagem</button>}
       </div>
       <form className="agenda-assistant-compose" onSubmit={submit}>
         {linkedActivity && <div className="assistant-compose-reference">
@@ -370,7 +325,7 @@ function ActivityResult({ activity, onOpen, onPrepare, agendaPath }: {
     <div className="assistant-activity-heading">
       <span className="assistant-activity-type"><i aria-hidden="true" style={{ background: color }} />{activity.type_label}</span>
       <span className="assistant-activity-date"><CalendarDays size={14} aria-hidden="true" />
-        <time dateTime={activity.date}>{formatActivityDate(activity.date)}</time>{activity.time && ` · ${activity.time}`}
+        <time dateTime={activity.date}>{formatActivityDate(activity.date)}</time>{` · ${activity.time || 'Sem horário'}`}
       </span>
     </div>
     {activity.id
@@ -390,11 +345,6 @@ function fitMessageInput(field: HTMLTextAreaElement) {
   field.style.height = 'auto'
   const border = field.offsetHeight - field.clientHeight
   field.style.height = `${field.scrollHeight + border}px`
-}
-
-function isCreateConfirmation(message: string) {
-  const text = message.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[.!?]+/g, '').replace(/\s+/g, ' ').trim()
-  return /^(?:s|sim|isso|confirmo|confirmar|ok|okay|cria|criar|crie|pode criar|pode criar (?:o|os|um|uma|esse|essa) (?:cards?|cartao|cartoes)|cria (?:o|os|um|uma|esse|essa) (?:cards?|cartao|cartoes)|pode confirmar|manda ver|pode mandar|cria os dois|cria as duas|pode criar os dois|pode criar as duas)$/.test(text)
 }
 
 function CardPreview({ label, title, children, collapsible = true }: { label: string; title: string; children: ReactNode; collapsible?: boolean }) {
