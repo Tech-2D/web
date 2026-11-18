@@ -12,6 +12,7 @@ export type AccessStatistics = {
   kanbanSince?: string | null
   sites: Record<'agenda' | 'professores', AccessSite> & Partial<Record<'pegaki' | 'kanban', AccessSite>>
   analytics?: UsageAnalytics
+  assistantDaily?: { date: string; messages: number }[]
 }
 
 export type UsageAnalytics = {
