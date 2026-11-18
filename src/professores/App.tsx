@@ -1,4 +1,4 @@
-import { type ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, FormEvent, lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import {
   ArrowRight,
   BarChart3,
@@ -50,6 +50,7 @@ import { readClassParam, readViewParam, type View } from './viewParams'
 import { IntegratedMenu } from '../IntegratedMenu'
 import { menuOptionSections } from '../menuCatalog'
 import { agendaMenuUrl, MENU_SHORTCUTS_KEY, readMenuShortcuts, storeMenuShortcuts } from './menuShortcuts'
+import { readPreferredTurma } from '../classPreference'
 import { FONT_SCALES, FONT_SCALE_LABELS, readStoredFontScale, readStoredHighContrast, readStoredReduceMotion, storeFontScale, storeHighContrast, storeReduceMotion, type FontScale } from './accessibility'
 import {
   NEON_COLORS,
@@ -65,6 +66,9 @@ import {
   type NeonColor,
   type Theme,
 } from './theme'
+
+const AssistantChat = lazy(() => import('../AssistantChat'))
+const ASSISTANT_ENDPOINT = import.meta.env.VITE_ASSISTANT_API_URL?.trim().replace(/\/+$/, '')
 
 const emptyForm: ScheduleInput = {
   professor: '',
@@ -250,6 +254,10 @@ function App() {
   return (
     <div className="app-shell portal-frame">
       <AccountSiteNavigation active="professores" menu={{ open: menuOpen, onOpen: () => setMenuOpen(true) }} />
+      {ASSISTANT_ENDPOINT && user && <Suspense fallback={null}>
+        <AssistantChat key={user.uid} account={user} preferredClass={readPreferredTurma()}
+          endpoint={ASSISTANT_ENDPOINT} agendaPath={import.meta.env.BASE_URL} />
+      </Suspense>}
 
       <main id="inicio" className="main-content portal-main">
         <div className="professor-controls interface-panel portal-toolbar">

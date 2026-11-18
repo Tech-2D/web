@@ -41,7 +41,7 @@ export function taskMatches(task: KanbanTask, search: string, priority: string) 
   const normalized = (s:string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR')
   return (!priority || task.priority===priority) && normalized([task.title,task.description,...task.labels].join(' ')).includes(normalized(search.trim()))
 }
-export function taskOverdue(task: KanbanTask, column: KanbanColumn, today: string) { return !column.done && !!task.dueDate && task.dueDate < today }
+export function taskOverdue(task: KanbanTask, column: Pick<KanbanColumn, 'done'>, today: string) { return !column.done && !!task.dueDate && task.dueDate < today }
 export function workspaceLimit(boards: KanbanBoard[]) {
   if (boards.length > 12) return 'Você pode manter até 12 quadros.'
   if (boards.some(b=>b.columns.length>12)) return 'Cada quadro pode ter até 12 colunas.'

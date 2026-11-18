@@ -44,6 +44,7 @@ import { SyncStatus } from './SyncStatus'
 import { recordSiteAccess } from './agendaAccess'
 import './agendaAccess.css'
 import { ActivityDetails } from './ActivityDetails'
+import type { AssistantActivityReference } from './AssistantChat'
 import { AgendaGuide, type GuideFeature } from './AgendaGuide'
 import './agendaGuide.css'
 import { readActivityLink } from './activityLinks'
@@ -55,9 +56,11 @@ const ClassRequestDialog = lazy(() => import('./ClassRequestDialog').then(module
 const NoticeBoardDialog = lazy(() => import('./NoticeBoard').then(module => ({ default: module.NoticeBoardDialog })))
 const AdminPage = lazy(() => import('./AdminPage'))
 const KanbanPage = lazy(() => import('./KanbanPage'))
+const AssistantChat = lazy(() => import('./AssistantChat'))
 const ActivityLinkDialog = lazy(() => import('./ActivityLinkDialog').then(module => ({ default: module.ActivityLinkDialog })))
 
 const RECENT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000
+const ASSISTANT_ENDPOINT = import.meta.env.VITE_ASSISTANT_API_URL?.trim().replace(/\/+$/, '')
 
 function updatedAtMs(activity: Activity): number {
   return activity.updatedAt?.toDate().getTime() ?? 0
@@ -102,6 +105,7 @@ function App() {
   const [linkedMenuDialog, setLinkedMenuDialog] = useState(() => readAgendaMenuDialog(window.location.hash))
   const [moreOptionsOpen, setMoreOptionsOpen] = useState(window.location.hash === '#opcoes')
   const [kanbanOpen, setKanbanOpen] = useState(window.location.hash.split('?')[0] === '#kanban')
+  const [kanbanRefresh, setKanbanRefresh] = useState(0)
   const [compareMode, setCompareMode] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
   const [suggestOpen, setSuggestOpen] = useState(false)
@@ -109,6 +113,7 @@ function App() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [noticesOpen, setNoticesOpen] = useState(false)
   const [calendarUser, setCalendarUser] = useState<User | null>(null)
+  const [assistantPrefill, setAssistantPrefill] = useState<AssistantActivityReference | null>(null)
   const [docsOpen, setDocsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [notificationsSeenAt, setNotificationsSeenAt] = useState(0)
@@ -294,6 +299,12 @@ function App() {
   function closeLinkedActivity() {
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     setLinkedActivityId(null)
+  }
+
+  function prepareActivityCard(activity: Activity) {
+    if (linkedActivityId) closeLinkedActivity()
+    setSelectedDay(null)
+    setAssistantPrefill({ id: activity.id, title: activity.title, date: activity.date, type: activity.type })
   }
 
   function viewLinkedActivity(activity: Activity) {
@@ -508,9 +519,15 @@ function App() {
       <SiteNavigation active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} notifications={{ onOpen: () => openMenuDialog('notifications'), count: unseenNotifications }} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
       <SyncStatus />
 
+      {ASSISTANT_ENDPOINT && calendarUser &&
+        <Suspense fallback={null}><AssistantChat key={calendarUser.uid} account={calendarUser}
+          preferredClass={preferredTurma} endpoint={ASSISTANT_ENDPOINT} prefill={assistantPrefill}
+          covered={Boolean(selectedDay || linkedActivityId)}
+          onViewKanban={() => { if (kanbanOpen) setKanbanRefresh(value => value + 1) }} /></Suspense>}
+
       {kanbanOpen ? (
         <DialogLoadBoundary><Suspense fallback={<div className="state-card" role="status"><LoaderCircle className="spin" /><p>Carregando seu Kanban…</p></div>}>
-          <KanbanPage activities={[...turmaActivities, ...globalActivities]} />
+          <KanbanPage activities={[...turmaActivities, ...globalActivities]} refreshKey={kanbanRefresh} />
         </Suspense></DialogLoadBoundary>
       ) : moreOptionsOpen ? (
         <MoreOptionsPage
@@ -673,10 +690,12 @@ function App() {
       )}
 
       {selectedDay && (
-        <DayDetail day={selectedDay} activities={activitiesByDay.get(dateKey(selectedDay)) ?? []} profile={calendarProfile} canAdd={canCreateForSelectedClass(calendarProfile, turmaId)} onEditActivity={openCalendarEdit} onAddActivity={() => openAdminForDay(selectedDay)} onClose={() => setSelectedDay(null)} />
+        <DayDetail day={selectedDay} activities={activitiesByDay.get(dateKey(selectedDay)) ?? []} profile={calendarProfile} canAdd={canCreateForSelectedClass(calendarProfile, turmaId)} onEditActivity={openCalendarEdit} onAddActivity={() => openAdminForDay(selectedDay)} onClose={() => setSelectedDay(null)}
+          onCreateCard={ASSISTANT_ENDPOINT && calendarUser ? prepareActivityCard : undefined} />
       )}
 
-      {linkedActivityId && <ActivityLinkDialog key={linkedActivityId} id={linkedActivityId} onClose={closeLinkedActivity} onViewCalendar={viewLinkedActivity} />}
+      {linkedActivityId && <ActivityLinkDialog key={linkedActivityId} id={linkedActivityId} onClose={closeLinkedActivity} onViewCalendar={viewLinkedActivity}
+        onCreateCard={ASSISTANT_ENDPOINT && calendarUser ? prepareActivityCard : undefined} />}
 
       {!turmaId && !kanbanOpen && !moreOptionsOpen && !linkedActivityId && !activeMenuDialog && !menuOpen && <TurmaPickerModal classNames={classNames} onChoose={choosePreferredTurma} onRequest={() => setClassRequestOpen(true)} onHelp={() => setDocsOpen(true)} />}
 
@@ -770,16 +789,18 @@ class DialogLoadBoundary extends Component<{ children: ReactNode }, { failed: bo
 function VLibrasWidget() {
   useEffect(() => {
     const loadWidget = () => {
-    if (document.getElementById('vlibras-script')) return
-    const script = document.createElement('script')
-    script.id = 'vlibras-script'
-    script.async = true
-    script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js'
-    script.onload = () => {
-      const vlibras = (window as unknown as { VLibras?: { Widget: new (url: string) => unknown } }).VLibras
-      if (vlibras) new vlibras.Widget('https://vlibras.gov.br/app')
-    }
-    document.body.appendChild(script)
+      if (document.getElementById('vlibras-script')) return
+      const script = document.createElement('script')
+      script.id = 'vlibras-script'
+      script.async = true
+      script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js'
+      script.onload = () => {
+        const { VLibras } = window as Window & {
+          VLibras?: { Widget: new (options: { rootPath: string; position: 'L' | 'R' }) => unknown }
+        }
+        if (VLibras) new VLibras.Widget({ rootPath: 'https://vlibras.gov.br/app', position: 'L' })
+      }
+      document.body.appendChild(script)
     }
     if (window.requestIdleCallback) {
       const idle = window.requestIdleCallback(loadWidget, { timeout: 3000 })
@@ -789,15 +810,7 @@ function VLibrasWidget() {
     return () => window.clearTimeout(timer)
   }, [])
 
-  // Marcação exigida pelo widget oficial do governo (atributos não-padrão, por isso o `as Record<string, string>`).
-  return (
-    <div {...({ vw: '', className: 'enabled' } as Record<string, string>)}>
-      <div {...({ 'vw-access-button': '', className: 'active' } as Record<string, string>)} />
-      <div {...({ 'vw-plugin-wrapper': '' } as Record<string, string>)}>
-        <div className="vw-plugin-top-wrapper" />
-      </div>
-    </div>
-  )
+  return null
 }
 
 function MoreOptionsPage({ turmaId, classNames, onChooseTurma, onBack, sections, shortcuts, onToggleShortcut, onResetShortcuts }: {
@@ -1426,7 +1439,10 @@ function NotificationsDialog({ activities, previouslySeenAt, onClose }: { activi
   )
 }
 
-function DayDetail({ day, activities, profile, canAdd, onEditActivity, onAddActivity, onClose }: { day: Date; activities: Activity[]; profile: AdminProfile | null; canAdd: boolean; onEditActivity: (activity: Activity) => void; onAddActivity: () => void; onClose: () => void }) {
+function DayDetail({ day, activities, profile, canAdd, onEditActivity, onAddActivity, onClose, onCreateCard }: {
+  day: Date; activities: Activity[]; profile: AdminProfile | null; canAdd: boolean; onEditActivity: (activity: Activity) => void
+  onAddActivity: () => void; onClose: () => void; onCreateCard?: (activity: Activity) => void
+}) {
   return (
     <div className="modal-backdrop activity-day-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="day-dialog activity-day-dialog" role="dialog" aria-modal="true" aria-labelledby="day-title">
@@ -1441,7 +1457,8 @@ function DayDetail({ day, activities, profile, canAdd, onEditActivity, onAddActi
         <div className="day-dialog-list">
           {activities.length === 0 && <p className="day-empty">Ainda não há atividades para esta data.</p>}
           {activities.map((activity) => (
-            <ActivityDetails key={activity.id} activity={activity} onEdit={canEditCalendarActivity(profile, activity) ? () => onEditActivity(activity) : undefined} />
+            <ActivityDetails key={activity.id} activity={activity} onCreateCard={onCreateCard}
+              onEdit={canEditCalendarActivity(profile, activity) ? () => onEditActivity(activity) : undefined} />
           ))}
         </div>
       </section>

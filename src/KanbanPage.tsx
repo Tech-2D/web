@@ -16,13 +16,23 @@ import { PageHeading } from './PageHeading'
 import type { Activity } from './types'
 import './kanban.css'
 
-export default function KanbanPage({ activities }: { activities: Activity[] }) {
+export default function KanbanPage({ activities, refreshKey = 0 }: { activities: Activity[]; refreshKey?: number }) {
   const [user, setUser] = useState<User | null>(null)
   const [checked, setChecked] = useState(false)
   const [invite,setInvite]=useState(()=>kanbanInvite(window.location.hash))
   const [mode,setMode]=useState<'personal'|'shared'>(()=>kanbanInvite(window.location.hash) ? 'shared' : 'personal')
   useEffect(() => onAuthStateChanged(auth, account => { setUser(account); setChecked(true) }), [])
-  useEffect(()=>{const change=()=>{const id=kanbanInvite(window.location.hash);setInvite(id);if(id)setMode('shared')};window.addEventListener('hashchange',change);return()=>window.removeEventListener('hashchange',change)},[])
+  useEffect(() => {
+    const change = () => {
+      const id = kanbanInvite(window.location.hash)
+      setInvite(id)
+      if (id) setMode('shared')
+      else if (window.location.hash === '#kanban') setMode('personal')
+    }
+    window.addEventListener('hashchange', change)
+    return () => window.removeEventListener('hashchange', change)
+  }, [])
+  useEffect(() => { if (refreshKey && !kanbanInvite(window.location.hash)) setMode('personal') }, [refreshKey])
   return <main className="kb-page portal-main">
     <div className="portal-toolbar interface-panel">
       <div className="portal-toolbar-heading">
@@ -37,7 +47,7 @@ export default function KanbanPage({ activities }: { activities: Activity[] }) {
       </div>}
     </div>
     {!checked ? <p role="status">Conferindo sua conta…</p> : user ? <div key={user.uid}>
-      {mode==='personal' ? <Workspace user={user} activities={activities}/> : <SharedKanban user={user} invite={invite} activities={activities}/>}
+      {mode==='personal' ? <Workspace user={user} activities={activities} refreshKey={refreshKey}/> : <SharedKanban user={user} invite={invite} activities={activities}/>}
     </div> : <>{invite && <p className="kb-invite-note">Você recebeu um convite para um quadro compartilhado. Entre ou crie sua conta para pedir acesso ao dono.</p>}<KanbanLogin /></>}
   </main>
 }
@@ -74,7 +84,7 @@ function KanbanLogin() {
 type WorkspaceData = { ownerId:string; schemaVersion:1; boards:KanbanBoard[]; createdAt?:unknown }
 type Editor = { kind:'board'; board?:KanbanBoard } | { kind:'column'; column?:KanbanColumn } | { kind:'task'; columnId:string; task?:KanbanTask }
 
-function Workspace({user,activities}:{user:User;activities:Activity[]}) {
+function Workspace({user,activities,refreshKey}:{user:User;activities:Activity[];refreshKey:number}) {
   const [workspace,setWorkspace] = useState<WorkspaceData | null>(null), [loading,setLoading] = useState(true), [error,setError] = useState(''), [notice,setNotice] = useState('')
   const busy=false
   const [stale,setStale] = useState(false), [reload,setReload] = useState(0)
@@ -100,7 +110,7 @@ function Workspace({user,activities}:{user:User;activities:Activity[]}) {
       setWorkspace(data);setStale(false)
     }).catch(()=>{if(active){if(!queuedDocument(ref)?.pending)setWorkspace(null);setStale(true);setError('Não foi possível confirmar o acesso ao Kanban. Confira sua conta e tente recarregar.')}}).finally(()=>{if(active)setLoading(false)})
     return ()=>{active=false;stopQueue()}
-  },[user.uid,reload])
+  },[user.uid,reload,refreshKey])
   const board=workspace?.boards.find(b=>b.id===selected) || workspace?.boards[0]
   const disabled=busy || loading || stale
   async function save(boards:KanbanBoard[]) {
