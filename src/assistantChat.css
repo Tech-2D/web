@@ -8,7 +8,25 @@
   bottom: var(--chat-bottom);
   z-index: 90;
 }
-.agenda-assistant-toggle { display: flex; align-items: center; gap: .55rem; margin-left: auto; }
+.assistant-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  min-height: 45px;
+  padding-inline: 1.125rem;
+  border: 0;
+  border-radius: var(--radius-interface-control, .625rem);
+  background: var(--accent);
+  color: var(--interface-on-accent, #fff);
+  font: inherit;
+  font-size: .8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.assistant-primary:hover:not(:disabled) { background: var(--accent-hover, var(--accent)); }
+.assistant-primary:disabled { cursor: default; }
+.agenda-assistant-toggle { display: flex; margin-left: auto; box-shadow: var(--shadow); }
 .agenda-assistant-panel {
   position: absolute;
   bottom: calc(100% + .65rem);
@@ -60,7 +78,7 @@
 .assistant-examples button { text-align: left; color: var(--accent); background: var(--paper); border: 1px solid var(--line); border-radius: .65rem; padding: .65rem .8rem; cursor: pointer; }
 .assistant-examples button:hover { border-color: var(--accent); }
 .assistant-turn { align-self: flex-start; max-width: 88%; background: var(--surface-alt); padding: .65rem .8rem; border-radius: .7rem; white-space: pre-wrap; }
-.assistant-turn.user { align-self: flex-end; background: var(--accent); color: var(--on-accent, #fff); }
+.assistant-turn.user { align-self: flex-end; background: var(--accent); color: var(--interface-on-accent, #fff); }
 .assistant-result-list { display: grid; gap: .5rem; min-width: 0; }
 .assistant-activity-card {
   display: grid;
