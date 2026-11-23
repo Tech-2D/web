@@ -24,21 +24,36 @@
   gap: .75rem 1rem;
 }
 
-.admin-page-nav {
+.admin-page-navigation {
   grid-area: 1 / 1 / -1 / 2;
   position: sticky;
   top: .75rem;
-  display: grid;
-  gap: .25rem;
-  padding: .5rem;
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: .65rem;
 }
-
-.admin-page-nav :is(button, a), .admin-subsections button {
+.admin-page-nav { display: grid; gap: .75rem; }
+.admin-nav-group + .admin-nav-group { border-top: 1px solid var(--line); padding-top: .55rem; }
+.admin-nav-group h2 {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  margin: 0;
+  padding: .45rem .5rem;
+  color: var(--ink-soft);
+  font-size: .75rem;
+  font-weight: 750;
+}
+.admin-nav-group ul, .admin-pending-actions ul, .admin-class-pending ul { margin: 0; padding: 0; list-style: none; }
+.admin-nav-group ul { display: grid; gap: .125rem; }
+.admin-page-nav :is(button, a), .admin-navigation-toggle {
   display: flex;
   align-items: center;
   gap: .5rem;
+  width: 100%;
   min-height: 44px;
-  padding: .45rem .65rem;
+  padding: .45rem .55rem;
   border: 0;
   border-radius: var(--radius-interface-control);
   background: transparent;
@@ -48,15 +63,15 @@
   text-align: start;
   text-decoration: none;
 }
-
-.admin-page-nav :is(button, a):hover, .admin-subsections button:hover {
-  background: var(--surface-alt);
-  color: var(--ink);
-}
-.admin-page-nav button[aria-current="true"], .admin-subsections button[aria-current="true"] {
+.admin-navigation-toggle { display: none; }
+.admin-page-nav button { padding-inline-start: 1.82rem; }
+.admin-page-nav button > span:first-child, .admin-pending-actions button > span:first-child { flex: 1; min-width: 0; }
+.admin-page-nav :is(button, a):hover { background: var(--surface-alt); color: var(--ink); }
+.admin-page-nav button[aria-current="true"] {
   background: var(--interface-subtle);
   color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--line);
+  border-inline-start: 3px solid var(--interface-accent);
+  padding-inline-start: calc(1.82rem - 3px);
   font-weight: 700;
 }
 .admin-page-nav svg { flex: none; }
@@ -79,40 +94,66 @@
 .admin-page-account .sidebar-block:first-child > strong { grid-column: 1; font-size: .85rem; }
 .admin-page-account .sidebar-block:first-child > button { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
 .admin-page-account .managed-turma { min-width: min(100%, 10rem); }
-.admin-section-heading {
-  grid-area: 2 / 2;
+.admin-pending-actions { grid-area: 2 / 2; display: grid; gap: .55rem; }
+.admin-pending-actions h2 { display: flex; align-items: center; gap: .45rem; margin: 0; color: var(--text); font-size: .875rem; }
+.admin-pending-actions ul {
   display: grid;
-  gap: .625rem;
-}
-.admin-section-heading h2 { margin: 0; color: var(--text); font-size: 1.075rem; }
-.admin-subsections {
-  display: flex;
-  flex-wrap: wrap;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
   gap: .375rem;
-  padding-top: .625rem;
-  border-top: 1px solid var(--line);
 }
-.admin-subsections button { border: 1px solid var(--line); }
-.admin-subsections button[aria-current="true"] {
-  background: var(--interface-accent);
-  color: var(--interface-on-accent);
-  border-color: var(--interface-accent);
-  box-shadow: none;
+.admin-pending-actions button, .admin-class-pending button {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 44px;
+  padding: .45rem .65rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-interface-control);
+  background: var(--paper);
+  color: var(--text);
+  cursor: pointer;
+  text-align: start;
+  font-size: .8rem;
+}
+.admin-pending-actions button { width: 100%; }
+.admin-pending-actions button svg { flex: none; color: var(--ink); }
+:is(.admin-pending-actions, .admin-class-pending) button:hover { border-color: var(--interface-accent); background: var(--surface-alt); }
+.admin-pending-count {
+  flex: none;
+  min-width: 1.35rem;
+  padding: .125rem .35rem;
+  border-radius: 1rem;
+  background: #a31d3f;
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.admin-class-pending { display: grid; gap: .5rem; padding-block: .35rem .8rem; font-size: .8rem; }
+.admin-class-pending ul { display: flex; flex-wrap: wrap; gap: .4rem; }
+.admin-page :is(.admin-page-navigation, .admin-pending-actions, .admin-class-pending) :is(button,a):focus-visible {
+  outline: 2px solid var(--interface-accent);
+  outline-offset: 2px;
 }
 .admin-page-notice { grid-area: 3 / 2; }
 .admin-page-panel { grid-area: 4 / 2; }
 .admin-panel-title { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
-.admin-panel-title h3 { margin: 0; color: var(--text); font-size: 1rem; }
+.admin-panel-location { display: grid; gap: .2rem; }
+.admin-panel-location > span { color: var(--ink-soft); font-size: .75rem; }
+.admin-panel-title h2 { margin: 0; color: var(--text); font-size: 1.175rem; }
+.admin-panel-title h2:focus-visible { outline: 2px solid var(--interface-accent); outline-offset: 3px; border-radius: .2rem; }
 .admin-page .quick-create-warning { margin: 0 0 .75rem; }
 .admin-resolution-overlay { position: fixed; z-index: 25; overflow: auto; }
 
 @media (max-width: 760px) {
   .admin-workspace { display: flex; flex-direction: column; align-items: stretch; }
-  .admin-page-nav {
-    position: static;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.25rem), 1fr));
-  }
-  .admin-page-nav > a { border-top: 0; }
-  .admin-page-notice { order: 1; }
+  .admin-page-navigation { position: static; max-height: none; overflow: visible; }
+  .admin-navigation-toggle { display: flex; justify-content: space-between; }
+  .admin-navigation-toggle > span { display: grid; gap: .15rem; }
+  .admin-navigation-toggle small { color: var(--ink-soft); }
+  .admin-navigation-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .admin-page-nav { margin-top: .5rem; border-top: 1px solid var(--line); padding-top: .5rem; }
+  .admin-page-nav[data-open="false"] { display: none; }
   .admin-page-panel .admin-list-heading { flex-wrap: wrap; }
 }

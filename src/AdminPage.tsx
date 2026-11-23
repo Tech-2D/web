@@ -1,6 +1,6 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, Calendar, CalendarDays, Check, Database, DoorOpen, Edit3, ExternalLink, History, Lightbulb, LoaderCircle, LogOut, Megaphone, MessageSquarePlus, Plus, Paperclip, ShieldCheck, Trash2, UserRound, Users, X, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, Calendar, CalendarDays, Check, ChevronDown, Database, DoorOpen, Edit3, ExternalLink, History, Lightbulb, LoaderCircle, LogOut, Megaphone, MessageSquarePlus, Plus, Paperclip, ShieldCheck, Trash2, UserRound, Users, X, type LucideIcon } from 'lucide-react'
 import { onAuthStateChanged, reload, sendEmailVerification, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { StorageAdminPanel } from './StorageAdminPanel'
@@ -79,6 +79,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   const [managedActivities, setManagedActivities] = useState<Activity[]>([])
   const [globalActivities, setGlobalActivities] = useState<Activity[]>([])
   const [managedSuggestions, setManagedSuggestions] = useState<Suggestion[]>([])
+  const [suggestionCounts, setSuggestionCounts] = useState<Map<string, number>>(() => new Map())
   const [representativeRequests, setRepresentativeRequests] = useState<RepresentativeRequest[]>([])
   const [classRequests, setClassRequests] = useState<ClassRequest[]>([])
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([])
@@ -92,6 +93,8 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   const [updateFeedbackId, setUpdateFeedbackId] = useState('')
   const [adminSearch, setAdminSearch] = useState('')
   const [adminTab, setAdminTab] = useState<AdminTabId>('activities')
+  const [navigationOpen, setNavigationOpen] = useState(false)
+  const panelTitle = useRef<HTMLHeadingElement>(null)
   const [recurrences, setRecurrences] = useState<RecurringActivity[]>([])
   const [repeatWeekly, setRepeatWeekly] = useState(false)
   const [repeatCustom, setRepeatCustom] = useState(false)
@@ -153,6 +156,11 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       setManagedActivities([])
       setGlobalActivities([])
       setManagedSuggestions([])
+      setSuggestionCounts(new Map())
+      setRepresentativeRequests([])
+      setClassRequests([])
+      setFeedbackList([])
+      setNavigationOpen(false)
       setRecurrences([])
       setAccessError('')
       setAuthChecked(!currentUser)
@@ -273,6 +281,19 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   const isSuperAdmin = profile?.role === 'superadmin'
 
   useEffect(() => {
+    if (!isSuperAdmin || !user) return
+    const pendingQuery = query(collection(db, 'suggestions'), where('status', '==', 'pendente'))
+    return onSnapshot(pendingQuery, snapshot => {
+      const counts = new Map<string, number>()
+      for (const item of snapshot.docs) {
+        const turma = item.data().turmaId
+        if (typeof turma === 'string' && classNames.includes(turma)) counts.set(turma, (counts.get(turma) ?? 0) + 1)
+      }
+      setSuggestionCounts(counts)
+    })
+  }, [isSuperAdmin, user, classNames])
+
+  useEffect(() => {
     if (!isSuperAdmin) return
     const pendingQuery = query(collection(db, 'representativeRequests'), where('status', '==', 'pendente'))
     return onSnapshot(pendingQuery, (snapshot) => {
@@ -315,11 +336,11 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
     .sort((a, b) => a.date.localeCompare(b.date) || compareActivities(a, b)), [globalActivities, adminSearch])
   const canManageGlobalActivity = (activity: Activity) => isSuperAdmin || activity.createdBy === user?.uid
   const pendingSuggestions = useMemo(() => managedSuggestions
-    .filter((item) => item.status === 'pendente')
-    .sort((a, b) => a.date.localeCompare(b.date)), [managedSuggestions])
+    .filter((item) => item.turmaId === managedTurma && item.status === 'pendente')
+    .sort((a, b) => a.date.localeCompare(b.date)), [managedSuggestions, managedTurma])
   const processedSuggestions = useMemo(() => managedSuggestions
-    .filter((item) => item.status !== 'pendente' && !item.closedAt)
-    .sort((a, b) => a.date.localeCompare(b.date)), [managedSuggestions])
+    .filter((item) => item.turmaId === managedTurma && item.status !== 'pendente' && !item.closedAt)
+    .sort((a, b) => a.date.localeCompare(b.date)), [managedSuggestions, managedTurma])
 
   async function submitRepresentativeRequest(event: FormEvent) {
     event.preventDefault()
@@ -801,6 +822,9 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
     }
   }
 
+  const otherSuggestionClasses = isSuperAdmin ? classNames.filter(name => name !== managedTurma && suggestionCounts.has(name)) : []
+  const suggestionTotal = pendingSuggestions.length + otherSuggestionClasses.reduce((total, name) => total + (suggestionCounts.get(name) ?? 0), 0)
+
   const adminSections: AdminSection[] = [
     {
       label: 'Agenda da turma',
@@ -809,7 +833,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
         { id: 'activities', label: 'Atividades' },
         { id: 'recurrences', label: 'Atividades recorrentes' },
         { id: 'notices', label: 'Avisos da turma' },
-        { id: 'suggestions', label: 'Sugestões de atividades', count: pendingSuggestions.length },
+        { id: 'suggestions', label: 'Sugestões de atividades', count: suggestionTotal },
       ],
     },
   ]
@@ -826,7 +850,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       label: 'Turmas e acessos',
       icon: Users,
       tabs: [
-        { id: 'representatives', label: 'Representantes', count: representativeRequests.length },
+        { id: 'representatives', label: 'Representantes e pedidos', count: representativeRequests.length },
         { id: 'administrators', label: 'Administradores' },
         { id: 'classes', label: 'Pedidos de novas turmas', count: classRequests.length },
         { id: 'users' as const, label: 'Contas de usuários' },
@@ -853,6 +877,16 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   })
   const activeSection = adminSections.find(section => section.tabs.some(tab => tab.id === adminTab)) ?? adminSections[0]
   const activeTab = activeSection.tabs.find(tab => tab.id === adminTab) ?? activeSection.tabs[0]
+  const pendingActions = adminSections.flatMap(section => section.tabs).filter(tab => (tab.count ?? 0) > 0)
+
+  function openPanelTab(tab: AdminTabId, jumpToPendingClass = false) {
+    if (jumpToPendingClass && tab === 'suggestions' && !pendingSuggestions.length && otherSuggestionClasses.length) {
+      setManagedTurma(otherSuggestionClasses[0])
+    }
+    setAdminTab(tab)
+    setNavigationOpen(false)
+    requestAnimationFrame(() => panelTitle.current?.focus())
+  }
 
   return (
     <main className="admin-page portal-main">
@@ -949,39 +983,50 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   )}
                 </div>
               </aside>
-              <nav className="admin-page-nav interface-panel" aria-label="Áreas do painel">
-                {adminSections.map(({ label, icon: Icon, tabs }) => (
-                  <button key={label} type="button" aria-current={label === activeSection.label ? 'true' : undefined}
-                    onClick={() => {
-                      if (label !== activeSection.label) setAdminTab(tabs[0].id)
-                    }}>
-                    <Icon size={18} aria-hidden="true" />
-                    <span>{label}</span>
-                  </button>
-                ))}
-                {isSuperAdmin && (
-                  <a href="https://tech-2d.github.io/database/" target="_blank" rel="noopener noreferrer" aria-label="Modelagem de dados (abre em nova aba)">
-                    <ExternalLink size={16} aria-hidden="true" />
-                    <span>Modelagem de dados</span>
-                  </a>
-                )}
-              </nav>
-
-              <div className="admin-section-heading interface-panel">
-                <h2>{activeSection.label}</h2>
-                <nav className="admin-subsections" aria-label={`Subseções de ${activeSection.label}`}>
-                  {activeSection.tabs.map(tab => (
-                    <button key={tab.id} type="button" aria-current={tab.id === activeTab.id ? 'true' : undefined} onClick={() => setAdminTab(tab.id)}>
-                      {tab.label}
-                      {!!tab.count && <span className="notif-count" aria-label={`${tab.count} pendentes`}>{tab.count}</span>}
-                    </button>
+              <div className="admin-page-navigation interface-panel">
+                <button className="admin-navigation-toggle" type="button" aria-expanded={navigationOpen}
+                  aria-controls="admin-panel-nav" onClick={() => setNavigationOpen(open => !open)}>
+                  <span><strong>Áreas do painel</strong><small>{activeTab.label}</small></span>
+                  <ChevronDown size={18} aria-hidden="true" />
+                </button>
+                <nav id="admin-panel-nav" className="admin-page-nav" data-open={navigationOpen} aria-label="Áreas do painel">
+                  {adminSections.map(({ label, icon: Icon, tabs }) => (
+                    <div className="admin-nav-group" key={label}>
+                      <h2><Icon size={16} aria-hidden="true" />{label}</h2>
+                      <ul>{tabs.map(tab => (
+                        <li key={tab.id}><button type="button" aria-current={tab.id === activeTab.id ? 'true' : undefined} onClick={() => openPanelTab(tab.id)}>
+                          <span>{tab.label}</span>
+                          {!!tab.count && <span className="admin-pending-count" aria-label={`${tab.count} pendentes`}>{tab.count}</span>}
+                        </button></li>
+                      ))}</ul>
+                    </div>
                   ))}
+                  {isSuperAdmin && (
+                    <a href="https://tech-2d.github.io/database/" target="_blank" rel="noopener noreferrer" aria-label="Modelagem de dados (abre em nova aba)">
+                      <ExternalLink size={16} aria-hidden="true" /> Modelagem de dados
+                    </a>
+                  )}
                 </nav>
               </div>
 
+              {pendingActions.length > 0 && <section className="admin-pending-actions interface-panel" aria-labelledby="admin-pending-heading">
+                <h2 id="admin-pending-heading"><Bell size={17} aria-hidden="true" /> Pendências para revisar</h2>
+                <ul>{pendingActions.map(tab => (
+                  <li key={tab.id}><button type="button" onClick={() => openPanelTab(tab.id, true)}>
+                    <span>{tab.label}</span><span className="admin-pending-count" aria-label={`${tab.count} pendentes`}>{tab.count}</span>
+                    <ArrowRight size={15} aria-hidden="true" />
+                  </button></li>
+                ))}</ul>
+              </section>}
+
+              {notice && <div className="notice admin-page-notice" role="status"><Check size={17} /> {notice}</div>}
+
                 <section className="admin-page-panel interface-panel" aria-labelledby="admin-section-title">
                   <div className="admin-panel-title">
-                    <h3 id="admin-section-title">{activeTab.label}</h3>
+                    <div className="admin-panel-location">
+                      <span>{activeSection.label}</span>
+                      <h2 id="admin-section-title" tabIndex={-1} ref={panelTitle}>{activeTab.label}</h2>
+                    </div>
                     {(adminTab === 'activities' || adminTab === 'recurrences') && (
                       <button type="button" className="primary-button compact" onClick={startCreate}><Plus size={18} /> Nova atividade</button>
                     )}
@@ -1045,8 +1090,16 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   {adminTab === 'notices' && <NoticesAdminPanel key={managedTurma} turmaId={managedTurma} user={user} />}
                   {adminTab === 'suggestions' && (
                     <>
+                      {otherSuggestionClasses.length > 0 && <div className="admin-class-pending">
+                        <strong>Pendências em outras turmas</strong>
+                        <ul>{otherSuggestionClasses.map(name => <li key={name}>
+                          <button type="button" onClick={() => setManagedTurma(name)}>
+                            {name}<span className="admin-pending-count" aria-label={`${suggestionCounts.get(name)} pendentes`}>{suggestionCounts.get(name)}</span>
+                          </button>
+                        </li>)}</ul>
+                      </div>}
                       <div className="admin-list-heading">
-                        <strong>Sugestões dos alunos</strong>
+                        <strong>Sugestões de {managedTurma}</strong>
                         {pendingSuggestions.length > 0 && <span className="soon-badge pending">{pendingSuggestions.length} pendente{pendingSuggestions.length === 1 ? '' : 's'}</span>}
                       </div>
                       {suggestionError && <p className="form-error" role="alert">{suggestionError}</p>}
@@ -1191,7 +1244,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   )}
                 </section>
 
-              {notice && <div className="notice admin-page-notice" role="status"><Check size={17} /> {notice}</div>}
             </div>
           </div>
         )}
