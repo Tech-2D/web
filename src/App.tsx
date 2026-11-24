@@ -22,10 +22,9 @@ import { movePeriod, periodTitle, type CalendarView } from './calendarViews'
 import { CalendarViewSwap, CalendarViewSwitch } from './CalendarViewSwap'
 import { PeriodAgenda } from './PeriodAgenda'
 import { WEEKDAY_LABELS, compareActivities, dateKey, getMonthMatrix, isToday } from './calendar'
-import { ACTIVITY_TYPES, ACTIVITY_TYPE_COLORS, ACTIVITY_TYPE_LABELS, SUGGESTION_STATUS_LABELS, type Activity, type ActivityInput, type ActivityType, type AdminProfile, type Announcement, type Suggestion, type SuggestionInput } from './types'
+import { ACTIVITY_TYPES, ACTIVITY_TYPE_COLORS, ACTIVITY_TYPE_LABELS, SUGGESTION_STATUS_LABELS, type Activity, type ActivityInput, type ActivityType, type AdminProfile, type Suggestion, type SuggestionInput } from './types'
 import { addMySuggestionId, readMySuggestionIds, removeMySuggestionId } from './mySuggestions'
 import { markNotificationsSeenNow, readLastSeen } from './notifications'
-import { markAnnouncementSeen, readAnnouncementSeenAt } from './announcementSeen'
 import { canCreateForSelectedClass } from './quickCreate'
 import { activeNotices, canManageNotices } from './notices'
 import { useNow, useTurmaNotices } from './useNotices'
@@ -118,8 +117,6 @@ function App() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [notificationsSeenAt, setNotificationsSeenAt] = useState(0)
   const [notificationsOpenedFrom, setNotificationsOpenedFrom] = useState(0)
-  const [announcement, setAnnouncement] = useState<Announcement | null>(null)
-  const [announcementSeenAt, setAnnouncementSeenAt] = useState(readAnnouncementSeenAt)
   const [systemUpdates, setSystemUpdates] = useState<SystemUpdate[]>([])
   const [updatesReady, setUpdatesReady] = useState(false)
   const [updatesError, setUpdatesError] = useState('')
@@ -226,14 +223,11 @@ function App() {
     : null
   const activeMenuDialog = notificationsOpen || updatesOpen || noticesOpen
     || suggestOpen || classRequestOpen || feedbackOpen || mySuggestionsOpen || configOpen || docsOpen
-  const menuDialogOpen = linkedMenuDialog || activeMenuDialog
   const acknowledgeSystemUpdate = useCallback((id: string) => {
     markSystemUpdateSeen(id)
     setSeenSystemUpdateId(id)
   }, [])
 
-  const announcementUpdatedMs = announcement?.updatedAt?.toDate().getTime() ?? 0
-  const showAnnouncement = Boolean(turmaId) && announcementUpdatedMs > 0 && announcementUpdatedMs > announcementSeenAt
 
   useEffect(() => {
     const syncOptionsPage = () => {
@@ -321,13 +315,12 @@ function App() {
     let loaded = false
     setLoading(true)
     setTurmaActivities([])
-    type PublicAgenda = { activities: Activity[]; classes: string[]; announcement: Announcement | null; updates: SystemUpdate[]; meta: CatalogMeta }
+    type PublicAgenda = { activities: Activity[]; classes: string[]; updates: SystemUpdate[]; meta: CatalogMeta }
     return observeCatalog<PublicAgenda>('agenda', data => {
       loaded = true
       setClassNames([...new Set([...CLASS_NAMES, ...data.classes])].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })))
       setTurmaActivities(turmaId ? data.activities.filter(item => item.turmaId === turmaId) : [])
       setGlobalActivities(data.activities.filter(item => item.turmaId === null))
-      setAnnouncement(data.announcement)
       setSystemUpdates(data.updates)
       setUpdatesReady(true)
       setUpdatesError('')
@@ -736,16 +729,6 @@ function App() {
       )}
 
       {notificationsOpen && <NotificationsDialog activities={recentActivities} previouslySeenAt={notificationsOpenedFrom} onClose={() => setNotificationsOpen(false)} />}
-
-      {showAnnouncement && announcement && updatesReady && !linkedActivityId && !menuDialogOpen && (
-        <AnnouncementModal
-          message={announcement.message}
-          onClose={() => {
-            markAnnouncementSeen(announcementUpdatedMs)
-            setAnnouncementSeenAt(announcementUpdatedMs)
-          }}
-        />
-      )}
 
       {configOpen && (
         <ConfigDialog
@@ -1328,28 +1311,6 @@ function FeedbackDialog({ turmaId, onClose }: { turmaId: string | null; onClose:
             <div className="form-actions"><button type="button" className="secondary-button" onClick={onClose}>Cancelar</button><button className="primary-button compact" disabled={busy}>{busy ? <LoaderCircle className="spin" /> : 'Enviar comentário'}</button></div>
           </form>
         )}
-      </section>
-    </div>
-  )
-}
-
-function AnnouncementModal({ message, onClose }: { message: string; onClose: () => void }) {
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
-
-  return (
-    <div className="modal-backdrop" role="presentation">
-      <section className="day-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-title">
-        <div className="dialog-header">
-          <div><p className="eyebrow dark">NOVIDADE</p><h2 id="announcement-title">O que mudou</h2></div>
-        </div>
-        <div className="announcement-body">
-          <p>{message}</p>
-          <button className="primary-button" onClick={onClose}>Entendi</button>
-        </div>
       </section>
     </div>
   )

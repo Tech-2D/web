@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, RefreshCw, TrendingUp } from 'lucide-react'
+import { Activity, MessageCircle, RefreshCw, TrendingUp } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { API_BASE } from './apiBase'
 import { auth } from './firebase'
@@ -48,6 +48,7 @@ export function SiteAccessPanel({ user }: { user: User }) {
   const measured = timeline.filter(day => day.total !== null)
   const peak = measured.reduce<(typeof timeline)[number] | undefined>((best, day) => !best || day.total! > best.total! ? day : best, undefined)
   const sites = accessSiteIds.filter(site => result?.sites[site])
+  const assistantDaily = result?.assistantDaily
 
   return (
     <section className="site-access" aria-labelledby="site-access-heading">
@@ -71,6 +72,22 @@ export function SiteAccessPanel({ user }: { user: User }) {
           </dl>
         </div>
         <SiteAccessChart key={days + ':' + revision} rows={timeline} />
+        {assistantDaily && <div className="site-access-card">
+          <h4><MessageCircle size={16} aria-hidden="true" /> Uso do Assistente</h4>
+          <strong>{formatAccessCount(assistantDaily.reduce((sum, row) => sum + row.messages, 0))} <span>mensagens no período</span></strong>
+          <small>{formatAccessCount(assistantDaily.find(row => row.date === result.today)?.messages ?? 0)} hoje</small>
+          {assistantDaily.length > 0 ? <details className="access-daily-details">
+            <summary>Ver mensagens por dia</summary>
+            <table className="site-access-table assistant-usage-table">
+              <thead><tr><th scope="col">Dia</th><th scope="col">Mensagens</th></tr></thead>
+              <tbody>{assistantDaily.map(row => <tr key={row.date}>
+                <th scope="row"><time dateTime={row.date}>{accessDateLabel(row.date)}</time></th>
+                <td>{formatAccessCount(row.messages)}</td>
+              </tr>)}</tbody>
+            </table>
+          </details> : <small>Nenhuma mensagem registrada neste período.</small>}
+          <small>A contagem começa com a ativação desta métrica.</small>
+        </div>}
         <div className="site-access-summary">
           {sites.map(site => {
             const stats = result.sites[site]

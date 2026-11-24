@@ -82,6 +82,7 @@
 .access-daily-details summary { padding: .875rem 1rem; color: var(--ink); font-size: .875rem; font-weight: 650; cursor: pointer; }
 .access-table-scroll { overflow-x: auto; padding: 0 1rem 1rem; }
 .site-access-table { min-width: 400px; }
+.site-access-table.assistant-usage-table { min-width: 0; }
 .site-access-table caption { color: var(--ink-soft); font-weight: 500; font-size: .75rem; }
 .site-access-table tbody tr:hover { background: var(--surface-alt, var(--paper)); }
 .site-access :is(input, button, select, summary, [tabindex="0"]):focus-visible { outline: 2px solid var(--accent, var(--ink)); outline-offset: 3px; }

@@ -222,7 +222,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const sizeAction = expanded ? 'Restaurar tamanho do chat' : 'Ampliar chat'
 
   return <div ref={chat} className="agenda-assistant" hidden={covered} data-expanded={open && expanded ? 'true' : undefined}>
-    <button ref={toggle} className="agenda-assistant-toggle primary-button compact" type="button" aria-expanded={open} onClick={() => open ? close() : setOpen(true)}>
+    <button ref={toggle} className="agenda-assistant-toggle assistant-primary" type="button" aria-expanded={open} onClick={() => open ? close() : setOpen(true)}>
       <MessageCircle size={20} aria-hidden="true" /> Assistente
     </button>
     {open && <section className="agenda-assistant-panel" aria-label="Assistente" onKeyDown={e => { if (e.key === 'Escape') close() }}>
@@ -294,7 +294,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
               event.preventDefault(); event.currentTarget.form?.requestSubmit()
             }
           }} />
-        <button type="submit" className="primary-button compact" disabled={busy || !message.trim()}>Enviar</button>
+        <button type="submit" className="assistant-primary" disabled={busy || !message.trim()}>Enviar</button>
       </form>
       {quotaText && <footer className="agenda-assistant-quota" aria-live="polite">{quotaText}</footer>}
     </section>}
@@ -382,7 +382,7 @@ function DraftCard({ draft, busy, retryOnly, submitted, onFieldsChange, onAction
     <form className="kb-form" onSubmit={create}>
       <CardFieldsEditor draft={draft} fields={fields} disabled={busy || retryOnly} onChange={next => { setFields(next); onFieldsChange(next) }} />
       <div className="assistant-kanban-actions">
-        <button className="primary-button compact" type="submit" disabled={busy || !fields.column_id || !fields.title.trim()}>
+        <button className="assistant-primary" type="submit" disabled={busy || !fields.column_id || !fields.title.trim()}>
           {retryOnly ? 'Tentar novamente' : 'Criar card'}
         </button>
         {!retryOnly && <button className="kb-link" type="button" disabled={busy} onClick={() => onAction('cancel')}>Cancelar</button>}
@@ -424,7 +424,7 @@ function DraftBatch({ batch, busy, retryOnly, submitted, onFieldsChange, onActio
         }} />
     </CardPreview>)}
     <div className="assistant-kanban-actions">
-      <button className="primary-button compact" type="submit" disabled={busy}>
+      <button className="assistant-primary" type="submit" disabled={busy}>
         {retryOnly ? 'Tentar novamente' : `Criar ${batch.drafts.length} cards`}
       </button>
       {!retryOnly && <button className="kb-link" type="button" disabled={busy} onClick={() => onAction('cancel')}>Cancelar</button>}
