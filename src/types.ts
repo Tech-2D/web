@@ -108,8 +108,3 @@ export type Feedback = {
   publicCreditAllowed?: boolean
   publicCreditName?: string
 }
-
-export type Announcement = {
-  message: string
-  updatedAt: { toDate: () => Date } | null
-}

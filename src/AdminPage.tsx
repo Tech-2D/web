@@ -11,7 +11,7 @@ import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
 import { AdministratorsPanel } from './AdministratorsPanel'
 import { ATTACHMENTS_ENABLED, deleteActivityWithAttachments, formatAttachmentSize, MAX_ATTACHMENTS, removeAttachment, uploadAttachment, validateAttachment } from './attachments'
-import { addDoc, collection, deleteDoc, doc, knownDocument, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from './dataClient'
+import { addDoc, collection, deleteDoc, doc, knownDocument, onSnapshot, query, serverTimestamp, updateDoc, where, writeBatch } from './dataClient'
 import { enqueueDocument, mergeQueuedActivities, pendingActivityStates, queuedDocument, QUEUED_CHANGED } from './queuedWrites'
 import { auth, db } from './firebase'
 import { CLASS_NAMES } from './classNames'
@@ -25,7 +25,7 @@ import { creditForUpdate, isCreditEligible } from './publicCredit'
 import { canEditCalendarActivity } from './calendarPermissions'
 import { activitySaveError } from './activityErrors'
 import { compareActivities, dateKey, matchesSearch } from './calendar'
-import { ACTIVITY_TYPES, ACTIVITY_TYPE_COLORS, ACTIVITY_TYPE_LABELS, SUGGESTION_STATUS_LABELS, type Activity, type ActivityAttachment, type ActivityInput, type ActivityType, type AdminProfile, type Announcement, type Feedback, type RecurringActivity, type Suggestion, type SuggestionResolution } from './types'
+import { ACTIVITY_TYPES, ACTIVITY_TYPE_COLORS, ACTIVITY_TYPE_LABELS, SUGGESTION_STATUS_LABELS, type Activity, type ActivityAttachment, type ActivityInput, type ActivityType, type AdminProfile, type Feedback, type RecurringActivity, type Suggestion, type SuggestionResolution } from './types'
 import { isValidRepresentativeEmail, normalizeRepresentativeEmail, readRepresentativeRequestId, storeRepresentativeRequestId, type RepresentativeRequest } from './representativeAccess'
 import { canCreateForSelectedClass } from './quickCreate'
 import { NoticesAdminPanel } from './NoticeBoard'
@@ -55,7 +55,7 @@ type AdminPageProps = {
 }
 
 type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
-  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'announcement' | 'feedback' | 'storage' | 'access' | 'users' | 'schedules' | 'scheduleImport'
+  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'users' | 'schedules' | 'scheduleImport'
 
 type AdminSection = {
   label: string
@@ -86,8 +86,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   const [feedbackFilter, setFeedbackFilter] = useState<FeedbackFilter>('pending')
   const pendingFeedbackCount = useMemo(() => filterFeedback(feedbackList, 'pending').length, [feedbackList])
   const visibleFeedback = useMemo(() => filterFeedback(feedbackList, feedbackFilter), [feedbackList, feedbackFilter])
-  const [announcement, setAnnouncement] = useState<Announcement | null>(null)
-  const [announcementDraft, setAnnouncementDraft] = useState('')
   const [updateTitle, setUpdateTitle] = useState('')
   const [updateBody, setUpdateBody] = useState('')
   const [updateFeedbackId, setUpdateFeedbackId] = useState('')
@@ -315,15 +313,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       setFeedbackList(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Feedback))
     })
   }, [isSuperAdmin])
-
-  useEffect(() => {
-    if (!isSuperAdmin || adminTab !== 'announcement') return
-    return onSnapshot(doc(db, 'announcement', 'latest'), (snapshot) => {
-      const data = snapshot.exists() ? (snapshot.data() as Announcement) : null
-      setAnnouncement(data)
-      setAnnouncementDraft(data?.message ?? '')
-    })
-  }, [isSuperAdmin, adminTab])
 
   const isRepresentante = profile?.role === 'representante'
   const quickCreateMismatch = Boolean(quickCreateDate && profile && !canCreateForSelectedClass(profile, publicTurmaId))
@@ -761,35 +750,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
     }
   }
 
-  async function publishAnnouncement() {
-    const message = announcementDraft.trim()
-    if (!message) return
-    setBusy(true)
-    try {
-      await setDoc(doc(db, 'announcement', 'latest'), { message, updatedAt: serverTimestamp() })
-      await invalidateCatalog('agenda')
-      setNotice('Aviso publicado para todos.')
-      window.setTimeout(() => setNotice(''), 2800)
-    } catch {
-      setNotice('Não foi possível publicar o aviso.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function removeAnnouncement() {
-    if (!window.confirm('Remover o aviso atual?')) return
-    try {
-      await deleteDoc(doc(db, 'announcement', 'latest'))
-      await invalidateCatalog('agenda')
-      setAnnouncementDraft('')
-      setNotice('Aviso removido.')
-      window.setTimeout(() => setNotice(''), 2800)
-    } catch {
-      setNotice('Não foi possível remover o aviso.')
-    }
-  }
-
   async function publishSystemUpdate(event: FormEvent) {
     event.preventDefault()
     if (!user || !isSuperAdmin) return
@@ -861,7 +821,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       icon: Megaphone,
       tabs: [
         { id: 'updates', label: 'Atualizações do sistema' },
-        { id: 'announcement', label: 'Aviso geral' },
         { id: 'feedback', label: 'Feedback do portal', count: pendingFeedbackCount },
         { id: 'access' as const, label: 'Estatísticas de acesso' },
       ],
@@ -1197,28 +1156,6 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                       </form>
                       {systemUpdates.length > 0 && <div className="system-update-admin-recent"><strong>Última publicação</strong>{systemUpdates.map((item) => <div key={item.id}><span>{item.title}</span><time>{item.publishedAt ? item.publishedAt.toDate().toLocaleDateString('pt-BR') : 'Publicando…'}</time></div>)}</div>}
                     </>
-                  )}
-                  {isSuperAdmin && adminTab === 'announcement' && (
-                      <div className="announcement-editor">
-                        <textarea
-                          rows={4}
-                          maxLength={500}
-                          value={announcementDraft}
-                          onChange={(event) => setAnnouncementDraft(event.target.value)}
-                          placeholder="Ex.: Agora dá pra sugerir atividades! Toca no ícone de lâmpada no topo da agenda."
-                        />
-                        <div className="announcement-editor-actions">
-                          <span className="config-hint">
-                            {announcement?.updatedAt ? `Publicado em ${announcement.updatedAt.toDate().toLocaleString('pt-BR')}` : 'Nenhum aviso publicado no momento.'}
-                          </span>
-                          <div className="toolbar-actions">
-                            {announcement && <button type="button" className="secondary-button" onClick={removeAnnouncement}>Remover aviso</button>}
-                            <button type="button" className="primary-button compact" onClick={publishAnnouncement} disabled={busy || !announcementDraft.trim()}>
-                              <Megaphone size={16} /> Publicar aviso
-                            </button>
-                          </div>
-                        </div>
-                      </div>
                   )}
                   {isSuperAdmin && adminTab === 'feedback' && (
                     <>

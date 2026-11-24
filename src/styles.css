@@ -310,13 +310,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sidebar-block strong { color: var(--ink); font-size: 12px; overflow-wrap: anywhere; }
 .sidebar-block .secondary-button { justify-self: start; margin-top: 4px; }
 
-.announcement-editor { display: grid; gap: 10px; margin-bottom: 20px; }
-.announcement-editor textarea { width: 100%; border: 1px solid var(--line); background: var(--paper); padding: 12px 13px; outline: none; color: var(--text); border-radius: 6px; resize: vertical; }
-.announcement-editor textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--mint); }
-.announcement-editor-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
-.announcement-body { padding: 24px 30px 30px; }
-.announcement-body p { white-space: pre-wrap; color: var(--text); font-size: 14px; line-height: 1.6; margin: 0 0 22px; }
 .updates-history-dialog { width: min(620px, 100%); max-height: min(780px, calc(100dvh - 40px)); overflow-y: auto; border-radius: 10px; background: var(--paper); box-shadow: var(--shadow); }
 .updates-history-list { display: grid; padding: 22px 30px 30px; }
 .updates-history-item { position: relative; padding: 0 0 22px 22px; border-left: 1px solid var(--line); }
