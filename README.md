@@ -59,6 +59,8 @@ A Agenda lê os avisos da turma em `GET /api/catalog/notices?class=…`. Represe
 
 ## Rodar localmente
 
+O [AGENTS.md](AGENTS.md) descreve o fluxo de desenvolvimento por tarefa e indica onde encontrar o índice do ecossistema.
+
 Use Node.js 22 ou mais recente.
 
 ```bash
