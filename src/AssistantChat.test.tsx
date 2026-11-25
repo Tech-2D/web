@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { User } from 'firebase/auth'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import AssistantChat from './AssistantChat'
@@ -25,11 +25,39 @@ function send(text: string) {
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
   vi.unstubAllGlobals()
   window.history.replaceState(null, '', '/')
 })
 
 describe('contrato do chat integrado', () => {
+  it('alterna os convites enquanto fechado e abre o chat sem enviar mensagem', () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const props = { account, endpoint, preferredClass: '2° TECH D' }
+    const view = render(<AssistantChat {...props} />)
+    const first = screen.getByText('Quer saber o que tem na Agenda hoje?')
+    const bubble = first.closest('[data-visible]')
+    expect(bubble?.getAttribute('data-visible')).toBe('false')
+    act(() => vi.advanceTimersByTime(6000))
+    expect(bubble?.getAttribute('data-visible')).toBe('true')
+    act(() => vi.advanceTimersByTime(10000))
+    expect(bubble?.getAttribute('data-visible')).toBe('false')
+    act(() => vi.advanceTimersByTime(50000))
+    expect(bubble?.getAttribute('data-visible')).toBe('true')
+    expect(screen.getByText('Posso te ajudar a encontrar o horário de um professor.')).toBeDefined()
+
+    view.rerender(<AssistantChat {...props} covered />)
+    expect(screen.queryByText('Conversar com o D2')).toBeNull()
+    view.rerender(<AssistantChat {...props} />)
+    act(() => vi.advanceTimersByTime(6000))
+    fireEvent.click(screen.getByText('Conversar com o D2'))
+    expect(screen.getByRole('textbox', { name: 'Sua mensagem' })).toBeDefined()
+    expect(screen.queryByText('Conversar com o D2')).toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('troca a dica sem enviar mensagens e envia a pergunta escolhida', async () => {
     const fetchMock = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(async () => Response.json({ answer: 'Vamos conferir a Agenda.' }))
     vi.stubGlobal('fetch', fetchMock)

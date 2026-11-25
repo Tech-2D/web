@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { CalendarDays, ChevronDown, Maximize2, Minimize2, Plus, Sparkles, X } from 'lucide-react'
+import { ArrowUpRight, CalendarDays, ChevronDown, Maximize2, Minimize2, Plus, Sparkles, X } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { KanbanCardFace } from './KanbanCardFace'
 import { AssistantWelcome } from './AssistantWelcome'
@@ -21,6 +21,39 @@ type D2Reaction = 'repouso' | 'saudacao' | 'respondendo' | 'confirmacao'
 
 const noWelcomeActivities: readonly WelcomeActivity[] = []
 const kanbanDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
+const launcherHints = [
+  'Quer saber o que tem na Agenda hoje?',
+  'Posso te ajudar a encontrar o horário de um professor.',
+  'Quer transformar um lembrete em um card do Kanban?',
+]
+
+function AssistantLauncherHint() {
+  const [hint, setHint] = useState(0)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    let nextHint = 0
+    let hide = 0
+    const show = () => {
+      next = window.setTimeout(show, 60000)
+      if (document.hidden) return
+      setHint(nextHint)
+      nextHint = (nextHint + 1) % launcherHints.length
+      setVisible(true)
+      hide = window.setTimeout(() => setVisible(false), 10000)
+    }
+    let next = window.setTimeout(show, 6000)
+    return () => {
+      window.clearTimeout(hide)
+      window.clearTimeout(next)
+    }
+  }, [])
+
+  return <span className="assistant-launcher-hint" data-visible={visible} aria-hidden="true">
+    <span>{launcherHints[hint]}</span>
+    <span className="assistant-launcher-hint-action">Conversar com o D2 <ArrowUpRight size={13} /></span>
+  </span>
+}
 
 export default function AssistantChat({ account, preferredClass, endpoint, prefill, covered, onViewKanban, agendaPath = sitePaths.agenda, welcomeActivities = noWelcomeActivities }: {
   account: User; preferredClass: string | null; endpoint: string; prefill?: AssistantActivityReference | null; covered?: boolean
@@ -240,6 +273,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
       else { reactD2('saudacao'); setOpen(true) }
     }}>
       <img className="d2-launcher-avatar" src={d2Avatar} alt="" width="28" height="28" /> Assistente
+      {!open && !covered && <AssistantLauncherHint />}
     </button>
     {open && <section className="agenda-assistant-panel" aria-label="Assistente" onKeyDown={e => { if (e.key === 'Escape') close() }}>
       <header>
