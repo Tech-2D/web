@@ -27,7 +27,12 @@
 .assistant-primary:hover:not(:disabled) { background: var(--accent-hover, var(--accent)); }
 .assistant-primary:disabled { cursor: default; }
 .agenda-assistant-toggle { display: flex; margin-left: auto; box-shadow: var(--shadow); }
-.d2-launcher-avatar { flex: none; width: 28px; height: 28px; border-radius: .5rem; background: #fff; }
+.d2-launcher-avatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 0 .7px #fff) drop-shadow(0 0 .5px #fff);
+}
 .agenda-assistant-panel {
   position: absolute;
   bottom: calc(100% + .65rem);
