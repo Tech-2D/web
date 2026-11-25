@@ -8,6 +8,7 @@ import { RepresentativesPanel } from './RepresentativesPanel'
 import { ActiveRepresentativesPanel } from './ActiveRepresentativesPanel'
 import { SiteAccessPanel } from './SiteAccessPanel'
 import { AssistantAdminPanel } from './AssistantAdminPanel'
+import { RecoveryAdminPanel } from './RecoveryAdminPanel'
 import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
 import { AdministratorsPanel } from './AdministratorsPanel'
@@ -56,7 +57,7 @@ type AdminPageProps = {
 }
 
 type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
-  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport'
+  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport' | 'recovery'
 
 type AdminSection = {
   id: string
@@ -80,6 +81,7 @@ const adminDescriptions: Record<AdminTabId, string> = {
   feedback: 'Organize as sugestões de melhoria enviadas pelo portal.',
   access: 'Compare o uso da Agenda, Professores, Notas e Kanban.',
   assistant: 'Acompanhe as mensagens, as contas mais ativas e o limite diário do D2.',
+  recovery: 'Prepare o edital e os horários das aulas e defina quando a recuperação aparece na Agenda.',
   retention: 'Defina por quanto tempo as atividades da turma ficam na Agenda.',
   storage: 'Consulte o espaço ocupado e gerencie os anexos das atividades.',
 }
@@ -818,6 +820,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
         { id: 'recurrences', label: 'Atividades recorrentes', icon: Repeat2 },
         { id: 'notices', label: 'Avisos da turma', icon: Bell },
         { id: 'suggestions', label: 'Sugestões de atividades', icon: Lightbulb, count: suggestionTotal },
+        ...(isSuperAdmin ? [{ id: 'recovery' as const, label: 'Recuperação', icon: GraduationCap }] : []),
       ],
     },
   ]
@@ -866,7 +869,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
   const activeSection = adminSections.find(section => section.tabs.some(tab => tab.id === adminTab)) ?? adminSections[0]
   const activeTab = activeSection.tabs.find(tab => tab.id === adminTab) ?? activeSection.tabs[0]
   const openGroup = groupOverride?.tab === adminTab ? groupOverride.group : activeSection.id
-  const usesClass = activeSection.id === 'agenda' || activeTab.id === 'retention'
+  const usesClass = (activeSection.id === 'agenda' && activeTab.id !== 'recovery') || activeTab.id === 'retention'
   const PanelIcon = activeTab.icon
   const pendingActions = adminSections.flatMap(section => section.tabs).filter(tab => (tab.count ?? 0) > 0)
 
@@ -1180,6 +1183,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   {isSuperAdmin && adminTab === 'storage' && <StorageAdminPanel />}
                   {isSuperAdmin && adminTab === 'access' && <SiteAccessPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'assistant' && <AssistantAdminPanel key={user.uid} user={user} />}
+                  {isSuperAdmin && adminTab === 'recovery' && <RecoveryAdminPanel key={user.uid} user={user} classNames={classNames} />}
                   {isSuperAdmin && adminTab === 'users' && <AgendaUsersPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'administrators' && <AdministratorsPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'updates' && (

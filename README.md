@@ -61,6 +61,10 @@ O formulário pode anexar até cinco PDF, DOCX, PPTX, ZIP ou imagens de até 50 
 
 A Agenda lê os avisos da turma em `GET /api/catalog/notices?class=…`. Representantes gerenciam os avisos da própria turma e superadministradores podem gerenciar os de qualquer turma. O e-mail do autor fica restrito à área administrativa. Cada publicação expira em sete dias.
 
+### Período de recuperação
+
+Em **Administração → Agenda da turma → Recuperação**, administradores gerais preparam o edital e os horários. Depois da publicação, a Agenda abre nessa visão entre o início e o fim definidos em horário de Brasília. A grade pode ser filtrada por turma e o calendário normal continua disponível. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
+
 ## Rodar localmente
 
 O [AGENTS.md](AGENTS.md) descreve o fluxo de desenvolvimento por tarefa e indica onde encontrar o índice do ecossistema.

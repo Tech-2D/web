@@ -10,6 +10,8 @@ import { AttachmentLinks } from './AttachmentLinks'
 import { ATTACHMENTS_ENABLED } from './attachments'
 import { FirebaseError } from 'firebase/app'
 import { PageHeading } from './PageHeading'
+import { RecoveryAgenda } from './RecoveryAgenda'
+import { useRecoveryMode } from './recovery'
 import { SiteNavigation } from './SiteNavigation'
 import { addDoc, collection, doc, getDoc, serverTimestamp } from './dataClient'
 import { auth, db } from './firebase'
@@ -113,6 +115,9 @@ function App() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [noticesOpen, setNoticesOpen] = useState(false)
   const [calendarUser, setCalendarUser] = useState<User | null>(null)
+  const { period, checking: checkingRecovery } = useRecoveryMode(calendarUser, !adminOpen && !kanbanOpen && !moreOptionsOpen)
+  const [regularCalendarVersion, setRegularCalendarVersion] = useState<number>()
+  const showRecovery = Boolean(period && period.id !== regularCalendarVersion && !linkedActivityId && !compareMode)
   const [assistantPrefill, setAssistantPrefill] = useState<AssistantActivityReference | null>(null)
   const [docsOpen, setDocsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -306,6 +311,7 @@ function App() {
   }
 
   function viewLinkedActivity(activity: Activity) {
+    if (period) setRegularCalendarVersion(period.id)
     if (activity.turmaId) chooseTurma(activity.turmaId)
     const [year, month, day] = activity.date.split('-').map(Number)
     const date = new Date(year, month - 1, day)
@@ -541,6 +547,12 @@ function App() {
           onToggleShortcut={toggleMenuShortcut}
           onResetShortcuts={resetMenuShortcuts}
         />
+      ) : checkingRecovery && !compareMode && !linkedActivityId && !selectedDay ? (
+        <main id="inicio" className="main-content portal-main">
+          <div className="state-card" role="status"><LoaderCircle className="spin" /><p>Carregando Agenda…</p></div>
+        </main>
+      ) : period && showRecovery ? (
+        <RecoveryAgenda key={period.id} period={period} turmaId={turmaId} onCalendar={() => setRegularCalendarVersion(period.id)} />
       ) : compareMode ? (
       <main id="inicio" className="main-content portal-main">
         <Suspense fallback={<div className="state-card"><LoaderCircle className="spin" /><p>Carregando…</p></div>}>
@@ -551,6 +563,8 @@ function App() {
       <main id="inicio" className="main-content portal-main">
         <div className="agenda-toolbar interface-panel portal-toolbar">
           <PageHeading icon={Calendar} title="Agenda" />
+          {period && !linkedActivityId && <button type="button" className="portal-control recovery-return"
+            onClick={() => setRegularCalendarVersion(undefined)}>Ver edital e horários de recuperação</button>}
           <div className="agenda-heading portal-tool-row">
             <label className="turma-select-inline" aria-label="Turma selecionada">
               <select className="portal-control" value={turmaId ?? ''} onChange={(event) => chooseTurma(event.target.value)}>
@@ -698,7 +712,7 @@ function App() {
       {linkedActivityId && <ActivityLinkDialog key={linkedActivityId} id={linkedActivityId} onClose={closeLinkedActivity} onViewCalendar={viewLinkedActivity}
         onCreateCard={ASSISTANT_ENDPOINT && calendarUser ? prepareActivityCard : undefined} />}
 
-      {!turmaId && !kanbanOpen && !moreOptionsOpen && !linkedActivityId && !activeMenuDialog && !menuOpen && <TurmaPickerModal classNames={classNames} onChoose={choosePreferredTurma} onRequest={() => setClassRequestOpen(true)} onHelp={() => setDocsOpen(true)} />}
+      {!turmaId && !checkingRecovery && !showRecovery && !kanbanOpen && !moreOptionsOpen && !linkedActivityId && !activeMenuDialog && !menuOpen && <TurmaPickerModal classNames={classNames} onChoose={choosePreferredTurma} onRequest={() => setClassRequestOpen(true)} onHelp={() => setDocsOpen(true)} />}
 
       {menuOpen && (
         <IntegratedMenu
