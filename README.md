@@ -33,6 +33,8 @@ Depois de entrar como representante ou superadministrador, abra um dia no calend
 
 Na administração, a seção **Professores** permite ao superadministrador criar, editar e excluir aulas em **Grade de horários**, ou importar a grade em **Importar horários por JSON**. A grade abrange todas as turmas, incluindo as que ainda não têm Agenda. Para gerar esse JSON a partir da planilha da escola, use `scripts/generate-schedules.py`.
 
+Em **Administração → Portal → Assistente D2**, superadministradores acompanham o volume diário, o ranking de contas e o limite diário de mensagens. O ranking reúne registros por conta a partir da ativação da métrica. As mudanças de limite valem para novas mensagens e seguem o dia de Brasília. A especificação fica em [Tech-2D/api](https://github.com/Tech-2D/api/tree/main/specs/painel-assistente-d2).
+
 Para virar representante, a pessoa entra em **Sou representante > Solicitar acesso**, informa e-mail e turma e guarda o código da solicitação. O superadministrador aprova ou recusa na aba **Representantes**.
 
 > **Atenção:** sem confirmação por e-mail, quem souber um endereço aprovado pode cadastrar uma senha para esse endereço antes do titular. Aprove solicitações somente quando você conhece e confia em quem as enviou.
