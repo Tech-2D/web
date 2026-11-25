@@ -30,6 +30,30 @@ afterEach(() => {
 })
 
 describe('contrato do chat integrado', () => {
+  it('faz o D2 cumprimentar, pensar e reagir à resposta sem disparar mensagens ao tocar no mascote', async () => {
+    let answer!: (response: Response) => void
+    const fetchMock = vi.fn(async (_: string, init: RequestInit) => init.method === 'DELETE'
+      ? new Response(null, { status: 204 }) : new Promise<Response>(resolve => { answer = resolve }))
+    vi.stubGlobal('fetch', fetchMock)
+    chat()
+    const mascot = screen.getByRole('button', { name: 'Cumprimentar o D2' })
+    const frame = () => mascot.querySelector('.d2-mascot-frame')!
+    expect(frame().getAttribute('data-pose')).toBe('saudacao')
+    fireEvent.animationEnd(frame())
+    expect(frame().getAttribute('data-pose')).toBe('repouso')
+    fireEvent.click(mascot)
+    expect(frame().getAttribute('data-pose')).toBe('saudacao')
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    send('Oi')
+    expect(frame().getAttribute('data-pose')).toBe('pensando')
+    expect(screen.getByRole('status').textContent).toBe('D2 está pensando…')
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    answer(Response.json({ answer: 'Olá!' }))
+    await screen.findByText('Olá!')
+    expect(frame().getAttribute('data-pose')).toBe('respondendo')
+  })
+
   it('encaminha o “sim” ao chat e inclui os campos da prévia para o servidor decidir se deve gravar', async () => {
     window.history.replaceState(null, '', `${import.meta.env.BASE_URL}admin/`)
     const posts: { path: string; body: Record<string, unknown> }[] = []
@@ -58,6 +82,7 @@ describe('contrato do chat integrado', () => {
     expect(posts[2]).toMatchObject({ path: '/api/chat', body: { message: 'sim', draft: { draft_id: 'draft' } } })
     send('cria o card')
     await screen.findByText('Card criado no Kanban.')
+    expect(screen.getByRole('button', { name: 'Cumprimentar o D2' }).querySelector('[data-pose="confirmacao"]')).not.toBeNull()
     const kanbanLink = screen.getByRole('link', { name: 'Ver no Kanban' })
     expect(kanbanLink.getAttribute('href')).toBe(`${import.meta.env.BASE_URL}#kanban`)
     expect(posts[3]).toMatchObject({ path: '/api/chat',

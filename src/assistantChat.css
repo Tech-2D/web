@@ -27,6 +27,7 @@
 .assistant-primary:hover:not(:disabled) { background: var(--accent-hover, var(--accent)); }
 .assistant-primary:disabled { cursor: default; }
 .agenda-assistant-toggle { display: flex; margin-left: auto; box-shadow: var(--shadow); }
+.d2-launcher-avatar { flex: none; width: 28px; height: 28px; border-radius: .5rem; background: #fff; }
 .agenda-assistant-panel {
   position: absolute;
   bottom: calc(100% + .65rem);
@@ -67,6 +68,33 @@
   gap: .5rem;
   padding: .65rem .75rem;
   border-bottom: 1px solid var(--line);
+}
+.assistant-identity { display: flex; align-items: center; gap: .55rem; min-width: 0; }
+.assistant-identity > div { display: grid; line-height: 1.2; }
+.assistant-identity small { margin-top: .125rem; color: var(--ink-soft); font-size: .68rem; }
+.d2-mascot {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: .7rem;
+  background: #f4f7ff;
+  cursor: pointer;
+}
+.d2-mascot:hover:not(:disabled) { border-color: var(--accent); }
+.agenda-assistant .d2-mascot:disabled { opacity: 1; cursor: default; }
+.d2-mascot img { visibility: hidden; }
+.d2-mascot-frame { position: absolute; inset: 0; background-repeat: no-repeat; }
+.assistant-thinking { margin: 0; color: var(--ink-soft); font-size: .85rem; }
+[data-motion="reduzido"] .d2-mascot-frame { display: none; }
+[data-motion="reduzido"] .d2-mascot img { visibility: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .d2-mascot-frame { display: none; }
+  .d2-mascot img { visibility: visible; }
 }
 .agenda-assistant-controls { display: flex; flex: none; gap: .25rem; }
 .agenda-assistant-controls button { width: 2.15rem; height: 2.15rem; }
