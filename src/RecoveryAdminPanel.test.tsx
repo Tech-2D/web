@@ -34,3 +34,16 @@ it('imports and saves schedules from the file picker, preserving the metadata of
     lessons: [{ date: '2026-12-07', start: '08:00', end: '08:50', subject: 'Matemática', className: '', teacher: '', room: '' }],
   })
 })
+
+it('lets administrators choose from the Agenda catalogs when adding a lesson', async () => {
+  vi.mocked(recoveryRequest).mockResolvedValueOnce({ draft: null, publication: null, publicationAvailable: true })
+  render(<RecoveryAdminPanel user={{ uid: 'owner' } as User} classNames={['2° TECH D', '1° TECH NOVA']} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Adicionar aula' }))
+  const subject = screen.getByRole('combobox', { name: 'Matéria' }) as HTMLSelectElement
+  const turma = screen.getByRole('combobox', { name: 'Turma' }) as HTMLSelectElement
+  fireEvent.change(subject, { target: { value: 'Matemática 10-Modelagem de Dados' } })
+  fireEvent.change(turma, { target: { value: '1° TECH NOVA' } })
+  expect(subject.value).toBe('Matemática 10-Modelagem de Dados')
+  expect(turma.value).toBe('1° TECH NOVA')
+  expect(Array.from(turma.options).map(option => option.text)).toEqual(['Todas as turmas', '2° TECH D', '1° TECH NOVA'])
+})

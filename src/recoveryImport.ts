@@ -1,5 +1,6 @@
 import { normalizeClassName } from './classRequests'
 import type { RecoveryLesson } from './recovery'
+import { SUBJECTS } from './subjects'
 
 export const MAX_RECOVERY_LESSONS = 200
 const columns = {
@@ -16,6 +17,8 @@ const columnNames = Object.keys(columns) as (keyof RecoveryLesson)[]
 const required = columnNames.slice(0, 4)
 const columnKey = (value: string) => value.normalize('NFD').replace(/\p{M}|[\s_-]/gu, '').toLowerCase()
 const classKey = (name: string) => normalizeClassName(name).replace(/º/g, '°')
+const subjectKey = (name: string) => normalizeClassName(name).normalize('NFD').replace(/\p{M}/gu, '').replace(/\s*-\s*/g, '-')
+const availableSubjects = new Map(SUBJECTS.map(name => [subjectKey(name), name]))
 const dayMs = 86400000
 
 function normalizeDate(value: unknown) {
@@ -66,10 +69,12 @@ function normalizeLessons(rows: { values: Record<string, unknown>; label: string
     const date = normalizeDate(get('date'))
     const start = normalizeTime(get('start'))
     const end = normalizeTime(get('end'))
-    const subject = readText('subject', 120)
+    const inputSubject = readText('subject', 120)
     if (!date) throw new Error(label + ' — informe uma data válida (DD/MM/AAAA ou AAAA-MM-DD).')
     if (!start || !end || end <= start) throw new Error(label + ' — confira os horários de início e fim.')
-    if (!subject) throw new Error(label + ' — informe a matéria.')
+    if (!inputSubject) throw new Error(label + ' — informe a matéria.')
+    const subject = availableSubjects.get(subjectKey(inputSubject))
+    if (!subject) throw new Error(label + ' — matéria não encontrada na Agenda: ' + inputSubject + '.')
     const inputClass = readText('className', 100)
     const className = !inputClass || classKey(inputClass) === 'TODAS AS TURMAS' ? null : available.get(classKey(inputClass))
     if (className === undefined) throw new Error(label + ' — turma não encontrada: ' + inputClass + '.')
