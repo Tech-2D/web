@@ -27,10 +27,45 @@ afterEach(() => {
   cleanup()
   vi.useRealTimers()
   vi.unstubAllGlobals()
+  localStorage.removeItem('tech-2d:assistant-position')
   window.history.replaceState(null, '', '/')
 })
 
 describe('contrato do chat integrado', () => {
+  it('moves the launcher, saves its position and only opens through a separate click', () => {
+    const props = { account, endpoint, preferredClass: '2° TECH D' }
+    const view = render(<AssistantChat {...props} />)
+    const button = screen.getByRole('button', { name: 'Assistente' })
+    const area = button.parentElement!
+    area.getBoundingClientRect = () => new DOMRect(16, 16, 800, 600)
+    button.getBoundingClientRect = () => new DOMRect(676, 571, 140, 45)
+    button.setPointerCapture = vi.fn()
+    const pointer = (type: string, x: number, y: number) => {
+      const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0 })
+      Object.assign(event, { pointerId: 1, isPrimary: true })
+      fireEvent(button, event)
+    }
+    pointer('pointerdown', 700, 590)
+    pointer('pointermove', 1, 1)
+    pointer('pointerup', 1, 1)
+    fireEvent.click(button, { detail: 1 })
+    expect(button.getAttribute('aria-expanded')).toBe('false')
+    expect(area.style.getPropertyValue('--launcher-x')).toBe('0')
+    expect(area.style.getPropertyValue('--launcher-y')).toBe('0')
+    expect(area.hasAttribute('data-panel-below')).toBe(true)
+
+    view.unmount()
+    render(<AssistantChat {...props} />)
+    const restored = screen.getByRole('button', { name: 'Assistente' })
+    expect(restored.parentElement?.style.getPropertyValue('--launcher-x')).toBe('0')
+    fireEvent.keyDown(restored, { key: 'ArrowRight' })
+    expect(restored.parentElement?.style.getPropertyValue('--launcher-x')).toBe('0.05')
+    fireEvent.keyDown(restored, { key: 'Home' })
+    expect(restored.parentElement?.style.getPropertyValue('--launcher-x')).toBe('1')
+    fireEvent.click(restored)
+    expect(screen.getByRole('textbox', { name: 'Sua mensagem' })).toBeDefined()
+  })
+
   it('alterna os convites enquanto fechado e abre o chat sem enviar mensagem', () => {
     vi.useFakeTimers()
     const fetchMock = vi.fn()

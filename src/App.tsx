@@ -33,7 +33,7 @@ import { teacherFinderTodayUrl } from './teacherFinder'
 import { observeCatalog, type CatalogMeta } from './publicQueries'
 import { latestUnseenUpdate, markSystemUpdateSeen, readSeenSystemUpdateId, type SystemUpdate } from './systemUpdates'
 import { NEON_COLORS, NEON_COLOR_LABELS, NEON_COLOR_SWATCHES, THEME_LABELS, THEME_PREVIEW, THEMES, readStoredNeon, readStoredTheme, storeNeon, storeTheme, type NeonColor, type Theme } from './theme'
-import { FONT_SCALES, FONT_SCALE_LABELS, readStoredFontScale, readStoredHighContrast, readStoredReduceMotion, storeFontScale, storeHighContrast, storeReduceMotion, type FontScale } from './accessibility'
+import { FONT_SCALES, FONT_SCALE_LABELS, VLIBRAS_KEY, readStoredFontScale, readStoredHighContrast, readStoredReduceMotion, readStoredVLibras, storeFontScale, storeHighContrast, storeReduceMotion, storeVLibras, type FontScale } from './accessibility'
 import { subscribeAdminProfile } from './adminAccess'
 import { DEFAULT_MENU_SHORTCUTS, MENU_SHORTCUTS_KEY, readAgendaMenuDialog, readMenuShortcuts, storeMenuShortcuts, type MenuShortcutId } from './menuShortcuts'
 import { IntegratedMenu } from './IntegratedMenu'
@@ -49,6 +49,7 @@ import './agendaGuide.css'
 import { readActivityLink } from './activityLinks'
 import { isAdminRoute, legacyAdminUrl } from './adminRoute'
 import { sitePaths } from './sitePaths'
+import { useVLibras } from './useVLibras'
 
 const CompareCalendar = lazy(() => import('./CompareCalendar').then(module => ({ default: module.CompareCalendar })))
 const ClassRequestDialog = lazy(() => import('./ClassRequestDialog').then(module => ({ default: module.ClassRequestDialog })))
@@ -127,6 +128,8 @@ function App() {
   const [fontScale, setFontScaleState] = useState<FontScale>(readStoredFontScale)
   const [highContrast, setHighContrastState] = useState(readStoredHighContrast)
   const [reduceMotion, setReduceMotionState] = useState(readStoredReduceMotion)
+  const [showVLibras, setShowVLibras] = useState(readStoredVLibras)
+  useVLibras(showVLibras)
 
   useEffect(() => {
     function syncPreferences(event: StorageEvent) {
@@ -134,6 +137,7 @@ function App() {
         setPreferredTurma(readPreferredTurma())
       }
       if (event.key === null || event.key === MENU_SHORTCUTS_KEY) setMenuShortcuts(readMenuShortcuts())
+      if (event.key === null || event.key === VLIBRAS_KEY) setShowVLibras(readStoredVLibras())
       if (event.key === null || ['agenda:theme', 'agenda:neon', 'agenda:fontScale', 'agenda:highContrast', 'agenda:reduceMotion'].includes(event.key)) {
         setThemeState(readStoredTheme())
         setNeonState(readStoredNeon())
@@ -508,7 +512,6 @@ function App() {
           <AdminPage publicTurmaId={turmaId} classNames={classNames} quickCreateDate={quickCreateDate} quickEditActivity={quickEditActivity} systemUpdates={systemUpdates} onReturnToCalendar={closeAdmin} />
         </Suspense>
       </DialogLoadBoundary>
-      <VLibrasWidget />
     </div>
   )
 
@@ -744,6 +747,8 @@ function App() {
           onSetHighContrast={setHighContrast}
           reduceMotion={reduceMotion}
           onSetReduceMotion={setReduceMotion}
+          showVLibras={showVLibras}
+          onSetShowVLibras={value => { setShowVLibras(value); storeVLibras(value) }}
           onOpenMenuSettings={() => { setConfigOpen(false); openMoreOptions() }}
           onClose={() => setConfigOpen(false)}
         />
@@ -753,7 +758,6 @@ function App() {
 
       </Suspense>
       </DialogLoadBoundary>
-      <VLibrasWidget />
     </div>
   )
 }
@@ -772,33 +776,6 @@ class DialogLoadBoundary extends Component<{ children: ReactNode }, { failed: bo
       <button type="button" className="primary-button compact" onClick={() => window.location.reload()}>Atualizar página</button>
     </div></div>
   }
-}
-
-function VLibrasWidget() {
-  useEffect(() => {
-    const loadWidget = () => {
-      if (document.getElementById('vlibras-script')) return
-      const script = document.createElement('script')
-      script.id = 'vlibras-script'
-      script.async = true
-      script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js'
-      script.onload = () => {
-        const { VLibras } = window as Window & {
-          VLibras?: { Widget: new (options: { rootPath: string; position: 'L' | 'R' }) => unknown }
-        }
-        if (VLibras) new VLibras.Widget({ rootPath: 'https://vlibras.gov.br/app', position: 'L' })
-      }
-      document.body.appendChild(script)
-    }
-    if (window.requestIdleCallback) {
-      const idle = window.requestIdleCallback(loadWidget, { timeout: 3000 })
-      return () => window.cancelIdleCallback(idle)
-    }
-    const timer = window.setTimeout(loadWidget, 1000)
-    return () => window.clearTimeout(timer)
-  }, [])
-
-  return null
 }
 
 function MoreOptionsPage({ turmaId, classNames, onChooseTurma, onBack, sections, shortcuts, onToggleShortcut, onResetShortcuts }: {
@@ -904,6 +881,8 @@ function ConfigDialog({
   onSetHighContrast,
   reduceMotion,
   onSetReduceMotion,
+  showVLibras,
+  onSetShowVLibras,
   onOpenMenuSettings,
   onClose,
 }: {
@@ -917,6 +896,8 @@ function ConfigDialog({
   onSetHighContrast: (value: boolean) => void
   reduceMotion: boolean
   onSetReduceMotion: (value: boolean) => void
+  showVLibras: boolean
+  onSetShowVLibras: (value: boolean) => void
   onOpenMenuSettings: () => void
   onClose: () => void
 }) {
@@ -994,7 +975,10 @@ function ConfigDialog({
               <span>Reduzir animações</span>
               <span className="toggle"><input type="checkbox" checked={reduceMotion} onChange={(event) => onSetReduceMotion(event.target.checked)} /><span /></span>
             </label>
-            <p className="config-hint">VLibras (tradutor de Libras) já está disponível no botão flutuante no canto da tela.</p>
+            <label className="a11y-toggle">
+              <span>Mostrar VLibras (tradutor de Libras)</span>
+              <span className="toggle"><input type="checkbox" checked={showVLibras} onChange={(event) => onSetShowVLibras(event.target.checked)} /><span /></span>
+            </label>
           </div>
           <div className="config-section">
             <h3>Atalhos do menu</h3>

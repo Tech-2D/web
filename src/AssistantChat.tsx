@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { CalendarDays, ChevronDown, Maximize2, Minimize2, Plus, Sparkles, X } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { KanbanCardFace } from './KanbanCardFace'
@@ -7,6 +7,7 @@ import type { WelcomeActivity } from './assistantWelcomeContext'
 import { PRIORITIES } from './kanban'
 import type { Activity, AssistantActivityReference, Batch, BatchInput, CardInput, Draft, Fields, Kanban } from './assistantContract'
 import { useAssistantTransport, type AssistantRoute } from './useAssistantTransport'
+import { useAssistantLauncherPosition } from './useAssistantLauncherPosition'
 export type { AssistantActivityReference } from './assistantContract'
 import { ACTIVITY_TYPE_COLORS, type ActivityType } from './types'
 import { canCreateActivityCard } from './activityFuture'
@@ -82,6 +83,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const transcript = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const toggle = useRef<HTMLButtonElement>(null)
+  const launcher = useAssistantLauncherPosition()
 
   useEffect(() => {
     if (!typingTurn) return
@@ -296,8 +298,13 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const sizeAction = expanded ? 'Restaurar tamanho do chat' : 'Ampliar chat'
   const pose = busy ? 'pensando' : error ? 'repouso' : d2.reaction
 
-  return <div ref={chat} className="agenda-assistant" hidden={covered} data-expanded={open && expanded ? 'true' : undefined}>
-    <button ref={toggle} className="agenda-assistant-toggle assistant-primary" type="button" aria-label="Assistente" aria-expanded={open} onClick={() => {
+  return <div ref={chat} className="agenda-assistant" hidden={covered} data-expanded={open && expanded ? 'true' : undefined}
+    data-panel-below={launcher.position.y < .5 ? '' : undefined}
+    style={{ '--launcher-x': launcher.position.x, '--launcher-y': launcher.position.y } as CSSProperties}>
+    <button ref={toggle} className="agenda-assistant-toggle assistant-primary" type="button" aria-label="Assistente" aria-expanded={open}
+      title={open ? 'Fechar assistente' : 'Arraste ou use as setas para mover. Home restaura a posição.'}
+      {...(!open ? launcher.handlers : {})} onClick={event => {
+      if (launcher.wasDragged(event.detail)) return
       if (open) close()
       else { reactD2('saudacao'); setOpen(true) }
     }}>

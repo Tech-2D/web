@@ -2,11 +2,15 @@
   --chat-visible-height: 100dvh;
   --chat-left: max(1rem, env(safe-area-inset-left));
   --chat-right: max(1rem, env(safe-area-inset-right));
+  --chat-top: max(.75rem, env(safe-area-inset-top));
   --chat-bottom: max(1rem, env(safe-area-inset-bottom));
+  --launcher-height: 45px;
+  --launcher-top: calc((100% - var(--launcher-height)) * var(--launcher-y));
+  --chat-gap: .65rem;
   position: fixed;
-  right: var(--chat-right);
-  bottom: var(--chat-bottom);
+  inset: var(--chat-top) var(--chat-right) var(--chat-bottom) var(--chat-left);
   z-index: 90;
+  pointer-events: none;
 }
 .assistant-primary {
   display: inline-flex;
@@ -27,17 +31,25 @@
 .assistant-primary:hover:not(:disabled) { background: var(--accent-hover, var(--accent)); }
 .assistant-primary:disabled { cursor: default; }
 .agenda-assistant-toggle {
+  position: absolute;
+  left: calc(100% * var(--launcher-x));
+  top: calc(100% * var(--launcher-y));
+  transform: translate(calc(-100% * var(--launcher-x)), calc(-100% * var(--launcher-y)));
   display: flex;
   justify-content: flex-start;
   box-sizing: border-box;
   inline-size: 8.75rem;
-  max-inline-size: calc(100vw - var(--chat-left) - var(--chat-right));
-  margin-inline-start: auto;
+  max-inline-size: 100%;
+  min-height: var(--launcher-height);
   padding: .5rem .8rem;
   box-shadow: var(--shadow);
   text-align: start;
   transition: inline-size .24s ease;
+  pointer-events: auto;
 }
+.agenda-assistant-toggle[aria-expanded="false"] { touch-action: none; user-select: none; cursor: grab; }
+.agenda-assistant-toggle[aria-expanded="false"]:active { cursor: grabbing; }
+.agenda-assistant-toggle img { pointer-events: none; }
 .assistant-launcher-copy { display: block; min-width: 0; }
 .assistant-launcher-hint {
   display: grid;
@@ -74,36 +86,50 @@
 }
 .agenda-assistant-panel {
   position: absolute;
-  bottom: calc(100% + .65rem);
-  right: 0;
+  left: calc(100% * var(--launcher-x));
+  bottom: calc(100% - var(--launcher-top) + var(--chat-gap));
+  transform: translateX(calc(-100% * var(--launcher-x)));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto auto;
-  width: min(max(22rem, 33.333vw), calc(100vw - var(--chat-left) - var(--chat-right)));
-  height: min(39rem, calc(100dvh - var(--chat-bottom) - 5rem));
+  width: min(max(22rem, 33.333vw), 100%);
+  height: min(39rem, calc(var(--launcher-top) - var(--chat-gap)));
   overflow: hidden;
   color: var(--text);
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: .9rem;
   box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+.agenda-assistant[data-panel-below] .agenda-assistant-panel {
+  top: calc(var(--launcher-top) + var(--launcher-height) + var(--chat-gap));
+  bottom: auto;
+  height: min(39rem, calc(100% - var(--launcher-top) - var(--launcher-height) - var(--chat-gap)));
 }
 .agenda-assistant[data-expanded="true"] .agenda-assistant-toggle { visibility: hidden; }
 .agenda-assistant[data-expanded="true"] .agenda-assistant-panel {
   position: fixed;
+  top: auto;
+  left: auto;
   right: var(--chat-right);
   bottom: var(--chat-bottom);
+  transform: none;
   width: min(max(52rem, 66.666vw), calc(100vw - var(--chat-left) - var(--chat-right)));
   height: min(55rem, calc(100dvh - max(.75rem, env(safe-area-inset-top)) - var(--chat-bottom)));
 }
 .agenda-assistant[data-keyboard] .agenda-assistant-toggle { visibility: hidden; }
 .agenda-assistant[data-keyboard] .agenda-assistant-panel {
   position: fixed;
+  top: auto;
+  left: auto;
   right: var(--chat-right);
   bottom: calc(var(--chat-viewport-bottom) + .4rem);
+  transform: none;
   height: min(39rem, calc(var(--chat-visible-height) - .8rem));
 }
 @media (max-width: 640px) {
-  .agenda-assistant-panel { width: calc(100vw - var(--chat-left) - var(--chat-right)); }
+  .agenda-assistant-panel { width: 100%; }
+  .agenda-assistant:is([data-expanded="true"], [data-keyboard]) .agenda-assistant-panel { width: calc(100vw - var(--chat-left) - var(--chat-right)); }
 }
 .agenda-assistant-panel > header {
   display: flex;

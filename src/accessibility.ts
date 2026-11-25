@@ -10,6 +10,7 @@ export const FONT_SCALE_LABELS: Record<FontScale, string> = {
 const FONT_KEY = 'agenda:fontScale'
 const CONTRAST_KEY = 'agenda:highContrast'
 const MOTION_KEY = 'agenda:reduceMotion'
+export const VLIBRAS_KEY = 'agenda:vlibras'
 
 function readBoolean(key: string): boolean {
   try {
@@ -49,3 +50,6 @@ export const storeHighContrast = (value: boolean) => storeBoolean(CONTRAST_KEY, 
 
 export const readStoredReduceMotion = () => readBoolean(MOTION_KEY)
 export const storeReduceMotion = (value: boolean) => storeBoolean(MOTION_KEY, value)
+
+export const readStoredVLibras = () => readBoolean(VLIBRAS_KEY)
+export const storeVLibras = (value: boolean) => storeBoolean(VLIBRAS_KEY, value)
