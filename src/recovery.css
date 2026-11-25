@@ -7,6 +7,9 @@
 .recovery-heading h2, .recovery-action, .recovery-actions, .recovery-filter { display: flex; align-items: center; gap: .55rem; }
 .recovery-action { width: fit-content; }
 .recovery-actions { flex-wrap: wrap; margin-top: .75rem; }
+.recovery-actions:has(input) { align-items: end; }
+.recovery-actions label { display: grid; gap: .25rem; font-size: .9rem; font-weight: 600; }
+.recovery-actions input[type="number"] { width: 8rem; }
 .recovery-filter { font-weight: 600; }
 .recovery-window { margin: .35rem 0 .75rem; font-size: .9rem; }
 .recovery-description { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -20,6 +23,15 @@
 .recovery-form { display: grid; gap: 1.35rem; justify-items: start; }
 .recovery-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; width: 100%; }
 .recovery-form legend { font-size: 1.05rem; font-weight: 700; margin-bottom: .7rem; }
+.recovery-import { padding: 1rem; margin-bottom: .75rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface-alt); }
+.recovery-import label { display: grid; gap: .5rem; font-weight: 650; }
+.recovery-import input { min-width: 0; max-width: 100%; }
+.recovery-import p { margin: .6rem 0; font-size: .9rem; }
+.recovery-import pre { max-width: 100%; overflow: auto; }
+.recovery-import-preview { border-top: 1px solid var(--line); margin-top: .65rem; }
+.recovery-form summary { cursor: pointer; width: fit-content; font-size: .9rem; font-weight: 650; }
+.recovery-lesson-list { margin-bottom: .75rem; }
+.recovery-lesson-list[open] summary { margin-bottom: .65rem; }
 .recovery-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .recovery-fields label { display: grid; gap: .25rem; min-width: 0; align-content: start; font-size: .9rem; font-weight: 600; }
 .recovery-fields .portal-control { width: 100%; min-width: 0; }

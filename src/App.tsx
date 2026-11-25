@@ -116,8 +116,9 @@ function App() {
   const [noticesOpen, setNoticesOpen] = useState(false)
   const [calendarUser, setCalendarUser] = useState<User | null>(null)
   const { period, checking: checkingRecovery } = useRecoveryMode(calendarUser, !adminOpen && !kanbanOpen && !moreOptionsOpen)
-  const [regularCalendarVersion, setRegularCalendarVersion] = useState<number>()
-  const showRecovery = Boolean(period && period.id !== regularCalendarVersion && !linkedActivityId && !compareMode)
+  const [regularCalendarVersion, setRegularCalendarVersion] = useState<string>()
+  const recoveryVersion = period ? period.id + ':' + period.startsAt : undefined
+  const showRecovery = Boolean(period && recoveryVersion !== regularCalendarVersion && !linkedActivityId && !compareMode)
   const [assistantPrefill, setAssistantPrefill] = useState<AssistantActivityReference | null>(null)
   const [docsOpen, setDocsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -311,7 +312,7 @@ function App() {
   }
 
   function viewLinkedActivity(activity: Activity) {
-    if (period) setRegularCalendarVersion(period.id)
+    if (period) setRegularCalendarVersion(recoveryVersion)
     if (activity.turmaId) chooseTurma(activity.turmaId)
     const [year, month, day] = activity.date.split('-').map(Number)
     const date = new Date(year, month - 1, day)
@@ -552,7 +553,7 @@ function App() {
           <div className="state-card" role="status"><LoaderCircle className="spin" /><p>Carregando Agenda…</p></div>
         </main>
       ) : period && showRecovery ? (
-        <RecoveryAgenda key={period.id} period={period} turmaId={turmaId} onCalendar={() => setRegularCalendarVersion(period.id)} />
+        <RecoveryAgenda key={recoveryVersion} period={period} turmaId={turmaId} onCalendar={() => setRegularCalendarVersion(recoveryVersion)} />
       ) : compareMode ? (
       <main id="inicio" className="main-content portal-main">
         <Suspense fallback={<div className="state-card"><LoaderCircle className="spin" /><p>Carregando…</p></div>}>

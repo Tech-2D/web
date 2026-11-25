@@ -18,12 +18,15 @@ export interface RecoveryPublication {
   endsAt: string
 }
 
-export interface RecoveryEdition extends RecoveryPublication {
+export interface RecoveryContent {
+  id: number
   title: string
   description: string
   link: string | null
   lessons: RecoveryLesson[]
 }
+
+export type RecoveryEdition = RecoveryContent & RecoveryPublication
 
 export async function recoveryRequest<T>(user: User, admin: boolean, signal?: AbortSignal, input?: unknown): Promise<T> {
   const token = await user.getIdToken()
@@ -39,11 +42,6 @@ export async function recoveryRequest<T>(user: User, admin: boolean, signal?: Ab
   }
   return response.json()
 }
-
-const localDateTime = new Intl.DateTimeFormat('sv-SE', {
-  timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short',
-})
-export const recoveryInputDateTime = (value: string) => localDateTime.format(new Date(value)).replace(' ', 'T')
 
 const periodDate = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short',

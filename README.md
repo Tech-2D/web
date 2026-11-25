@@ -63,7 +63,9 @@ A Agenda lê os avisos da turma em `GET /api/catalog/notices?class=…`. Represe
 
 ### Período de recuperação
 
-Em **Administração → Agenda da turma → Recuperação**, administradores gerais preparam o edital e os horários. Depois da publicação, a Agenda abre nessa visão entre o início e o fim definidos em horário de Brasília. A grade pode ser filtrada por turma e o calendário normal continua disponível. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
+Em **Administração → Agenda da turma → Recuperação**, administradores gerais podem editar o edital e importar os horários de um Excel `.xlsx` ou JSON. A primeira linha da planilha deve conter **Data**, **Início**, **Fim** e **Matéria**. **Turma**, **Professor** e **Local** são opcionais. O painel mostra um exemplo de JSON e permite revisar a grade antes de salvar.
+
+Depois de salvar o rascunho, informe a duração de 1 a 90 dias e clique em **Ativar recuperação**. A Agenda abre a visão especial imediatamente e volta à visão habitual ao final do prazo ou quando um administrador desliga o modo. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
 
 ## Rodar localmente
 

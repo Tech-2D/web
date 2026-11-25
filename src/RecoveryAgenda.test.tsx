@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { RecoveryAgenda } from './RecoveryAgenda'
-import { recoveryInputDateTime, type RecoveryEdition } from './recovery'
+import { formatRecoveryTime, type RecoveryEdition } from './recovery'
 
 afterEach(cleanup)
 
@@ -27,5 +27,5 @@ it('starts with the selected class and keeps shared lessons visible when the fil
   expect(screen.getByText('Inglês')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Ver Agenda normal' }))
   expect(onCalendar).toHaveBeenCalledOnce()
-  expect(recoveryInputDateTime(period.startsAt)).toBe('2026-12-07T08:00')
+  expect(formatRecoveryTime(period.startsAt)).toContain('08:00')
 })
