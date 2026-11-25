@@ -342,6 +342,8 @@ function App() {
     const merged = [...turmaActivities, ...globalActivities]
     return subjectFilter ? merged.filter((activity) => activity.subject === subjectFilter) : merged
   }, [turmaActivities, globalActivities, subjectFilter])
+  const assistantActivities = useMemo(() => [...turmaActivities, ...globalActivities], [turmaActivities, globalActivities])
+  const assistantClass = preferredTurma ?? turmaId
 
   const recentActivities = useMemo(() => {
     const threshold = Date.now() - RECENT_WINDOW_MS
@@ -500,7 +502,7 @@ function App() {
       <SyncStatus />
       {ASSISTANT_ENDPOINT && calendarUser &&
         <Suspense fallback={null}><AssistantChat key={calendarUser.uid} account={calendarUser}
-          preferredClass={preferredTurma} endpoint={ASSISTANT_ENDPOINT} /></Suspense>}
+          preferredClass={assistantClass} endpoint={ASSISTANT_ENDPOINT} welcomeActivities={assistantActivities} /></Suspense>}
       <DialogLoadBoundary>
         <Suspense fallback={<main className="main-content"><p role="status">Carregando painel…</p></main>}>
           <AdminPage publicTurmaId={turmaId} classNames={classNames} quickCreateDate={quickCreateDate} quickEditActivity={quickEditActivity} systemUpdates={systemUpdates} onReturnToCalendar={closeAdmin} />
@@ -517,7 +519,7 @@ function App() {
 
       {ASSISTANT_ENDPOINT && calendarUser &&
         <Suspense fallback={null}><AssistantChat key={calendarUser.uid} account={calendarUser}
-          preferredClass={preferredTurma} endpoint={ASSISTANT_ENDPOINT} prefill={assistantPrefill}
+          preferredClass={assistantClass} endpoint={ASSISTANT_ENDPOINT} prefill={assistantPrefill} welcomeActivities={assistantActivities}
           covered={Boolean(selectedDay || linkedActivityId)}
           onViewKanban={() => { if (kanbanOpen) setKanbanRefresh(value => value + 1) }} /></Suspense>}
 

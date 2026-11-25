@@ -108,6 +108,7 @@
 .agenda-assistant-turns { display: flex; flex-direction: column; gap: .65rem; padding: .75rem 1rem; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
 .assistant-message, .assistant-result-turn { display: flex; flex-direction: column; min-width: 0; gap: .5rem; }
 .assistant-welcome, .assistant-examples { display: grid; gap: .5rem; }
+.assistant-welcome .assistant-turn p { margin: .25rem 0 0; }
 .assistant-examples button { text-align: left; color: var(--accent); background: var(--paper); border: 1px solid var(--line); border-radius: .65rem; padding: .65rem .8rem; cursor: pointer; }
 .assistant-examples button:hover { border-color: var(--accent); }
 .assistant-turn { align-self: flex-start; max-width: 88%; background: var(--surface-alt); padding: .65rem .8rem; border-radius: .7rem; white-space: pre-wrap; }

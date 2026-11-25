@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type Reac
 import { CalendarDays, ChevronDown, Maximize2, Minimize2, Plus, Sparkles, X } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { KanbanCardFace } from './KanbanCardFace'
+import { AssistantWelcome } from './AssistantWelcome'
+import type { WelcomeActivity } from './assistantWelcomeContext'
 import { PRIORITIES } from './kanban'
 import type { Activity, AssistantActivityReference, Batch, BatchInput, CardInput, Draft, Fields, Kanban } from './assistantContract'
 import { useAssistantTransport, type AssistantRoute } from './useAssistantTransport'
@@ -17,13 +19,14 @@ import './d2Sprites.css'
 type Turn = { text: string; user?: boolean; cards?: Activity[] }
 type D2Reaction = 'repouso' | 'saudacao' | 'respondendo' | 'confirmacao'
 
-const examples = ['Qual a próxima prova?', 'Cria um card falando para estudar matemática', 'Onde tá a Lisete?']
+const noWelcomeActivities: readonly WelcomeActivity[] = []
 const kanbanDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
 
-export default function AssistantChat({ account, preferredClass, endpoint, prefill, covered, onViewKanban, agendaPath = sitePaths.agenda }: {
+export default function AssistantChat({ account, preferredClass, endpoint, prefill, covered, onViewKanban, agendaPath = sitePaths.agenda, welcomeActivities = noWelcomeActivities }: {
   account: User; preferredClass: string | null; endpoint: string; prefill?: AssistantActivityReference | null; covered?: boolean
   onViewKanban?: () => void
   agendaPath?: string
+  welcomeActivities?: readonly WelcomeActivity[]
 }) {
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -260,14 +263,12 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
         </div>
       </header>
       <div ref={transcript} className="agenda-assistant-turns" role="log" aria-live="polite">
-        {turns.length === 0 && <div className="assistant-welcome">
-          <div className="assistant-turn">Oi, eu sou o D2! Posso ajudar com a Agenda, os horários dos professores e o Kanban.</div>
-          <div className="assistant-examples">{examples.map(example => <button type="button" key={example} disabled={busy} onClick={() => {
+        {turns.length === 0 && !covered && <AssistantWelcome account={account} turma={preferredClass}
+          activities={welcomeActivities} busy={busy} onAsk={question => {
             setMessage('')
             setLinkedActivity(null)
-            void send('/api/chat', { message: example, preferred_class: preferredClass }, example)
-          }}>{example}</button>)}</div>
-        </div>}
+            void send('/api/chat', { message: question, preferred_class: preferredClass }, question)
+          }} />}
         {turns.map((turn, index) => <div className={turn.cards?.length ? 'assistant-result-turn' : 'assistant-message'} key={index}>
           <div className={turn.user ? 'assistant-turn user' : 'assistant-turn'}>{turn.text}</div>
           {!!turn.cards?.length && <div className="assistant-result-list">
