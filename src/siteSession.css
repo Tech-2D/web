@@ -51,6 +51,14 @@
 }
 .site-entry-check-brand { font-size: .8rem; font-weight: 800; color: var(--ink); }
 .site-entry-check-card p { margin: 0; font-size: 1rem; line-height: 1.45; }
+.site-access-state { box-sizing: border-box; width: min(100%, 25rem); gap: .7rem; padding: clamp(1.25rem, 5vw, 2rem); }
+.site-access-state-icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: .85rem; background: var(--surface-alt); color: var(--accent); }
+.site-access-state h1 { margin: 0; color: var(--text); font-size: clamp(1.25rem, 3.5vw, 1.65rem); line-height: 1.2; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.site-access-state p { color: var(--ink-soft); font-size: .9rem; }
+.site-access-state-actions { display: grid; justify-items: center; gap: .25rem; width: 100%; margin-top: .3rem; }
+.site-access-state-actions .site-entry-submit { width: 100%; padding: .6rem .75rem; margin: 0; font-size: .9rem; }
+.site-access-state-actions .site-entry-link { min-height: 44px; }
+.site-access-state button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .site-session-loading p { font-weight: 650; }
 @media (prefers-reduced-motion: no-preference) {
   :root:not([data-motion="reduzido"]) .site-session-mascot img { animation: site-session-d2 2s ease-in-out infinite; }

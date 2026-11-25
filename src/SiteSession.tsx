@@ -2,7 +2,7 @@ import { registerAccount } from './registration'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { ArrowRight, CalendarDays, ClipboardList, Columns3, Eye, EyeOff, MapPin } from 'lucide-react'
+import { ArrowRight, CalendarDays, ClipboardList, Columns3, Eye, EyeOff, MapPin, RefreshCw, ShieldAlert, ShieldOff } from 'lucide-react'
 import { auth } from './firebase'
 import { requestPasswordReset } from './passwordReset'
 import { API_BASE } from './apiBase'
@@ -34,6 +34,7 @@ export function SiteSession({ destination, children }: { destination: string; ch
 
 function PortalAccess({ user, children }: { user: User; children: ReactNode }) {
   const [status, setStatus] = useState<'checking' | 'allowed' | 'blocked' | 'unavailable'>('checking')
+  const [attempt, retry] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
     let checking = false
@@ -69,16 +70,22 @@ function PortalAccess({ user, children }: { user: User; children: ReactNode }) {
       window.removeEventListener('focus', checkAccess)
       window.removeEventListener('online', checkAccess)
     }
-  }, [user])
+  }, [user, attempt])
 
   if (status === 'allowed') return <>{children}</>
   if (status === 'checking') return <SessionLoading />
+  const blocked = status === 'blocked'
   return <main className="site-entry-check">
-    <section className="site-entry-check-card" aria-live="polite">
-      <h1>{status === 'blocked' ? 'Acesso ao portal bloqueado' : 'Não foi possível verificar seu acesso'}</h1>
-      {status === 'blocked' && <p>Fale com a administração do portal para obter ajuda.</p>}
-      <button type="button" className="site-entry-link" onClick={() => window.location.reload()}>Verificar novamente</button>
-      <button type="button" className="site-entry-link" onClick={() => void signOut(auth)}>Sair da conta</button>
+    <section className="site-entry-check-card site-access-state" aria-labelledby="site-access-state-title" aria-live="polite">
+      <span className="site-access-state-icon" aria-hidden="true">{blocked ? <ShieldOff size={26} /> : <ShieldAlert size={26} />}</span>
+      <h1 id="site-access-state-title">{blocked ? 'Acesso ao portal bloqueado' : 'Não foi possível verificar seu acesso'}</h1>
+      <p>{blocked ? 'Fale com a administração do portal para obter ajuda.' : 'Confira sua conexão e tente verificar novamente.'}</p>
+      <div className="site-access-state-actions">
+        <button type="button" className="site-entry-submit" onClick={() => { setStatus('checking'); retry(n => n + 1) }}>
+          <RefreshCw size={17} aria-hidden="true" /> Verificar novamente
+        </button>
+        <button type="button" className="site-entry-link" onClick={() => void signOut(auth)}>Sair da conta</button>
+      </div>
     </section>
   </main>
 }
