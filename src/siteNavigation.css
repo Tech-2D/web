@@ -18,35 +18,61 @@
 .site-navigation a:focus-visible { outline: 2px solid var(--interface-accent, var(--color-brand-ink)); outline-offset: 3px; }
 .site-profile-reminder {
   box-sizing: border-box;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: .65rem;
+  column-gap: .75rem;
   width: var(--portal-content-width);
-  margin: 0 auto .65rem;
-  padding: .35rem .6rem .35rem .8rem;
+  margin: 0 auto .75rem;
+  padding: .75rem .65rem .75rem 1rem;
+  border: 1px solid var(--line);
+  border-inline-start: .3rem solid var(--interface-accent);
+  border-radius: .8rem;
+  background: var(--interface-subtle);
+  color: var(--text);
+}
+.site-profile-reminder-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
   border: 1px solid var(--line);
   border-radius: .65rem;
-  background: var(--surface-alt);
-  color: var(--text);
-  font-size: .8125rem;
+  background: var(--interface-surface);
+  color: var(--interface-accent);
 }
-.site-profile-reminder > svg { flex: none; color: var(--accent); }
-.site-profile-reminder > div { flex: 1; min-width: 0; }
-.site-profile-reminder p { margin: .1rem 0 0; color: var(--ink-soft); }
-.site-profile-reminder :is(a, button) { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; color: var(--accent); }
-.site-profile-reminder a { gap: .3rem; padding-inline: .35rem; font-weight: 700; text-decoration: underline; text-underline-offset: .16em; }
-.site-profile-reminder button { flex: none; width: 2.75rem; border: 0; border-radius: .45rem; background: transparent; cursor: pointer; }
-.site-profile-reminder button:hover { background: var(--paper); }
-.site-profile-reminder :is(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.site-profile-reminder-copy strong { display: block; font-size: 1rem; line-height: 1.25; }
+.site-profile-reminder p { margin: .2rem 0 0; color: var(--ink-soft); font-size: .875rem; line-height: 1.45; }
+.site-profile-reminder :is(a, button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  border-radius: .55rem;
+}
+.site-profile-reminder a {
+  gap: .5rem;
+  padding-inline: .85rem;
+  background: var(--interface-accent);
+  color: var(--interface-on-accent);
+  font-size: .875rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.site-profile-reminder a svg { flex: none; }
+.site-profile-reminder a:hover { text-decoration: underline; text-underline-offset: .2em; }
+.site-profile-reminder button { width: 2.75rem; border: 0; background: transparent; color: var(--text); cursor: pointer; }
+.site-profile-reminder button:hover { background: var(--interface-surface); }
+.site-profile-reminder :is(a, button):focus-visible { outline: 2px solid var(--interface-accent); outline-offset: 3px; }
 @media print { .site-header { display: none; } }
 @media (max-width: 640px) {
   .site-navigation { grid-template-columns: 1fr auto; gap: .25rem .5rem; }
   .site-navigation-pages { grid-column: 1 / -1; grid-row: 2; justify-content: start; }
   .site-navigation-pages a { padding: .5rem; }
-  .site-profile-reminder { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 .55rem; }
-  .site-profile-reminder > svg { align-self: start; margin-top: .25rem; }
-  .site-profile-reminder a { grid-column: 2; justify-self: start; padding-inline: 0; }
-  .site-profile-reminder button { grid-column: 3; grid-row: 1 / span 2; align-self: start; }
+  .site-profile-reminder { grid-template-columns: auto minmax(0, 1fr) auto; gap: .65rem .55rem; padding-inline: .6rem .35rem; }
+  .site-profile-reminder-icon { align-self: start; }
+  .site-profile-reminder a { grid-column: 1 / 3; justify-self: start; }
+  .site-profile-reminder button { grid-column: 3; grid-row: 1; align-self: start; }
 }
 
 .site-options-button {

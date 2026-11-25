@@ -1,4 +1,4 @@
-import { ArrowRight, Bell, CalendarDays, ClipboardList, Columns3, KeyRound, MapPin, UserRound, X } from 'lucide-react'
+import { ArrowRight, Bell, CalendarDays, ClipboardList, Columns3, ContactRound, KeyRound, MapPin, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { collection, doc, getDoc, limit, onSnapshot, query, where } from './dataClient'
 import { isFeedbackCompleted } from './feedbackStatus'
@@ -59,12 +59,12 @@ function ProfileCompletionReminder({ uid }: { uid: string }) {
 
   if (!missing) return null
   return <aside className="site-profile-reminder" aria-label="Lembrete de perfil">
-    <UserRound size={18} aria-hidden="true" />
-    <div>
+    <span className="site-profile-reminder-icon" aria-hidden="true"><ContactRound size={25} /></span>
+    <div className="site-profile-reminder-copy">
       <strong>Complete seu perfil</strong>
-      <p>Adicione {missing} para personalizar sua experiência no portal.</p>
+      <p>Adicione {missing} ao seu perfil.</p>
     </div>
-    <a href={`${sitePaths.profile}#profiles-edit-title`}>Ir para o perfil <ArrowRight size={15} aria-hidden="true" /></a>
+    <a href={`${sitePaths.profile}#profiles-edit-title`}>Completar perfil <ArrowRight size={17} aria-hidden="true" /></a>
     <button type="button" aria-label="Dispensar lembrete de perfil" title="Agora não" onClick={() => {
       setMissing('')
       try { sessionStorage.setItem(dismissalKey, '1') } catch { /* In-memory dismissal is sufficient. */ }

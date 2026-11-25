@@ -50,9 +50,9 @@ it('offers a direct link for an incomplete profile and remembers dismissal for t
   account.currentUser = { uid: 'student' }
   getDoc.mockResolvedValue({ data: () => ({ displayName: 'Lucas', className: ' ' }) })
   const first = render(<SiteNavigation active="agenda" />)
-  const link = await screen.findByRole('link', { name: 'Ir para o perfil' })
+  const link = await screen.findByRole('link', { name: 'Completar perfil' })
   expect(link.getAttribute('href')).toBe('/perfil/#profiles-edit-title')
-  expect(screen.getByText('Adicione sua turma para personalizar sua experiência no portal.')).toBeDefined()
+  expect(screen.getByText('Adicione sua turma ao seu perfil.')).toBeDefined()
   fireEvent.click(screen.getByRole('button', { name: 'Dispensar lembrete de perfil' }))
   expect(screen.queryByText('Complete seu perfil')).toBeNull()
   first.unmount()
