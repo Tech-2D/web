@@ -3,7 +3,6 @@
 .recovery-panel h2 { margin: 0; font-size: 1.15rem; line-height: 1.35; }
 .recovery-panel h2 svg { flex-shrink: 0; color: var(--interface-accent); }
 .recovery-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem 1.25rem; }
-.recovery-heading + h2 { margin-top: 1rem; }
 .recovery-heading h2, .recovery-action, .recovery-actions, .recovery-filter { display: flex; align-items: center; gap: .55rem; }
 .recovery-action { width: fit-content; }
 .recovery-actions { flex-wrap: wrap; margin-top: .75rem; }
@@ -12,7 +11,6 @@
 .recovery-actions input[type="number"] { width: 8rem; }
 .recovery-filter { font-weight: 600; }
 .recovery-window { margin: .35rem 0 .75rem; font-size: .9rem; }
-.recovery-description { white-space: pre-wrap; overflow-wrap: anywhere; }
 .recovery-day { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: .85rem; }
 .recovery-day h3 { font-size: .95rem; margin: 0 0 .5rem; }
 .recovery-day h3::first-letter { text-transform: uppercase; }
@@ -24,8 +22,27 @@
 .recovery-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; width: 100%; }
 .recovery-form legend { font-size: 1.05rem; font-weight: 700; margin-bottom: .7rem; }
 .recovery-import { padding: 1rem; margin-bottom: .75rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface-alt); }
-.recovery-import label { display: grid; gap: .5rem; font-weight: 650; }
-.recovery-import input { min-width: 0; max-width: 100%; }
+.recovery-import h4 { margin: 0 0 .55rem; font-size: .95rem; }
+.recovery-import-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem .75rem; }
+.recovery-import-controls > span { font-size: .8rem; color: var(--ink-soft); }
+.recovery-import .portal-control.recovery-file-picker {
+  box-sizing: border-box;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 44px;
+  padding: .375rem .75rem;
+  background: var(--interface-surface);
+  color: var(--interface-accent);
+  font-size: .875rem;
+  font-weight: 650;
+}
+.recovery-file-picker input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.recovery-file-picker:has(input:focus-visible) { outline: 2px solid var(--interface-accent); outline-offset: 2px; }
+.recovery-import .recovery-file-picker:hover:not(:has(input:disabled)) { border-color: var(--interface-accent); }
+.recovery-file-picker:has(input:disabled) { opacity: .55; }
+.recovery-file-picker input:disabled { cursor: default; }
 .recovery-import p { margin: .6rem 0; font-size: .9rem; }
 .recovery-import pre { max-width: 100%; overflow: auto; }
 .recovery-import-preview { border-top: 1px solid var(--line); margin-top: .65rem; }
@@ -35,8 +52,6 @@
 .recovery-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .recovery-fields label { display: grid; gap: .25rem; min-width: 0; align-content: start; font-size: .9rem; font-weight: 600; }
 .recovery-fields .portal-control { width: 100%; min-width: 0; }
-.recovery-wide { grid-column: 1 / -1; }
-.recovery-fields textarea { resize: vertical; }
 .recovery-lesson { display: grid; gap: .6rem; border: 1px solid var(--line); border-radius: .7rem; padding: .8rem; margin-bottom: .65rem; }
 button.recovery-primary { background: var(--interface-accent); border-color: var(--interface-accent); color: white; font-weight: 650; }
 button.recovery-primary:disabled { opacity: .55; cursor: default; }

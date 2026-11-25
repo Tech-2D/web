@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import type { User } from 'firebase/auth'
-import { ExternalLink, Plus, Trash2 } from 'lucide-react'
+import { FileUp, Plus, Trash2 } from 'lucide-react'
 import { formatRecoveryTime, recoveryRequest, type RecoveryContent, type RecoveryLesson, type RecoveryPublication } from './recovery'
 import { importRecoveryFile, MAX_RECOVERY_LESSONS } from './recoveryImport'
 import './recovery.css'
@@ -42,14 +42,14 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
     return () => window.clearInterval(interval)
   }, [data?.publication])
 
-  function update(changes: Partial<RecoveryContent>) {
-    setDraft(current => ({ ...current, ...changes }))
+  function updateLessons(lessons: RecoveryLesson[]) {
+    setDraft(current => ({ ...current, lessons }))
     setDirty(true)
     setMessage('')
   }
 
   function updateLesson(index: number, changes: Partial<RecoveryLesson>) {
-    update({ lessons: draft.lessons.map((lesson, at) => at === index ? { ...lesson, ...changes } : lesson) })
+    updateLessons(draft.lessons.map((lesson, at) => at === index ? { ...lesson, ...changes } : lesson))
   }
 
   const publication = data?.publication && Date.parse(data.publication.endsAt) > now ? data.publication : null
@@ -90,7 +90,7 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
         setDraft(result.draft)
         setDirty(false)
       }
-      setMessage(action === 'save' ? 'Rascunho salvo.' : action === 'activate' ? 'Modo de recuperação ativado.' : 'Modo de recuperação desligado.')
+      setMessage(action === 'save' ? 'Horários salvos.' : action === 'activate' ? 'Modo de recuperação ativado.' : 'Modo de recuperação desligado.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível concluir a ação.')
     } finally {
@@ -128,7 +128,7 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
           <button className="portal-control" type="button" disabled={busy || importing} onClick={reload}>Atualizar painel</button>
         </div>
         {publication && <p className="recovery-window">{formatRecoveryTime(publication.startsAt)} até {formatRecoveryTime(publication.endsAt)} · Brasília</p>}
-        {publication && publication.id !== draft.id && <p>O rascunho mais recente será usado na próxima ativação.</p>}
+        {publication && publication.id !== draft.id && <p>A nova grade será usada na próxima ativação.</p>}
         {publication ? <div className="recovery-actions">
           <button className="portal-control" type="button" disabled={busy || importing}
             onClick={() => void execute('deactivate')}>Desligar recuperação</button>
@@ -141,24 +141,23 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
           <button className="portal-control recovery-primary" type="submit" disabled={!canActivate || busy || importing}>Ativar recuperação</button>
         </form>}
         {!publication && <p className="recovery-window">De 1 a 90 dias. O prazo começa ao ativar.</p>}
-        {!publication && (dirty || !draft.id) && <p>Salve o rascunho antes de ativar a recuperação.</p>}
+        {!publication && (dirty || !draft.id) && <p>Salve os horários antes de ativar a recuperação.</p>}
       </section>
       {error && <p className="interface-panel recovery-panel" role="alert">{error}</p>}
       {message && <p className="interface-panel recovery-panel" role="status">{message}</p>}
       <form className="interface-panel recovery-panel recovery-form" onSubmit={submit}>
         <fieldset disabled={busy || importing}>
-          <legend>Rascunho do edital</legend>
-          <div className="recovery-fields">
-            <label className="recovery-wide">Título<input className="portal-control" required maxLength={140} value={draft.title} onChange={e => update({ title: e.target.value })} /></label>
-            <label className="recovery-wide">Informações do edital<textarea className="portal-control" rows={5} maxLength={6000} value={draft.description} onChange={e => update({ description: e.target.value })} /></label>
-            <label className="recovery-wide">Link do edital<input type="url" className="portal-control" maxLength={1000} placeholder="https://" value={draft.link ?? ''} onChange={e => update({ link: e.target.value })} /></label>
-          </div>
-          {data.draft?.link && <a className="recovery-action" href={data.draft.link} target="_blank" rel="noreferrer">Abrir link salvo <ExternalLink size={16} /></a>}
-        </fieldset>
-        <fieldset disabled={busy || importing}>
           <legend>Horários das aulas</legend>
           <div className="recovery-import">
-            <label>Importar horários<input type="file" accept=".xlsx,.json" onChange={event => void chooseFile(event)} /></label>
+            <h4>Importar horários</h4>
+            <div className="recovery-import-controls">
+              <label className="portal-control recovery-file-picker">
+                <FileUp size={17} aria-hidden="true" /> Escolher arquivo
+                <input type="file" accept=".xlsx,.json" aria-describedby="recovery-import-format"
+                  disabled={busy || importing} onChange={event => void chooseFile(event)} />
+              </label>
+              <span id="recovery-import-format">Excel (.xlsx) ou JSON</span>
+            </div>
             <p>Use a primeira aba do Excel com Data, Início, Fim e Matéria. Turma, Professor e Local são opcionais. Até 200 aulas por arquivo.</p>
             <details>
               <summary>Ver exemplo de JSON</summary>
@@ -167,14 +166,14 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
             {importing && <p role="status">Lendo horários…</p>}
             {importError && <p role="alert">{importError}</p>}
             {!!preview.length && <div className="recovery-import-preview">
-              <p role="status">{preview.length} {preview.length === 1 ? 'aula validada' : 'aulas validadas'}. {draft.lessons.length > 0 && 'Aplicar o arquivo substitui a grade do rascunho.'}</p>
+              <p role="status">{preview.length} {preview.length === 1 ? 'aula validada' : 'aulas validadas'}. {draft.lessons.length > 0 && 'O arquivo substitui a grade em edição.'}</p>
               <ul>
                 {preview.slice(0, 3).map((lesson, index) => <li key={index}>
                   {lesson.date.split('-').reverse().join('/')} · {lesson.start}–{lesson.end} · {lesson.subject}{lesson.className && ' · ' + lesson.className}
                 </li>)}
               </ul>
               <div className="recovery-actions">
-                <button className="portal-control" type="button" onClick={() => { update({ lessons: preview }); setPreview([]) }}>Usar horários importados</button>
+                <button className="portal-control" type="button" onClick={() => { updateLessons(preview); setPreview([]) }}>Usar horários importados</button>
                 <button className="portal-control" type="button" onClick={() => setPreview([])}>Cancelar importação</button>
               </div>
             </div>}
@@ -199,19 +198,19 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
                   <label>Professor<input className="portal-control" maxLength={120} value={lesson.teacher ?? ''} onChange={e => updateLesson(index, { teacher: e.target.value })} /></label>
                   <label>Local<input className="portal-control" maxLength={120} value={lesson.room ?? ''} onChange={e => updateLesson(index, { room: e.target.value })} /></label>
                 </div>
-                <button type="button" className="portal-control recovery-action" onClick={() => update({ lessons: draft.lessons.filter((_, at) => at !== index) })}><Trash2 size={16} /> Remover aula</button>
+                <button type="button" className="portal-control recovery-action" onClick={() => updateLessons(draft.lessons.filter((_, at) => at !== index))}><Trash2 size={16} /> Remover aula</button>
               </div>
             ))}
           </details>}
           <button type="button" className="portal-control recovery-action" disabled={draft.lessons.length >= MAX_RECOVERY_LESSONS}
             onClick={() => {
-              update({ lessons: [...draft.lessons, { date: '', start: '', end: '', subject: '', className: '', teacher: '', room: '' }] })
+              updateLessons([...draft.lessons, { date: '', start: '', end: '', subject: '', className: '', teacher: '', room: '' }])
               setManualOpen(true)
             }}>
             <Plus size={17} /> Adicionar aula
           </button>
         </fieldset>
-        <button type="submit" className="portal-control recovery-primary" disabled={!dirty || busy || importing || !!preview.length}>{busy ? 'Aguarde…' : 'Salvar rascunho'}</button>
+        <button type="submit" className="portal-control recovery-primary" disabled={!dirty || busy || importing || !!preview.length}>{busy ? 'Aguarde…' : 'Salvar horários'}</button>
       </form>
     </div>
   )

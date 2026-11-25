@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarClock, ExternalLink, GraduationCap } from 'lucide-react'
+import { ArrowLeft, CalendarClock, GraduationCap } from 'lucide-react'
 import { useState } from 'react'
 import { PageHeading } from './PageHeading'
 import { formatRecoveryTime, type RecoveryEdition, type RecoveryLesson } from './recovery'
@@ -27,17 +27,12 @@ export function RecoveryAgenda({ period, turmaId, onCalendar }: {
 
   return (
     <main id="inicio" className="main-content portal-main recovery">
-      <section className="interface-panel recovery-panel" aria-label="Edital de recuperação">
+      <section className="interface-panel recovery-panel" aria-labelledby="recovery-schedule">
         <div className="recovery-heading">
           <PageHeading icon={GraduationCap} title="Recuperação" />
           <button type="button" className="portal-control recovery-action" onClick={onCalendar}><ArrowLeft size={17} /> Ver Agenda normal</button>
         </div>
-        <h2>{period.title}</h2>
         <p className="recovery-window">{formatRecoveryTime(period.startsAt)} até {formatRecoveryTime(period.endsAt)} · Brasília</p>
-        {period.description && <p className="recovery-description">{period.description}</p>}
-        {period.link && <a className="recovery-action" href={period.link} target="_blank" rel="noreferrer">Abrir edital <ExternalLink size={16} /></a>}
-      </section>
-      <section className="interface-panel recovery-panel" aria-labelledby="recovery-schedule">
         <div className="recovery-heading">
           <h2 id="recovery-schedule"><CalendarClock size={21} /> Horários das aulas</h2>
           <label className="recovery-filter">Turma

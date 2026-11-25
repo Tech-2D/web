@@ -565,7 +565,7 @@ function App() {
         <div className="agenda-toolbar interface-panel portal-toolbar">
           <PageHeading icon={Calendar} title="Agenda" />
           {period && !linkedActivityId && <button type="button" className="portal-control recovery-return"
-            onClick={() => setRegularCalendarVersion(undefined)}>Ver edital e horários de recuperação</button>}
+            onClick={() => setRegularCalendarVersion(undefined)}>Ver horários de recuperação</button>}
           <div className="agenda-heading portal-tool-row">
             <label className="turma-select-inline" aria-label="Turma selecionada">
               <select className="portal-control" value={turmaId ?? ''} onChange={(event) => chooseTurma(event.target.value)}>
