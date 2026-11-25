@@ -93,11 +93,33 @@ describe('contrato do chat integrado', () => {
 
     send('Oi')
     expect(frame().getAttribute('data-pose')).toBe('pensando')
-    expect(screen.getByRole('status').textContent).toBe('D2 está pensando…')
+    const thinking = screen.getByRole('status')
+    expect(thinking.textContent).toBe('D2 está pensando…')
+    expect(thinking.querySelector('[aria-hidden="true"] [data-pose="pensando"]')).not.toBeNull()
+    expect(thinking.querySelectorAll('.assistant-thinking-dots i')).toHaveLength(3)
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     answer(Response.json({ answer: 'Olá!' }))
     await screen.findByText('Olá!')
+    expect(screen.queryByText('D2 está pensando…')).toBeNull()
     expect(frame().getAttribute('data-pose')).toBe('respondendo')
+  })
+
+  it('revela a resposta aos poucos, com o texto completo disponível para leitores de tela', async () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] })
+    const answer = 'A próxima atividade da turma é o trabalho de inglês na sexta-feira.'
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ answer })))
+    chat()
+    await act(async () => send('O que vem por aí?'))
+    const fullText = screen.getByText(answer)
+    expect(fullText.closest('[aria-hidden="true"]')).toBeNull()
+    const visual = fullText.parentElement?.querySelector('[aria-hidden="true"]')
+    expect(visual?.textContent).toBe('')
+    act(() => vi.advanceTimersByTime(400))
+    expect(visual?.textContent?.length).toBeGreaterThan(0)
+    expect(visual?.textContent?.length).toBeLessThan(answer.length)
+    act(() => vi.advanceTimersByTime(1400))
+    expect(document.querySelector('.assistant-typing-text')).toBeNull()
+    expect(screen.getByText(answer)).toBeDefined()
   })
 
   it('encaminha o “sim” ao chat e inclui os campos da prévia para o servidor decidir se deve gravar', async () => {

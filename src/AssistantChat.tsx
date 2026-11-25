@@ -64,6 +64,8 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [turns, setTurns] = useState<Turn[]>([])
+  const [typingTurn, setTypingTurn] = useState<Turn | null>(null)
+  const [typedText, setTypedText] = useState('')
   const [message, setMessage] = useState('')
   const [linkedActivity, setLinkedActivity] = useState<AssistantActivityReference | null>(null)
   const [busy, setBusy] = useState(false)
@@ -81,6 +83,25 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const transcript = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const toggle = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!typingTurn) return
+    const characters = Array.from(typingTurn.text)
+    const duration = Math.min(1400, 200 + characters.length * 15)
+    let started: number | undefined
+    let frame = requestAnimationFrame(reveal)
+    function reveal(now: number) {
+      started ??= now
+      const progress = Math.min(1, (now - started) / duration)
+      if (progress === 1) {
+        setTypingTurn(null)
+        return
+      }
+      setTypedText(characters.slice(0, Math.floor(characters.length * progress)).join(''))
+      frame = requestAnimationFrame(reveal)
+    }
+    return () => cancelAnimationFrame(frame)
+  }, [typingTurn])
 
   useEffect(() => {
     if (transcript.current) transcript.current.scrollTop = transcript.current.scrollHeight
@@ -150,6 +171,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
 
   async function send(path: AssistantRoute, body: Record<string, unknown>, userText?: string) {
     if (request.current) return
+    setTypingTurn(null)
     const controller = new AbortController()
     request.current = controller
     const payload = path === '/api/chat' && !body.request_id ? { ...body, request_id: crypto.randomUUID() } : body
@@ -186,7 +208,13 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
             ? `${data.remaining_messages} mensagens restantes hoje`
             : '')
       }
-      setTurns(old => [...old, { text: data.answer, cards: data.cards }])
+      const reply = { text: data.answer, cards: data.cards }
+      setTurns(old => [...old, reply])
+      if (transcript.current && !chat.current?.hidden && document.documentElement.dataset.motion !== 'reduzido'
+        && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        setTypedText('')
+        setTypingTurn(reply)
+      }
       reactD2(data.kanban?.state === 'saved' || data.kanban?.state === 'batch_saved' ? 'confirmacao' : 'respondendo')
       if (path === '/api/kanban' || data.kanban) {
         setKanban(data.kanban ?? null)
@@ -237,6 +265,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     void send('/api/kanban', { action, draft_id: kanban.id, confirmation_source: 'button', ...(items ? { items } : {}) })
   }
   function close() {
+    setTypingTurn(null)
     setOpen(false)
     requestAnimationFrame(() => toggle.current?.focus())
   }
@@ -246,6 +275,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   function startNewChat() {
     if (request.current) return
     transport.forget()
+    setTypingTurn(null)
     setTurns([])
     setMessage('')
     setLinkedActivity(null)
@@ -304,7 +334,12 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
             void send('/api/chat', { message: question, preferred_class: preferredClass }, question)
           }} />}
         {turns.map((turn, index) => <div className={turn.cards?.length ? 'assistant-result-turn' : 'assistant-message'} key={index}>
-          <div className={turn.user ? 'assistant-turn user' : 'assistant-turn'}>{turn.text}</div>
+          <div className={turn.user ? 'assistant-turn user' : 'assistant-turn'}>
+            {turn.user ? turn.text : <span className={turn === typingTurn ? 'assistant-typing-text' : undefined}>
+              <span>{turn.text}</span>
+              {turn === typingTurn && <span aria-hidden="true">{typedText}<i /></span>}
+            </span>}
+          </div>
           {!!turn.cards?.length && <div className="assistant-result-list">
             {turn.cards.map((card, index) => <ActivityResult key={card.id ?? index} activity={card}
               agendaPath={agendaPath} onOpen={() => setOpen(false)} onPrepare={() => prepareFromResult(card)} />)}
@@ -328,7 +363,14 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
           <a href={agendaPath + '#kanban'} onClick={() => { close(); onViewKanban?.() }}>Ver no Kanban</a>
         </div>}
         {kanban?.state === 'missing' && <a href={agendaPath + '#kanban'} onClick={close}>Abrir Kanban</a>}
-        {busy && <p className="assistant-thinking" role="status">D2 está pensando…</p>}
+        {busy && <div className="assistant-thinking" role="status">
+          <span className="assistant-thinking-avatar" aria-hidden="true">
+            <img src={d2Avatar} alt="" width="36" height="36" />
+            <span className="d2-mascot-frame" data-pose="pensando" />
+          </span>
+          <span>D2 está pensando…</span>
+          <span className="assistant-thinking-dots" aria-hidden="true"><i /><i /><i /></span>
+        </div>}
         {error && <p className="kb-error" role="alert">{error}</p>}
         {retryMessage && <button type="button" className="kb-link" disabled={busy}
           onClick={() => void send('/api/chat', retryMessage)}>Reenviar mensagem</button>}
