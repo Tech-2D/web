@@ -3,6 +3,8 @@ import type { KanbanBoard } from './kanban'
 import type { Activity } from './types'
 
 export type WelcomeActivity = Pick<Activity, 'title' | 'date' | 'time' | 'type' | 'turmaId'>
+export type WelcomeTopic = 'agenda' | 'kanban' | 'professores' | 'd2'
+type WelcomeNote = { topic: WelcomeTopic; label: string; text: string }
 
 const dateKey = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
 const dateLabel = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', timeZone: 'UTC' })
@@ -22,23 +24,30 @@ export function buildWelcome(name: unknown, turma: string | null, activities: re
     return count + board.tasks.filter(task => openColumns.has(task.columnId) && task.dueDate && task.dueDate < today).length
   }, 0)
 
-  const notes: string[] = []
+  const notes: WelcomeNote[] = []
   if (next) {
-    const when = next.date === today ? 'hoje' : dateLabel.format(new Date(next.date + 'T12:00:00Z'))
-    notes.push(`Próxima atividade · ${next.title} (${when})`)
+    const when = next.date === today ? 'Hoje' : dateLabel.format(new Date(next.date + 'T12:00:00Z'))
+    notes.push({ topic: 'agenda', label: `Na Agenda · ${when}${next.time ? `, ${next.time}` : ''}`, text: next.title })
     const count = upcoming.filter(activity => activity.date === today).length
-    if (count > 1) notes.push(`Ainda há ${count} atividades na Agenda de hoje.`)
+    if (count > 1) notes.push({ topic: 'agenda', label: 'No ritmo de hoje', text: `Ainda tem ${count} atividades na Agenda. Quer conferir quais são?` })
   }
-  if (overdue) notes.push(overdue === 1 ? 'Você tem 1 cartão com prazo vencido no Kanban pessoal.' : `Você tem ${overdue} cartões com prazo vencido no Kanban pessoal.`)
-  notes.push('Posso consultar a Agenda, encontrar horários de professores ou ajudar a criar cartões no Kanban.')
+  if (overdue) notes.push({
+    topic: 'kanban', label: 'No seu Kanban',
+    text: overdue === 1 ? 'Um cartão passou do prazo. Vale dar uma olhada quando puder.' : `${overdue} cartões passaram do prazo. Vale dar uma olhada quando puder.`,
+  })
+  notes.push({ topic: 'd2', label: 'Vale perguntar', text: 'Pode falar do seu jeito. Até um “o que tem pra hoje?” já dá pra começar.' })
+
+  const questions: { topic: WelcomeTopic; text: string }[] = [
+    { topic: 'agenda', text: next?.date === today ? 'O que ainda tem na Agenda hoje?' : 'O que tem na Agenda esta semana?' },
+    upcoming.some(activity => activity.type === 'prova')
+      ? { topic: 'agenda', text: 'Quando é a próxima prova?' }
+      : { topic: 'professores', text: 'Como vejo os horários dos professores?' },
+    { topic: 'kanban', text: 'Me ajuda a criar um card de revisão no Kanban?' },
+  ]
 
   return {
-    greeting: `${greeting}${safeName ? `, ${safeName}` : ''}! Eu sou o D2.`,
+    greeting: `${greeting}${safeName ? `, ${safeName}` : ''}!`,
     notes,
-    questions: [
-      next?.date === today ? 'O que ainda tem na Agenda hoje?' : 'O que tem na Agenda esta semana?',
-      upcoming.some(activity => activity.type === 'prova') ? 'Qual é a próxima prova?' : 'Como consulto os horários dos professores?',
-      'Crie um card para revisar o conteúdo da semana',
-    ],
+    questions,
   }
 }

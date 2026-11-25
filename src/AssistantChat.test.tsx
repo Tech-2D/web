@@ -30,6 +30,24 @@ afterEach(() => {
 })
 
 describe('contrato do chat integrado', () => {
+  it('troca a dica sem enviar mensagens e envia a pergunta escolhida', async () => {
+    const fetchMock = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(async () => Response.json({ answer: 'Vamos conferir a Agenda.' }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<AssistantChat account={account} endpoint={endpoint} preferredClass="2° TECH D" welcomeActivities={[
+      { title: 'Levar roupa de Educação Física', date: '2099-11-30', time: null, turmaId: '2° TECH D', type: 'tarefa' },
+    ]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Assistente' }))
+    expect(screen.getByText('Levar roupa de Educação Física')).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima dica do D2' }))
+    expect(screen.getByText('Vale perguntar')).toBeDefined()
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    const message = 'O que tem na Agenda esta semana?'
+    fireEvent.click(screen.getByRole('button', { name: message }))
+    await screen.findByText('Vamos conferir a Agenda.')
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1].body))).toMatchObject({ message, preferred_class: '2° TECH D' })
+  })
+
   it('faz o D2 cumprimentar, pensar e reagir à resposta sem disparar mensagens ao tocar no mascote', async () => {
     let answer!: (response: Response) => void
     const fetchMock = vi.fn(async (_: string, init: RequestInit) => init.method === 'DELETE'

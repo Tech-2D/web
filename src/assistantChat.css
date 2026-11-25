@@ -107,10 +107,73 @@
 .agenda-assistant-controls .assistant-new-chat:hover { border-color: var(--accent); color: var(--accent); }
 .agenda-assistant-turns { display: flex; flex-direction: column; gap: .65rem; padding: .75rem 1rem; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
 .assistant-message, .assistant-result-turn { display: flex; flex-direction: column; min-width: 0; gap: .5rem; }
-.assistant-welcome, .assistant-examples { display: grid; gap: .5rem; }
-.assistant-welcome .assistant-turn p { margin: .25rem 0 0; }
-.assistant-examples button { text-align: left; color: var(--accent); background: var(--paper); border: 1px solid var(--line); border-radius: .65rem; padding: .65rem .8rem; cursor: pointer; }
-.assistant-examples button:hover { border-color: var(--accent); }
+.assistant-welcome {
+  display: grid;
+  gap: .9rem;
+  align-self: center;
+  width: min(100%, 38rem);
+}
+.assistant-welcome-card {
+  display: grid;
+  gap: .75rem;
+  padding: .85rem;
+  border: 1px solid var(--line);
+  border-radius: .85rem;
+  background: var(--surface-alt);
+}
+.assistant-welcome-intro { display: flex; align-items: center; justify-content: space-between; gap: .55rem; }
+.assistant-welcome-intro strong { display: block; font-size: 1.15rem; line-height: 1.25; }
+.assistant-welcome-intro p { margin: .3rem 0 0; font-size: .85rem; line-height: 1.4; color: var(--ink-soft); }
+.assistant-welcome-intro img { flex: none; object-fit: contain; }
+.assistant-welcome-note {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .5rem .55rem .5rem .65rem;
+  border: 1px solid var(--line);
+  border-radius: .65rem;
+  background: var(--paper);
+}
+.assistant-welcome-note > svg { flex: none; color: var(--accent); }
+.assistant-welcome-note-copy { flex: 1; min-width: 0; }
+.assistant-welcome-note-copy span { display: block; font-size: .72rem; font-weight: 700; color: var(--ink-soft); }
+.assistant-welcome-note-copy p { margin: .15rem 0 0; font-size: .84rem; line-height: 1.35; }
+.assistant-welcome-note button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: .5rem;
+  color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+}
+.assistant-examples { display: grid; gap: .35rem; }
+.assistant-examples > p { margin: 0 0 .1rem .1rem; color: var(--ink-soft); font-size: .76rem; font-weight: 700; }
+.assistant-examples button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .55rem;
+  min-height: 2.75rem;
+  padding: .5rem .65rem;
+  border: 1px solid var(--line);
+  border-radius: .65rem;
+  color: var(--text);
+  background: var(--paper);
+  font: inherit;
+  font-size: .85rem;
+  line-height: 1.35;
+  text-align: start;
+  cursor: pointer;
+}
+.assistant-examples button svg { color: var(--accent); }
+.assistant-welcome-note button:hover, .assistant-examples button:hover:not(:disabled) { background: var(--surface-alt); }
+.assistant-examples button:hover:not(:disabled) { border-color: var(--accent); }
+.assistant-welcome button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .assistant-turn { align-self: flex-start; max-width: 88%; background: var(--surface-alt); padding: .65rem .8rem; border-radius: .7rem; white-space: pre-wrap; }
 .assistant-turn.user { align-self: flex-end; background: var(--accent); color: var(--interface-on-accent, #fff); }
 .assistant-result-list { display: grid; gap: .5rem; min-width: 0; }

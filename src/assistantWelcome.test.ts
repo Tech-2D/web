@@ -14,10 +14,10 @@ describe('D2 welcome', () => {
       activity,
     ], [], now)
 
-    expect(welcome.greeting).toBe('Boa noite, Júlia! Eu sou o D2.')
-    expect(welcome.notes).toContain('Próxima atividade · Prova de inglês (hoje)')
-    expect(welcome.notes).toContain('Ainda há 2 atividades na Agenda de hoje.')
-    expect(welcome.questions).toContain('Qual é a próxima prova?')
+    expect(welcome.greeting).toBe('Boa noite, Júlia!')
+    expect(welcome.notes[0]).toEqual({ topic: 'agenda', label: 'Na Agenda · Hoje, 22:30', text: 'Prova de inglês' })
+    expect(welcome.notes[1]?.text).toContain('Ainda tem 2 atividades na Agenda.')
+    expect(welcome.questions).toContainEqual({ topic: 'agenda', text: 'Quando é a próxima prova?' })
   })
 
   it('counts only overdue, unfinished cards and falls back to a generic greeting for an email', () => {
@@ -33,8 +33,8 @@ describe('D2 welcome', () => {
     }
     const welcome = buildWelcome('aluno@example.com', null, [], [board], now)
 
-    expect(welcome.greeting).toBe('Boa noite! Eu sou o D2.')
-    expect(welcome.notes).toContain('Você tem 1 cartão com prazo vencido no Kanban pessoal.')
-    expect(welcome.notes.join(' ')).not.toContain(task.title)
+    expect(welcome.greeting).toBe('Boa noite!')
+    expect(welcome.notes[0]).toMatchObject({ topic: 'kanban', label: 'No seu Kanban', text: expect.stringContaining('Um cartão passou do prazo.') })
+    expect(welcome.notes.map(note => note.text).join(' ')).not.toContain(task.title)
   })
 })
