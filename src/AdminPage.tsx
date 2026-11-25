@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, ArrowRight, Bell, Calendar, CalendarDays, Check, ChevronDown, Database, DoorOpen, Edit3, ExternalLink, History, Lightbulb, LoaderCircle, LogOut, Megaphone, MessageSquarePlus, Plus, Paperclip, ShieldCheck, Trash2, UserRound, Users, X, type LucideIcon } from 'lucide-react'
+import { Archive, ArrowLeft, ArrowRight, Bell, Calendar, CalendarClock, CalendarDays, ChartNoAxesCombined, Check, ChevronDown, Database, DoorOpen, Edit3, ExternalLink, FileJson, GraduationCap, History, Lightbulb, ListChecks, LoaderCircle, LogOut, Megaphone, MessageSquarePlus, MessageSquareText, Plus, Paperclip, Repeat2, ShieldCheck, Trash2, UserCheck, UserRound, Users, X, type LucideIcon } from 'lucide-react'
 import { onAuthStateChanged, reload, sendEmailVerification, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { StorageAdminPanel } from './StorageAdminPanel'
@@ -60,7 +60,7 @@ type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'sugg
 type AdminSection = {
   label: string
   icon: LucideIcon
-  tabs: { id: AdminTabId; label: string; count?: number }[]
+  tabs: { id: AdminTabId; label: string; icon: LucideIcon; count?: number }[]
 }
 
 export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, quickEditActivity, systemUpdates, onReturnToCalendar }: AdminPageProps) {
@@ -790,10 +790,10 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       label: 'Agenda da turma',
       icon: CalendarDays,
       tabs: [
-        { id: 'activities', label: 'Atividades' },
-        { id: 'recurrences', label: 'Atividades recorrentes' },
-        { id: 'notices', label: 'Avisos da turma' },
-        { id: 'suggestions', label: 'Sugestões de atividades', count: suggestionTotal },
+        { id: 'activities', label: 'Atividades', icon: ListChecks },
+        { id: 'recurrences', label: 'Atividades recorrentes', icon: Repeat2 },
+        { id: 'notices', label: 'Avisos da turma', icon: Bell },
+        { id: 'suggestions', label: 'Sugestões de atividades', icon: Lightbulb, count: suggestionTotal },
       ],
     },
   ]
@@ -802,27 +802,27 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       label: 'Professores',
       icon: Calendar,
       tabs: [
-        { id: 'schedules', label: 'Grade de horários' },
-        { id: 'scheduleImport', label: 'Importar horários por JSON' },
+        { id: 'schedules', label: 'Grade de horários', icon: CalendarClock },
+        { id: 'scheduleImport', label: 'Importar horários por JSON', icon: FileJson },
       ],
     },
     {
       label: 'Turmas e acessos',
       icon: Users,
       tabs: [
-        { id: 'representatives', label: 'Representantes e pedidos', count: representativeRequests.length },
-        { id: 'administrators', label: 'Administradores' },
-        { id: 'classes', label: 'Pedidos de novas turmas', count: classRequests.length },
-        { id: 'users' as const, label: 'Contas de usuários' },
+        { id: 'representatives', label: 'Representantes e pedidos', icon: UserCheck, count: representativeRequests.length },
+        { id: 'administrators', label: 'Administradores', icon: ShieldCheck },
+        { id: 'classes', label: 'Pedidos de novas turmas', icon: GraduationCap, count: classRequests.length },
+        { id: 'users' as const, label: 'Contas de usuários', icon: UserRound },
       ],
     },
     {
       label: 'Portal',
       icon: Megaphone,
       tabs: [
-        { id: 'updates', label: 'Atualizações do sistema' },
-        { id: 'feedback', label: 'Feedback do portal', count: pendingFeedbackCount },
-        { id: 'access' as const, label: 'Estatísticas de acesso' },
+        { id: 'updates', label: 'Atualizações do sistema', icon: History },
+        { id: 'feedback', label: 'Feedback do portal', icon: MessageSquareText, count: pendingFeedbackCount },
+        { id: 'access' as const, label: 'Estatísticas de acesso', icon: ChartNoAxesCombined },
       ],
     },
   )
@@ -830,8 +830,8 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
     label: 'Manutenção',
     icon: Database,
     tabs: [
-      { id: 'retention', label: 'Exclusão de atividades antigas' },
-      ...(isSuperAdmin ? [{ id: 'storage' as const, label: 'Armazenamento de arquivos' }] : []),
+      { id: 'retention', label: 'Exclusão de atividades antigas', icon: Trash2 },
+      ...(isSuperAdmin ? [{ id: 'storage' as const, label: 'Armazenamento de arquivos', icon: Archive }] : []),
     ],
   })
   const activeSection = adminSections.find(section => section.tabs.some(tab => tab.id === adminTab)) ?? adminSections[0]
@@ -952,8 +952,9 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   {adminSections.map(({ label, icon: Icon, tabs }) => (
                     <div className="admin-nav-group" key={label}>
                       <h2><Icon size={16} aria-hidden="true" />{label}</h2>
-                      <ul>{tabs.map(tab => (
+                      <ul>{tabs.map(({ icon: TabIcon, ...tab }) => (
                         <li key={tab.id}><button type="button" aria-current={tab.id === activeTab.id ? 'true' : undefined} onClick={() => openPanelTab(tab.id)}>
+                          <TabIcon size={16} aria-hidden="true" />
                           <span>{tab.label}</span>
                           {!!tab.count && <span className="admin-pending-count" aria-label={`${tab.count} pendentes`}>{tab.count}</span>}
                         </button></li>
