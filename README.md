@@ -67,6 +67,10 @@ Em **Administração → Agenda da turma → Recuperação**, administradores ge
 
 Depois de salvar o rascunho, informe a duração de 1 a 90 dias e clique em **Ativar recuperação**. A Agenda abre a visão especial imediatamente e volta à visão habitual ao final do prazo ou quando um administrador desliga o modo. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
 
+### Análise por conta
+
+Em **Administração → Turmas e acessos → Contas de usuários**, selecione **Ver análise** em uma conta para consultar a turma, as permissões, a situação do acesso e a atividade registrada em 7 ou 30 dias. [Especificação da análise por conta](https://github.com/Tech-2D/api/tree/main/specs/analise-conta)
+
 ## Rodar localmente
 
 O [AGENTS.md](AGENTS.md) descreve o fluxo de desenvolvimento por tarefa e indica onde encontrar o índice do ecossistema.

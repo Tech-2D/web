@@ -76,7 +76,7 @@ const adminDescriptions: Record<AdminTabId, string> = {
   representatives: 'Consulte quem representa cada turma e avalie novos pedidos.',
   administrators: 'Gerencie quem tem acesso completo ao painel.',
   classes: 'Avalie os pedidos para abrir a Agenda de outras turmas.',
-  users: 'Busque contas e gerencie bloqueios do portal.',
+  users: 'Consulte a atividade das contas e gerencie bloqueios do portal.',
   updates: 'Publique novidades no histórico de atualizações.',
   feedback: 'Organize as sugestões de melhoria enviadas pelo portal.',
   access: 'Compare o uso da Agenda, Professores, Notas e Kanban.',

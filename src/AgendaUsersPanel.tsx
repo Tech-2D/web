@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { User } from 'firebase/auth'
-import { ArrowLeft, RefreshCw, ShieldBan, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ChartNoAxesCombined, RefreshCw, ShieldBan, ShieldCheck } from 'lucide-react'
 import { API_BASE } from './apiBase'
 import { auth } from './firebase'
 
@@ -11,6 +11,18 @@ type Change = { action: 'block'; kind: 'email' | 'uid'; value: string; durationS
 const endpoint = API_BASE + '/api/admin/agenda-users'
 const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' })
 const visitDate = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeZone: 'UTC' })
+const sites = { agenda: 'Agenda', professores: 'Professores', pegaki: 'Notas', kanban: 'Kanban' } as const
+const siteKeys = Object.keys(sites) as (keyof typeof sites)[]
+type ActivityDay = Record<keyof typeof sites, number> & { date: string; visits: number; messages: number }
+type AccountAnalytics = {
+  profile: { name: string | null; email: string | null; className: string | null; classSource: 'assignment' | 'profile' | 'preference' | null;
+    role: 'superadmin' | 'representante' | 'user'; blockedUntil: string | null }
+  daily: ActivityDay[]
+}
+const accessLabels = { superadmin: 'Administrador geral', representante: 'Representante', user: 'Usuário' }
+const classLabels = { assignment: 'Turma sob sua responsabilidade', profile: 'Informada no perfil', preference: 'Preferência da Agenda' }
+const number = new Intl.NumberFormat('pt-BR')
+const formatDay = (value: string) => visitDate.format(new Date(value))
 
 async function request(user: User, path: string, signal: AbortSignal, change?: Change) {
   const token = await user.getIdToken()
@@ -29,7 +41,83 @@ async function request(user: User, path: string, signal: AbortSignal, change?: C
   return result
 }
 
+function AccountAnalysis({ user, account, onBack }: { user: User; account: AgendaAccount; onBack: () => void }) {
+  const [days, setDays] = useState('30')
+  const [revision, refresh] = useState(0)
+  const [analysis, setAnalysis] = useState<AccountAnalytics>()
+  const [error, setError] = useState('')
+  const heading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => { heading.current?.focus() }, [])
+  useEffect(() => {
+    const controller = new AbortController()
+    const params = new URLSearchParams({ view: 'profile', uid: account.uid, days })
+    setAnalysis(undefined)
+    setError('')
+    void request(user, '?' + params, controller.signal).then(data => {
+      if (!controller.signal.aborted) setAnalysis(data as AccountAnalytics)
+    }).catch(cause => {
+      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Falha ao consultar a conta.')
+    })
+    return () => controller.abort()
+  }, [user, account.uid, days, revision])
+
+  const profile = analysis?.profile
+  const daily = analysis?.daily ?? []
+  const total = (field: keyof typeof sites | 'visits' | 'messages') => daily.reduce((sum, day) => sum + day[field], 0)
+  const visits = total('visits')
+  const lastVisit = daily.find(day => day.visits > 0)?.date
+  const lastMessage = daily.find(day => day.messages > 0)?.date
+  return <section className="storage-admin agenda-users" aria-labelledby="account-analysis-title">
+    <div className="storage-admin-heading">
+      <div><h3 id="account-analysis-title" tabIndex={-1} ref={heading}>Análise da conta</h3>
+        <p>{profile?.name ? <><strong>{profile.name}</strong>{profile.email && ' · ' + profile.email}</> : account.email ?? account.uid}</p>
+      </div>
+      <button type="button" className="secondary-button" onClick={onBack}><ArrowLeft size={16} /> Voltar aos usuários</button>
+    </div>
+    <div className="agenda-users-form">
+      <label>Período da análise<select value={days} onChange={event => setDays(event.target.value)}>
+        <option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option>
+      </select></label>
+      <button type="button" className="secondary-button" onClick={() => refresh(value => value + 1)}><RefreshCw size={16} /> Atualizar análise</button>
+    </div>
+    {error && <p role="alert" className="form-error">{error}</p>}
+    {!analysis && !error && <p role="status">Carregando análise da conta…</p>}
+    {profile && <>
+      <dl className="account-analysis-facts">
+        <div><dt>Nível de acesso</dt><dd>{accessLabels[profile.role]}</dd></div>
+        <div><dt>Turma</dt><dd>{profile.className ?? 'Sem turma identificada'}</dd>
+          {profile.classSource && <dd><small>{classLabels[profile.classSource]}</small></dd>}</div>
+        <div><dt>Situação da conta</dt><dd>{profile.blockedUntil ? 'Bloqueada até ' + date.format(new Date(profile.blockedUntil)) : 'Acesso liberado'}</dd></div>
+      </dl>
+      <div className="agenda-user-totals">
+        <div><span>Acessos no período</span><strong>{number.format(visits)}</strong>
+          <small>{lastVisit ? 'Último acesso no período em ' + formatDay(lastVisit) : 'Sem acesso registrado no período'}</small></div>
+        <div><span>Dias com acesso</span><strong>{number.format(daily.filter(day => day.visits > 0).length)}</strong></div>
+        <div><span>Mensagens registradas no D2</span><strong>{number.format(total('messages'))}</strong>
+          <small>{lastMessage ? 'Última mensagem registrada em ' + formatDay(lastMessage) : 'Sem mensagem registrada no período'}</small></div>
+      </div>
+      <h4>Acessos por área</h4>
+      <ul className="account-analysis-sites">
+        {siteKeys.map(site => {
+          const count = total(site)
+          return <li key={site}><span>{sites[site]}</span>
+            <span className="account-analysis-bar" aria-hidden="true"><span style={{ width: (visits ? count / visits * 100 : 0) + '%' }} /></span>
+            <strong>{number.format(count)}</strong></li>
+        })}
+      </ul>
+      <h4>Atividade por dia</h4>
+      {daily.length ? <div className="account-analysis-table"><table aria-label="Atividade registrada por dia">
+        <thead><tr><th scope="col">Dia</th><th scope="col">Acessos</th><th scope="col">Mensagens no D2</th></tr></thead>
+        <tbody>{daily.map(day => <tr key={day.date}><th scope="row"><time dateTime={day.date}>{formatDay(day.date)}</time></th>
+          <td>{number.format(day.visits)}</td><td>{number.format(day.messages)}</td></tr>)}</tbody>
+      </table></div> : <p className="admin-empty">Sem atividade registrada neste período.</p>}
+      <p className="storage-admin-note">Os acessos são agrupados a cada 30 minutos por área. As datas seguem o horário de Brasília.</p>
+    </>}
+  </section>
+}
+
 export function AgendaUsersPanel({ user }: { user: User }) {
+  const [selected, setSelected] = useState<AgendaAccount | null>(null)
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [offset, setOffset] = useState(0)
@@ -106,10 +194,15 @@ export function AgendaUsersPanel({ user }: { user: User }) {
     setQuery(search.trim())
   }
 
+  if (selected) return <AccountAnalysis key={selected.uid} user={user} account={selected} onBack={() => {
+    setSelected(null)
+    requestAnimationFrame(() => usersHeading.current?.focus())
+  }} />
+
   return (
     <section className="storage-admin agenda-users" aria-labelledby="agenda-users-title">
       <div className="storage-admin-heading">
-        <div><h3 id="agenda-users-title" tabIndex={-1} ref={usersHeading}>Contas cadastradas</h3><p>A lista mostra a última visita de cada conta à Agenda.</p></div>
+        <div><h3 id="agenda-users-title" tabIndex={-1} ref={usersHeading}>Contas cadastradas</h3><p>Abra a análise de uma conta para ver sua turma, suas permissões e a atividade registrada no portal.</p></div>
         <div className="agenda-user-actions">
           <button type="button" className="secondary-button" onClick={() => blocksHeading.current?.focus()}><ShieldBan size={16} /> Ver bloqueios ativos</button>
           <button type="button" className="secondary-button" disabled={busy} onClick={() => refresh(n => n + 1)}><RefreshCw size={16} /> Atualizar</button>
@@ -146,6 +239,7 @@ export function AgendaUsersPanel({ user }: { user: User }) {
                 {item.blockedUntil && <small>Bloqueado até {date.format(new Date(item.blockedUntil))}</small>}
               </div>
               <div className="agenda-user-actions">
+                <button type="button" className="secondary-button" onClick={() => setSelected(item)}><ChartNoAxesCombined size={16} /> Ver análise</button>
                 {item.protected && <small>Superadministrador</small>}
                 {item.blockId && <button type="button" className="secondary-button" disabled={busy} onClick={() => unblock(item.blockId!, item.email || item.uid)}><ShieldCheck size={16} /> Desbloquear conta</button>}
                 {!item.protected && !item.blocked && <button type="button" className="secondary-button" disabled={busy || !validDuration} onClick={() => block('uid', item.uid, item.email || item.uid)}>Bloquear conta</button>}
