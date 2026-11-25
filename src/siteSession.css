@@ -12,34 +12,55 @@
   box-shadow: var(--shadow);
   text-align: center;
 }
-.site-entry-check-icon {
-  position: relative;
+.site-session-loading {
+  gap: .4rem;
+  padding: 1.75rem 1.25rem 1.5rem;
+}
+.site-session-mascot {
   display: grid;
   place-items: center;
-  width: 4rem;
-  aspect-ratio: 1;
-  margin-bottom: .8rem;
-  border-radius: 50%;
+  width: 5.25rem;
+  height: 5.25rem;
+  margin-bottom: .45rem;
+  border: 1px solid var(--line);
+  border-radius: 1.65rem;
   background: var(--surface-alt, var(--surface));
-  color: var(--ink);
 }
-.site-entry-check-icon::after {
-  position: absolute;
-  inset: -.1875rem;
-  border: 2px solid var(--line);
-  border-top-color: var(--accent);
-  border-right-color: var(--accent);
-  border-radius: inherit;
+.site-session-mascot img {
+  display: block;
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+}
+.site-session-progress {
+  width: min(7.5rem, 70%);
+  height: .25rem;
+  margin-top: .7rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--surface-alt, var(--surface));
+}
+.site-session-progress::after {
   content: '';
-  animation: site-session-spin 1.15s linear infinite;
+  display: block;
+  width: 36%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transform: translateX(89%);
 }
-@keyframes site-session-spin { to { transform: rotate(360deg); } }
-.site-entry-check-brand { font-size: .875rem; font-weight: 800; color: var(--ink); }
+.site-entry-check-brand { font-size: .8rem; font-weight: 800; color: var(--ink); }
 .site-entry-check-card p { margin: 0; font-size: 1rem; line-height: 1.45; }
-@media (prefers-reduced-motion: reduce) {
-  .site-entry-check-icon::after { animation: none; }
+.site-session-loading p { font-weight: 650; }
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="reduzido"]) .site-session-mascot img { animation: site-session-d2 2s ease-in-out infinite; }
+  :root:not([data-motion="reduzido"]) .site-session-progress::after { animation: site-session-progress 1.25s ease-in-out infinite alternate; }
 }
-[data-motion="reduzido"] .site-entry-check-icon::after { animation: none; }
+@keyframes site-session-d2 { 50% { transform: translateY(-.2rem); } }
+@keyframes site-session-progress {
+  from { transform: translateX(0); }
+  to { transform: translateX(178%); }
+}
 .site-entry {
   min-height: 100dvh;
   display: grid;

@@ -2,11 +2,12 @@ import { registerAccount } from './registration'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { ArrowRight, CalendarDays, ClipboardList, Columns3, Eye, EyeOff, MapPin, ShieldCheck } from 'lucide-react'
+import { ArrowRight, CalendarDays, ClipboardList, Columns3, Eye, EyeOff, MapPin } from 'lucide-react'
 import { auth } from './firebase'
 import { requestPasswordReset } from './passwordReset'
 import { API_BASE } from './apiBase'
 import { signOut } from './sessionActions'
+import d2Avatar from './assets/d2/d2.webp'
 import './siteSession.css'
 
 type Mode = 'login' | 'register' | 'reset'
@@ -85,10 +86,13 @@ function PortalAccess({ user, children }: { user: User; children: ReactNode }) {
 function SessionLoading() {
   return (
     <main className="site-entry-check">
-      <div className="site-entry-check-card" role="status">
-        <span className="site-entry-check-icon" aria-hidden="true"><ShieldCheck size={28} strokeWidth={1.8} /></span>
+      <div className="site-entry-check-card site-session-loading" role="status">
+        <div className="site-session-mascot" aria-hidden="true">
+          <img src={d2Avatar} alt="" width="72" height="72" />
+        </div>
         <span className="site-entry-check-brand" aria-hidden="true">Tech 2D</span>
         <p>Verificando sua sessão…</p>
+        <span className="site-session-progress" aria-hidden="true" />
       </div>
     </main>
   )

@@ -1,30 +1,71 @@
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { CalendarDays, ChevronDown, Maximize2, MessageCircle, Minimize2, Plus, Sparkles, X } from 'lucide-react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
+import { CalendarDays, ChevronDown, Maximize2, Minimize2, Plus, Sparkles, X } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { KanbanCardFace } from './KanbanCardFace'
+import { AssistantWelcome } from './AssistantWelcome'
+import type { WelcomeActivity } from './assistantWelcomeContext'
 import { PRIORITIES } from './kanban'
 import type { Activity, AssistantActivityReference, Batch, BatchInput, CardInput, Draft, Fields, Kanban } from './assistantContract'
 import { useAssistantTransport, type AssistantRoute } from './useAssistantTransport'
+import { useAssistantLauncherPosition } from './useAssistantLauncherPosition'
 export type { AssistantActivityReference } from './assistantContract'
 import { ACTIVITY_TYPE_COLORS, type ActivityType } from './types'
 import { canCreateActivityCard } from './activityFuture'
 import { sitePaths } from './sitePaths'
+import d2Avatar from './assets/d2/d2.webp'
 import './kanban.css'
 import './assistantChat.css'
+import './d2Sprites.css'
 
 type Turn = { text: string; user?: boolean; cards?: Activity[] }
+type D2Reaction = 'repouso' | 'saudacao' | 'respondendo' | 'confirmacao'
 
-const examples = ['Qual a próxima prova?', 'Cria um card falando para estudar matemática', 'Onde tá a Lisete?']
+const noWelcomeActivities: readonly WelcomeActivity[] = []
 const kanbanDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
+const launcherHints = [
+  'Quer saber o que tem na Agenda hoje?',
+  'Posso te ajudar a encontrar o horário de um professor.',
+  'Quer transformar um lembrete em um card do Kanban?',
+]
 
-export default function AssistantChat({ account, preferredClass, endpoint, prefill, covered, onViewKanban, agendaPath = sitePaths.agenda }: {
+function AssistantLauncherHint() {
+  const [hint, setHint] = useState(0)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    let nextHint = 0
+    let hide = 0
+    const show = () => {
+      next = window.setTimeout(show, 60000)
+      if (document.hidden) return
+      setHint(nextHint)
+      nextHint = (nextHint + 1) % launcherHints.length
+      setVisible(true)
+      hide = window.setTimeout(() => setVisible(false), 10000)
+    }
+    let next = window.setTimeout(show, 6000)
+    return () => {
+      window.clearTimeout(hide)
+      window.clearTimeout(next)
+    }
+  }, [])
+
+  return <span className="assistant-launcher-hint" data-visible={visible} aria-hidden="true">
+    <span>{launcherHints[hint]}</span>
+  </span>
+}
+
+export default function AssistantChat({ account, preferredClass, endpoint, prefill, covered, onViewKanban, agendaPath = sitePaths.agenda, welcomeActivities = noWelcomeActivities }: {
   account: User; preferredClass: string | null; endpoint: string; prefill?: AssistantActivityReference | null; covered?: boolean
   onViewKanban?: () => void
   agendaPath?: string
+  welcomeActivities?: readonly WelcomeActivity[]
 }) {
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [turns, setTurns] = useState<Turn[]>([])
+  const [typingTurn, setTypingTurn] = useState<Turn | null>(null)
+  const [typedText, setTypedText] = useState('')
   const [message, setMessage] = useState('')
   const [linkedActivity, setLinkedActivity] = useState<AssistantActivityReference | null>(null)
   const [busy, setBusy] = useState(false)
@@ -35,16 +76,37 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const [retryOnly, setRetryOnly] = useState(false)
   const [retryMessage, setRetryMessage] = useState<Record<string, unknown> | null>(null)
   const [quotaText, setQuotaText] = useState('')
+  const [d2, setD2] = useState<{ reaction: D2Reaction; version: number }>({ reaction: 'saudacao', version: 0 })
   const transport = useAssistantTransport(account, endpoint)
   const request = transport.inFlight
   const chat = useRef<HTMLDivElement>(null)
   const transcript = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const toggle = useRef<HTMLButtonElement>(null)
+  const launcher = useAssistantLauncherPosition()
+
+  useEffect(() => {
+    if (!typingTurn) return
+    const characters = Array.from(typingTurn.text)
+    const duration = Math.min(1400, 200 + characters.length * 15)
+    let started: number | undefined
+    let frame = requestAnimationFrame(reveal)
+    function reveal(now: number) {
+      started ??= now
+      const progress = Math.min(1, (now - started) / duration)
+      if (progress === 1) {
+        setTypingTurn(null)
+        return
+      }
+      setTypedText(characters.slice(0, Math.floor(characters.length * progress)).join(''))
+      frame = requestAnimationFrame(reveal)
+    }
+    return () => cancelAnimationFrame(frame)
+  }, [typingTurn])
 
   useEffect(() => {
     if (transcript.current) transcript.current.scrollTop = transcript.current.scrollHeight
-  }, [turns, kanban, open])
+  }, [turns, kanban, open, busy, error])
   useLayoutEffect(() => {
     if (input.current) fitMessageInput(input.current)
   }, [message, open, expanded, covered])
@@ -110,6 +172,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
 
   async function send(path: AssistantRoute, body: Record<string, unknown>, userText?: string) {
     if (request.current) return
+    setTypingTurn(null)
     const controller = new AbortController()
     request.current = controller
     const payload = path === '/api/chat' && !body.request_id ? { ...body, request_id: crypto.randomUUID() } : body
@@ -146,7 +209,14 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
             ? `${data.remaining_messages} mensagens restantes hoje`
             : '')
       }
-      setTurns(old => [...old, { text: data.answer, cards: data.cards }])
+      const reply = { text: data.answer, cards: data.cards }
+      setTurns(old => [...old, reply])
+      if (transcript.current && !chat.current?.hidden && document.documentElement.dataset.motion !== 'reduzido'
+        && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        setTypedText('')
+        setTypingTurn(reply)
+      }
+      reactD2(data.kanban?.state === 'saved' || data.kanban?.state === 'batch_saved' ? 'confirmacao' : 'respondendo')
       if (path === '/api/kanban' || data.kanban) {
         setKanban(data.kanban ?? null)
         setRetryOnly((data.kanban?.state === 'draft' || data.kanban?.state === 'batch') && !!data.kanban.retry_only)
@@ -196,12 +266,17 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     void send('/api/kanban', { action, draft_id: kanban.id, confirmation_source: 'button', ...(items ? { items } : {}) })
   }
   function close() {
+    setTypingTurn(null)
     setOpen(false)
     requestAnimationFrame(() => toggle.current?.focus())
+  }
+  function reactD2(reaction: D2Reaction) {
+    setD2(current => ({ reaction, version: current.version + 1 }))
   }
   function startNewChat() {
     if (request.current) return
     transport.forget()
+    setTypingTurn(null)
     setTurns([])
     setMessage('')
     setLinkedActivity(null)
@@ -211,6 +286,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     setBatchSubmission(null)
     setRetryOnly(false)
     setRetryMessage(null)
+    reactD2('saudacao')
     requestAnimationFrame(() => input.current?.focus())
   }
   function prepareFromResult(activity: Activity) {
@@ -220,14 +296,35 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     input.current?.focus()
   }
   const sizeAction = expanded ? 'Restaurar tamanho do chat' : 'Ampliar chat'
+  const pose = busy ? 'pensando' : error ? 'repouso' : d2.reaction
 
-  return <div ref={chat} className="agenda-assistant" hidden={covered} data-expanded={open && expanded ? 'true' : undefined}>
-    <button ref={toggle} className="agenda-assistant-toggle assistant-primary" type="button" aria-expanded={open} onClick={() => open ? close() : setOpen(true)}>
-      <MessageCircle size={20} aria-hidden="true" /> Assistente
+  return <div ref={chat} className="agenda-assistant" hidden={covered} data-expanded={open && expanded ? 'true' : undefined}
+    data-panel-below={launcher.position.y < .5 ? '' : undefined}
+    style={{ '--launcher-x': launcher.position.x, '--launcher-y': launcher.position.y } as CSSProperties}>
+    <button ref={toggle} className="agenda-assistant-toggle assistant-primary" type="button" aria-label="Assistente" aria-expanded={open}
+      title={open ? 'Fechar assistente' : 'Arraste ou use as setas para mover. Home restaura a posição.'}
+      {...(!open ? launcher.handlers : {})} onClick={event => {
+      if (launcher.wasDragged(event.detail)) return
+      if (open) close()
+      else { reactD2('saudacao'); setOpen(true) }
+    }}>
+      <img className="d2-launcher-avatar" src={d2Avatar} alt="" width="28" height="28" />
+      <span className="assistant-launcher-copy">
+        <span>Assistente</span>
+        {!open && !covered && <AssistantLauncherHint />}
+      </span>
     </button>
     {open && <section className="agenda-assistant-panel" aria-label="Assistente" onKeyDown={e => { if (e.key === 'Escape') close() }}>
       <header>
-        <strong>Assistente</strong>
+        <div className="assistant-identity">
+          <button type="button" className="d2-mascot" aria-label="Cumprimentar o D2" title="Cumprimentar o D2" disabled={busy}
+            onClick={() => reactD2('saudacao')}>
+            <img src={d2Avatar} alt="" width="44" height="44" />
+            <span key={d2.version} className="d2-mascot-frame" data-pose={pose} aria-hidden="true"
+              onAnimationEnd={() => reactD2('repouso')} />
+          </button>
+          <div><strong>D2</strong><small>Assistente</small></div>
+        </div>
         <div className="agenda-assistant-controls">
           <button type="button" className="assistant-new-chat" aria-label="Nova conversa" title="Nova conversa" disabled={busy} onClick={startNewChat}>
             <Plus size={16} aria-hidden="true" /> <span>Novo chat</span>
@@ -239,16 +336,19 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
         </div>
       </header>
       <div ref={transcript} className="agenda-assistant-turns" role="log" aria-live="polite">
-        {turns.length === 0 && <div className="assistant-welcome">
-          <div className="assistant-turn">Oi! Posso ajudar você com ações rápidas do sistema. Experimente perguntar:</div>
-          <div className="assistant-examples">{examples.map(example => <button type="button" key={example} disabled={busy} onClick={() => {
+        {turns.length === 0 && !covered && <AssistantWelcome account={account} turma={preferredClass}
+          activities={welcomeActivities} busy={busy} onAsk={question => {
             setMessage('')
             setLinkedActivity(null)
-            void send('/api/chat', { message: example, preferred_class: preferredClass }, example)
-          }}>{example}</button>)}</div>
-        </div>}
+            void send('/api/chat', { message: question, preferred_class: preferredClass }, question)
+          }} />}
         {turns.map((turn, index) => <div className={turn.cards?.length ? 'assistant-result-turn' : 'assistant-message'} key={index}>
-          <div className={turn.user ? 'assistant-turn user' : 'assistant-turn'}>{turn.text}</div>
+          <div className={turn.user ? 'assistant-turn user' : 'assistant-turn'}>
+            {turn.user ? turn.text : <span className={turn === typingTurn ? 'assistant-typing-text' : undefined}>
+              <span>{turn.text}</span>
+              {turn === typingTurn && <span aria-hidden="true">{typedText}<i /></span>}
+            </span>}
+          </div>
           {!!turn.cards?.length && <div className="assistant-result-list">
             {turn.cards.map((card, index) => <ActivityResult key={card.id ?? index} activity={card}
               agendaPath={agendaPath} onOpen={() => setOpen(false)} onPrepare={() => prepareFromResult(card)} />)}
@@ -272,7 +372,14 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
           <a href={agendaPath + '#kanban'} onClick={() => { close(); onViewKanban?.() }}>Ver no Kanban</a>
         </div>}
         {kanban?.state === 'missing' && <a href={agendaPath + '#kanban'} onClick={close}>Abrir Kanban</a>}
-        {busy && <p role="status">Aguarde…</p>}
+        {busy && <div className="assistant-thinking" role="status">
+          <span className="assistant-thinking-avatar" aria-hidden="true">
+            <img src={d2Avatar} alt="" width="36" height="36" />
+            <span className="d2-mascot-frame" data-pose="pensando" />
+          </span>
+          <span>D2 está pensando…</span>
+          <span className="assistant-thinking-dots" aria-hidden="true"><i /><i /><i /></span>
+        </div>}
         {error && <p className="kb-error" role="alert">{error}</p>}
         {retryMessage && <button type="button" className="kb-link" disabled={busy}
           onClick={() => void send('/api/chat', retryMessage)}>Reenviar mensagem</button>}

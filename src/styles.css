@@ -767,3 +767,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .notice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
   .notice-form-actions .primary-button, .notice-form-actions .secondary-button { flex: 1; }
 }
+html:not([data-vlibras-enabled]) :is(#vlibras-access-wrapper, #vlibras-app-root, [vw]) {
+  display: none !important;
+}

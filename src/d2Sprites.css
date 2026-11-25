@@ -1,0 +1,78 @@
+/* D2 sprite timing from the supplied animation frames. */
+.d2-mascot-frame[data-pose="repouso"] {
+  background-image: url("./assets/d2/d2-repouso.webp");
+  background-size: 300% 100%;
+  animation: d2-repouso 2510ms steps(1, end) infinite;
+}
+@keyframes d2-repouso {
+  0.00000% { background-position: 0.00000% 0; }
+  63.74502% { background-position: 50.00000% 0; }
+  68.12749% { background-position: 100.00000% 0; }
+}
+
+.d2-mascot-frame[data-pose="saudacao"] {
+  background-image: url("./assets/d2/d2-saudacao.webp");
+  background-size: 600% 100%;
+  animation: d2-saudacao 680ms steps(1, end) 1;
+}
+@keyframes d2-saudacao {
+  0.00000% { background-position: 0.00000% 0; }
+  13.23529% { background-position: 20.00000% 0; }
+  23.52941% { background-position: 40.00000% 0; }
+  45.58824% { background-position: 60.00000% 0; }
+  60.29412% { background-position: 80.00000% 0; }
+  73.52941% { background-position: 100.00000% 0; }
+}
+
+.d2-mascot-frame[data-pose="pensando"] {
+  background-image: url("./assets/d2/d2-pensando.webp");
+  background-size: 1600% 100%;
+  animation: d2-pensando 1200ms steps(1, end) infinite;
+}
+@keyframes d2-pensando {
+  0.00000% { background-position: 0.00000% 0; }
+  6.25000% { background-position: 6.66667% 0; }
+  12.50000% { background-position: 13.33333% 0; }
+  18.75000% { background-position: 20.00000% 0; }
+  25.00000% { background-position: 26.66667% 0; }
+  31.25000% { background-position: 33.33333% 0; }
+  37.50000% { background-position: 40.00000% 0; }
+  43.75000% { background-position: 46.66667% 0; }
+  50.00000% { background-position: 53.33333% 0; }
+  56.25000% { background-position: 60.00000% 0; }
+  62.50000% { background-position: 66.66667% 0; }
+  68.75000% { background-position: 73.33333% 0; }
+  75.00000% { background-position: 80.00000% 0; }
+  81.25000% { background-position: 86.66667% 0; }
+  87.50000% { background-position: 93.33333% 0; }
+  93.75000% { background-position: 100.00000% 0; }
+}
+
+.d2-mascot-frame[data-pose="respondendo"] {
+  background-image: url("./assets/d2/d2-respondendo.webp");
+  background-size: 600% 100%;
+  animation: d2-respondendo 705ms steps(1, end) 1;
+}
+@keyframes d2-respondendo {
+  0.00000% { background-position: 0.00000% 0; }
+  13.47518% { background-position: 20.00000% 0; }
+  30.49645% { background-position: 40.00000% 0; }
+  44.68085% { background-position: 60.00000% 0; }
+  64.53901% { background-position: 80.00000% 0; }
+  85.10638% { background-position: 100.00000% 0; }
+}
+
+.d2-mascot-frame[data-pose="confirmacao"] {
+  background-image: url("./assets/d2/d2-confirmacao.webp");
+  background-size: 700% 100%;
+  animation: d2-confirmacao 755ms steps(1, end) 1;
+}
+@keyframes d2-confirmacao {
+  0.00000% { background-position: 0.00000% 0; }
+  10.59603% { background-position: 16.66667% 0; }
+  19.20530% { background-position: 33.33333% 0; }
+  30.46358% { background-position: 50.00000% 0; }
+  39.73510% { background-position: 66.66667% 0; }
+  48.34437% { background-position: 83.33333% 0; }
+  78.80795% { background-position: 100.00000% 0; }
+}
