@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { User } from 'firebase/auth'
-import { ArrowUpRight, CalendarDays, ChevronRight, Columns3, MapPin, MessageCircle } from 'lucide-react'
+import { ArrowUpRight, CalendarDays, Columns3, MapPin, MessageCircle } from 'lucide-react'
 import { buildWelcome, type WelcomeActivity, type WelcomeTopic } from './assistantWelcomeContext'
 import d2Avatar from './assets/d2/d2.webp'
 import { doc, getDoc } from './dataClient'
@@ -18,8 +18,10 @@ export function AssistantWelcome({ account, turma, activities, busy, onAsk }: {
 }) {
   const [profileName, setProfileName] = useState<string>()
   const [boards, setBoards] = useState<KanbanBoard[]>([])
-  const [moment, setMoment] = useState(() => ({ now: new Date(), step: 0 }))
+  const [now, setNow] = useState(() => new Date())
   const welcomeRef = useRef<HTMLDivElement>(null)
+  const notesRef = useRef<HTMLDivElement>(null)
+  const lastScroll = useRef(-Infinity)
 
   useEffect(() => {
     if (auth.currentUser?.uid !== account.uid) return
@@ -39,14 +41,17 @@ export function AssistantWelcome({ account, turma, activities, busy, onAsk }: {
   useEffect(() => {
     const interval = window.setInterval(() => {
       if (document.hidden || welcomeRef.current?.contains(document.activeElement)) return
-      setMoment(current => ({ now: new Date(), step: current.step + 1 }))
-    }, 45000)
+      const notes = notesRef.current
+      if (!notes || notes.matches(':hover') || performance.now() - lastScroll.current < 4000
+        || document.documentElement.dataset.motion === 'reduzido'
+        || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+      setNow(new Date())
+      moveWelcomeNote(notes, 1)
+    }, 12000)
     return () => window.clearInterval(interval)
   }, [])
 
-  const welcome = buildWelcome(profileName ?? account.displayName, turma, activities, boards, moment.now)
-  const note = welcome.notes[moment.step % welcome.notes.length]
-  const NoteIcon = topicIcons[note.topic]
+  const welcome = buildWelcome(profileName ?? account.displayName, turma, activities, boards, now)
 
   return <div ref={welcomeRef} className="assistant-welcome">
     <div className="assistant-welcome-card">
@@ -57,16 +62,23 @@ export function AssistantWelcome({ account, turma, activities, busy, onAsk }: {
         </div>
         <img src={d2Avatar} alt="" width="52" height="52" />
       </div>
-      <div className="assistant-welcome-note">
-        <NoteIcon size={18} aria-hidden="true" />
-        <div className="assistant-welcome-note-copy" aria-live="off">
-          <span>{note.label}</span>
-          <p>{note.text}</p>
-        </div>
-        {welcome.notes.length > 1 && <button type="button" aria-label="Próxima dica do D2" title="Próxima dica do D2"
-          onClick={() => setMoment(current => ({ now: new Date(), step: current.step + 1 }))}>
-          <ChevronRight size={17} aria-hidden="true" />
-        </button>}
+      <div ref={notesRef} className="assistant-welcome-notes" role="group" aria-label="Dicas do D2" aria-live="off"
+        onScroll={() => { lastScroll.current = performance.now() }}
+        tabIndex={welcome.notes.length > 1 ? 0 : undefined} onKeyDown={event => {
+          if (welcome.notes.length < 2 || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return
+          event.preventDefault()
+          moveWelcomeNote(event.currentTarget, event.key === 'ArrowRight' ? 1 : -1)
+        }}>
+        {welcome.notes.map(note => {
+          const NoteIcon = topicIcons[note.topic]
+          return <div className="assistant-welcome-note" key={note.label}>
+            <NoteIcon size={18} aria-hidden="true" />
+            <div className="assistant-welcome-note-copy">
+              <span>{note.label}</span>
+              <p>{note.text}</p>
+            </div>
+          </div>
+        })}
       </div>
     </div>
     <div className="assistant-examples" role="group" aria-label="Sugestões para conversar com o D2">
@@ -81,4 +93,12 @@ export function AssistantWelcome({ account, turma, activities, busy, onAsk }: {
       })}
     </div>
   </div>
+}
+
+function moveWelcomeNote(notes: HTMLDivElement, direction: 1 | -1) {
+  const { clientWidth, scrollLeft, childElementCount } = notes
+  if (childElementCount < 2 || !clientWidth) return
+  const current = Math.round(scrollLeft / clientWidth)
+  const next = (current + direction + childElementCount) % childElementCount
+  notes.scrollTo({ left: next * clientWidth })
 }

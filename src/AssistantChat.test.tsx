@@ -95,6 +95,7 @@ describe('contrato do chat integrado', () => {
   })
 
   it('troca a dica sem enviar mensagens e envia a pergunta escolhida', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
     const fetchMock = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(async () => Response.json({ answer: 'Vamos conferir a Agenda.' }))
     vi.stubGlobal('fetch', fetchMock)
     render(<AssistantChat account={account} endpoint={endpoint} preferredClass="2° TECH D" welcomeActivities={[
@@ -102,8 +103,21 @@ describe('contrato do chat integrado', () => {
     ]} />)
     fireEvent.click(screen.getByRole('button', { name: 'Assistente' }))
     expect(screen.getByText('Levar roupa de Educação Física')).toBeDefined()
-    fireEvent.click(screen.getByRole('button', { name: 'Próxima dica do D2' }))
     expect(screen.getByText('Vale perguntar')).toBeDefined()
+    expect(screen.queryByRole('button', { name: 'Próxima dica do D2' })).toBeNull()
+    const notes = screen.getByRole('group', { name: 'Dicas do D2' })
+    Object.defineProperty(notes, 'clientWidth', { value: 300 })
+    const scrollTo = vi.fn(({ left }: ScrollToOptions) => { notes.scrollLeft = left ?? 0 })
+    notes.scrollTo = scrollTo
+    fireEvent.keyDown(notes, { key: 'ArrowRight' })
+    expect(scrollTo).toHaveBeenLastCalledWith({ left: 300 })
+    fireEvent.keyDown(notes, { key: 'ArrowRight' })
+    expect(scrollTo).toHaveBeenLastCalledWith({ left: 0 })
+    act(() => vi.advanceTimersByTime(12000))
+    expect(scrollTo).toHaveBeenLastCalledWith({ left: 300 })
+    notes.focus()
+    act(() => vi.advanceTimersByTime(12000))
+    expect(scrollTo).toHaveBeenCalledTimes(3)
     expect(fetchMock).not.toHaveBeenCalled()
 
     const message = 'O que tem na Agenda esta semana?'
