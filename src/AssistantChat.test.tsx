@@ -107,7 +107,9 @@ describe('contrato do chat integrado', () => {
     expect(screen.queryByRole('button', { name: 'Próxima dica do D2' })).toBeNull()
     const notes = screen.getByRole('group', { name: 'Dicas do D2' })
     Object.defineProperty(notes, 'clientWidth', { value: 300 })
-    const scrollTo = vi.fn(({ left }: ScrollToOptions) => { notes.scrollLeft = left ?? 0 })
+    const scrollTo = vi.fn((target?: ScrollToOptions | number) => {
+      notes.scrollLeft = typeof target === 'number' ? target : target?.left ?? 0
+    })
     notes.scrollTo = scrollTo
     fireEvent.keyDown(notes, { key: 'ArrowRight' })
     expect(scrollTo).toHaveBeenLastCalledWith({ left: 300 })
