@@ -84,7 +84,7 @@ export function AdministratorsPanel({ user }: { user: User }) {
 
   return <section className="storage-admin" aria-labelledby="administrators-title">
     <div className="storage-admin-heading">
-      <div><h3 id="administrators-title">Administradores</h3><p>Administradores podem gerenciar todas as turmas, usuários e configurações do portal, além de conceder acesso a outras pessoas.</p></div>
+      <div><h3 id="administrators-title">Conceder acesso</h3><p>Use o e-mail de uma conta cadastrada. A senha será solicitada na confirmação.</p></div>
       <button type="button" className="secondary-button" disabled={busy} onClick={() => { setError(''); refresh(value => value + 1) }}><RefreshCw size={16} />Atualizar</button>
     </div>
     {error && <p className="form-error" role="alert">{error}</p>}

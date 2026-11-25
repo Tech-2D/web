@@ -93,18 +93,18 @@ export function StorageAdminPanel() {
   return (
     <section className="storage-admin" aria-labelledby="storage-admin-title">
       <div className="storage-admin-heading">
-        <div><span className="storage-admin-eyebrow">CLOUDFLARE R2</span><h3 id="storage-admin-title">Armazenamento da Agenda</h3><p>Confira o espaço usado e gerencie os anexos das atividades.</p></div>
+        <h3 id="storage-admin-title">Resumo do armazenamento</h3>
         <button className="secondary-button" type="button" onClick={() => void refresh()} disabled={loading || !!workingKey}><RefreshCw size={16} /> Atualizar</button>
       </div>
       <div className="storage-admin-stats">
         <div className="storage-admin-stat"><HardDrive size={19} aria-hidden="true" /><span>Espaço ocupado</span><strong>{usage ? formatBytes(usage.bytes) : '—'}</strong></div>
-        <div className="storage-admin-stat"><span>Arquivos no bucket</span><strong>{usage ? usage.count.toLocaleString('pt-BR') : '—'}</strong><small>{usage?.bucket ?? 'tech-2d-agenda'}</small></div>
+        <div className="storage-admin-stat"><span>Arquivos armazenados</span><strong>{usage ? usage.count.toLocaleString('pt-BR') : '—'}</strong><small>{usage?.bucket ?? 'tech-2d-agenda'}</small></div>
       </div>
       {usage?.partial && <p className="storage-admin-note">O bucket tem mais de 20 mil arquivos. Os números acima são parciais; consulte o painel Cloudflare para o total.</p>}
       <p className="storage-admin-note">Espaço ocupado pelos objetos atuais, calculado ao atualizar. Não é a métrica de faturamento do R2.</p>
       {error && <p className="form-error" role="alert">{error}</p>}
       {notice && <p className="storage-admin-success" role="status">{notice}</p>}
-      <div className="storage-admin-list-heading"><strong>Documentos</strong><span>{loaded ? `${files.length} carregado${files.length === 1 ? '' : 's'}` : 'Consulta indisponível'}</span></div>
+      <div className="storage-admin-list-heading"><strong>Arquivos</strong>{loaded && <span>{files.length} na lista</span>}</div>
       {loading && !files.length ? <p className="admin-empty"><LoaderCircle className="spin" size={18} /> Carregando arquivos…</p> : !loaded ? <p className="admin-empty">{error ? 'Não foi possível consultar os arquivos. Tente atualizar mais tarde.' : 'Aguardando consulta aos arquivos.'}</p> : files.length === 0 ? <p className="admin-empty">Nenhum arquivo encontrado no bucket.</p> : (
         <div className="storage-admin-list">
           {files.map(file => (

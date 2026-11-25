@@ -109,7 +109,7 @@ export function AgendaUsersPanel({ user }: { user: User }) {
   return (
     <section className="storage-admin agenda-users" aria-labelledby="agenda-users-title">
       <div className="storage-admin-heading">
-        <div><h3 id="agenda-users-title" tabIndex={-1} ref={usersHeading}>Usuários e bloqueios</h3><p>Consulte as contas cadastradas, a data da última visita à Agenda e os bloqueios ativos.</p></div>
+        <div><h3 id="agenda-users-title" tabIndex={-1} ref={usersHeading}>Contas cadastradas</h3><p>A lista mostra a última visita de cada conta à Agenda.</p></div>
         <div className="agenda-user-actions">
           <button type="button" className="secondary-button" onClick={() => blocksHeading.current?.focus()}><ShieldBan size={16} /> Ver bloqueios ativos</button>
           <button type="button" className="secondary-button" disabled={busy} onClick={() => refresh(n => n + 1)}><RefreshCw size={16} /> Atualizar</button>
@@ -117,21 +117,22 @@ export function AgendaUsersPanel({ user }: { user: User }) {
       </div>
       {result && <div className="agenda-user-totals" role="status">
         <div><span>Contas cadastradas no sistema</span><strong>{result.totalUsers == null ? '—' : result.totalUsers.toLocaleString('pt-BR')}</strong><small>Total geral, incluindo contas que ainda não acessaram a Agenda.</small></div>
-        {query && <div><span>Resultados da busca</span><strong>{result.matchedUsers == null ? '—' : result.matchedUsers.toLocaleString('pt-BR')}</strong><small>O total geral permanece independente do filtro.</small></div>}
+        {query && <div><span>Resultados da busca</span><strong>{result.matchedUsers == null ? '—' : result.matchedUsers.toLocaleString('pt-BR')}</strong></div>}
       </div>}
-      <div className="agenda-users-form">
-        <label>Duração do bloqueio<input type="number" min={1} max={Math.floor(365 * 86400 / unit)} step={1} value={duration} onChange={event => setDuration(Number(event.target.value))} /></label>
-        <label>Unidade<select value={unit} onChange={event => setUnit(Number(event.target.value))}>
-          <option value={60}>Minutos</option><option value={3600}>Horas</option><option value={86400}>Dias</option>
-        </select></label>
-      </div>
-      <p className="storage-admin-note">O bloqueio vale para todo o portal. O acesso é liberado automaticamente ao fim do prazo.</p>
       {notice && <p className="storage-admin-success" role="status">{notice}</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
       <form className="agenda-users-form" onSubmit={searchUsers}>
         <label>Buscar conta<input type="search" value={search} onChange={event => setSearch(event.target.value)} maxLength={254} placeholder="E-mail ou UID" /></label>
         <button className="secondary-button" disabled={busy}>Buscar</button>
       </form>
+      <fieldset className="agenda-users-form admin-user-duration">
+        <legend>Prazo para novos bloqueios</legend>
+        <label>Duração<input type="number" min={1} max={Math.floor(365 * 86400 / unit)} step={1} value={duration} onChange={event => setDuration(Number(event.target.value))} /></label>
+        <label>Unidade<select value={unit} onChange={event => setUnit(Number(event.target.value))}>
+          <option value={60}>Minutos</option><option value={3600}>Horas</option><option value={86400}>Dias</option>
+        </select></label>
+        <p className="storage-admin-note">O prazo vale para todo o portal. O acesso volta automaticamente quando ele termina.</p>
+      </fieldset>
       {!result && !error && <p role="status">Carregando usuários…</p>}
       {result && <>
         <div className="storage-admin-list">

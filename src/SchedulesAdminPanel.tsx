@@ -173,10 +173,10 @@ export function SchedulesAdminPanel({ view, classNames }: { view: 'schedules' | 
               <div className="form-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => setFormOpen(false)}>Cancelar</button><button className="primary-button compact" disabled={busy}>{busy ? <LoaderCircle className="spin" /> : 'Salvar horário'}</button></div>
             </form>
 ) : <>
-      <div className="schedule-admin-toolbar"><p>Gerencie a grade de todas as turmas, com professores, matérias, dias, horários e localização.</p><button type="button" className="primary-button compact" disabled={loading || Boolean(loadError) || busy} onClick={startCreate}><Plus size={17} />Novo horário</button></div>
+      {adminSection === 'schedules' && <div className="schedule-admin-toolbar"><button type="button" className="primary-button compact" disabled={loading || Boolean(loadError) || busy} onClick={startCreate}><Plus size={17} aria-hidden="true" />Novo horário</button></div>}
       {loading ? <p role="status"><LoaderCircle size={17} />Carregando horários…</p> : loadError ? null : <><div hidden={adminSection !== 'import'}>
             <section className="import-panel" aria-label="Importar horários por JSON">
-              <div className="import-copy"><strong>Importar horários por JSON</strong><span>Os horários ativos ficam visíveis mesmo sem localização. Reimportar atualiza o status dos horários já cadastrados.</span></div>
+              <div className="import-copy"><strong>Arquivo de horários</strong><span>Confira a prévia antes de cadastrar. Se importar o mesmo horário de novo, o sistema atualiza o status dele.</span></div>
               <label className="import-file">Escolher JSON<input type="file" accept=".json,application/json" onChange={readImportFile} disabled={busy} /></label>
               {importRows.length > 0 && <div className="import-preview"><span>{importRows.length} horários validados · {new Set(importRows.map((row) => row.className)).size} turmas</span><button className="primary-button compact" onClick={importSchedules} disabled={busy}><Upload size={16} /> {busy ? 'Importando…' : 'Cadastrar horários'}</button></div>}
               {importProgress && <p className="import-progress" role="status">{importProgress}</p>}
@@ -195,8 +195,8 @@ export function SchedulesAdminPanel({ view, classNames }: { view: 'schedules' | 
                   <div className="admin-row-main"><strong>{schedule.professor}</strong><span>{schedule.subject} · {schedule.className}</span></div>
                   <div className="admin-row-meta"><span>{WEEKDAYS.find((item) => item.value === schedule.dayOfWeek)?.label}</span><strong>{schedule.startTime}–{schedule.endTime}</strong></div>
                   <div className="row-actions">
-                    <button disabled={busy} onClick={() => startEdit(schedule)} aria-label={`Editar horário de ${schedule.professor}`}><Edit3 /></button>
-                    <button className="danger" disabled={busy} onClick={() => removeSchedule(schedule)} aria-label={`Excluir horário de ${schedule.professor}`}><Trash2 /></button>
+                    <button disabled={busy} onClick={() => startEdit(schedule)} title="Editar horário" aria-label={`Editar horário de ${schedule.professor}`}><Edit3 /></button>
+                    <button className="danger" disabled={busy} onClick={() => removeSchedule(schedule)} title="Excluir horário" aria-label={`Excluir horário de ${schedule.professor}`}><Trash2 /></button>
                   </div>
                 </article>
               ))}

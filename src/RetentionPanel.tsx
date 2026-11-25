@@ -61,9 +61,9 @@ export function RetentionPanel({ turmaId, userId, activityDates }: Props) {
           <label>Manter atividades por
             <span className="retention-number"><input type="number" min={MIN_RETENTION_DAYS} max={MAX_RETENTION_DAYS} step="1" value={days} onChange={(event) => setDays(Number(event.target.value))} required /> dias</span>
           </label>
-          <label className="retention-checkbox"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /> Ativar expurgo automático</label>
+          <label className="retention-checkbox"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /> Ativar limpeza automática</label>
           <div className="retention-preview"><strong>{estimate} atividade{estimate === 1 ? '' : 's'} antiga{estimate === 1 ? '' : 's'}</strong><span>se enquadra{estimate === 1 ? '' : 'm'} no prazo escolhido hoje</span></div>
-          <p className="config-hint">Uma regra nova ou alterada só começa a apagar após 24 horas. O expurgo roda diariamente e exclui os anexos antes de remover a atividade.</p>
+          <p className="config-hint">A limpeza roda diariamente. Uma regra nova ou alterada começa a valer após 24 horas.</p>
           <button type="submit" className="primary-button compact" disabled={saving || !validDays}>{saving ? 'Salvando…' : 'Salvar regra'}</button>
           {message && <p className="retention-message" role="status">{message}</p>}
         </form>
