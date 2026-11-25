@@ -1,6 +1,6 @@
-import { Bell, CalendarDays, ClipboardList, Columns3, KeyRound, MapPin, UserRound } from 'lucide-react'
+import { ArrowRight, Bell, CalendarDays, ClipboardList, Columns3, KeyRound, MapPin, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { collection, limit, onSnapshot, query, where } from './dataClient'
+import { collection, doc, getDoc, limit, onSnapshot, query, where } from './dataClient'
 import { isFeedbackCompleted } from './feedbackStatus'
 import { auth, db } from './firebase'
 import { agendaMenuUrl } from './menuShortcuts'
@@ -40,6 +40,38 @@ function AdminNavigationLink({ active }: { active: boolean }) {
   </a>
 }
 
+function ProfileCompletionReminder({ uid }: { uid: string }) {
+  const [missing, setMissing] = useState('')
+  const dismissalKey = `tech-2d:profile-reminder:${uid}`
+
+  useEffect(() => {
+    try { if (sessionStorage.getItem(dismissalKey)) return } catch { /* The reminder can still be dismissed on this page. */ }
+    let active = true
+    void getDoc(doc(db, 'userProfiles', uid)).then(snapshot => {
+      if (!active || auth.currentUser?.uid !== uid) return
+      const profile = snapshot.data()
+      const hasName = typeof profile?.displayName === 'string' && profile.displayName.trim().length >= 2
+      const hasClass = typeof profile?.className === 'string' && Boolean(profile.className.trim())
+      if (!hasName || !hasClass) setMissing(!hasName && !hasClass ? 'seu nome e sua turma' : hasName ? 'sua turma' : 'seu nome')
+    }).catch(() => {})
+    return () => { active = false }
+  }, [dismissalKey, uid])
+
+  if (!missing) return null
+  return <aside className="site-profile-reminder" aria-label="Lembrete de perfil">
+    <UserRound size={18} aria-hidden="true" />
+    <div>
+      <strong>Complete seu perfil</strong>
+      <p>Adicione {missing} para personalizar sua experiência no portal.</p>
+    </div>
+    <a href={`${sitePaths.profile}#profiles-edit-title`}>Ir para o perfil <ArrowRight size={15} aria-hidden="true" /></a>
+    <button type="button" aria-label="Dispensar lembrete de perfil" title="Agora não" onClick={() => {
+      setMissing('')
+      try { sessionStorage.setItem(dismissalKey, '1') } catch { /* In-memory dismissal is sufficient. */ }
+    }}><X size={18} aria-hidden="true" /></button>
+  </aside>
+}
+
 export function SiteNavigation({ active, role, menu, notifications }: {
   active?: 'agenda' | 'professores' | 'pegaki' | 'admin' | 'kanban' | 'profile'
   role?: AdminRole
@@ -47,6 +79,7 @@ export function SiteNavigation({ active, role, menu, notifications }: {
   notifications?: { onOpen: () => void; count: number }
 }) {
   const panelLabel = role === 'representante' ? 'Representante' : null
+  const account = auth.currentUser
   return (
     <header className="site-header">
       <nav className="site-navigation" aria-label="Navegação principal">
@@ -69,6 +102,7 @@ export function SiteNavigation({ active, role, menu, notifications }: {
           {menu ? <SiteOptionsButton {...menu} /> : <SiteOptions />}
         </div>
       </nav>
+      {active !== 'profile' && account && !account.isAnonymous && <ProfileCompletionReminder key={account.uid} uid={account.uid} />}
     </header>
   )
 }

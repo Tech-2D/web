@@ -16,11 +16,37 @@
 .site-navigation-pages a { display: inline-flex; align-items: center; gap: .4rem; padding: .55rem .75rem; border-radius: .625rem; font-size: .8125rem; font-weight: 600; }
 .site-navigation-pages a[aria-current="page"], .site-navigation-pages a:hover { background: var(--interface-subtle, var(--color-brand-soft)); color: var(--interface-accent, var(--color-brand-ink)); }
 .site-navigation a:focus-visible { outline: 2px solid var(--interface-accent, var(--color-brand-ink)); outline-offset: 3px; }
+.site-profile-reminder {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  width: var(--portal-content-width);
+  margin: 0 auto .65rem;
+  padding: .35rem .6rem .35rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: .65rem;
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: .8125rem;
+}
+.site-profile-reminder > svg { flex: none; color: var(--accent); }
+.site-profile-reminder > div { flex: 1; min-width: 0; }
+.site-profile-reminder p { margin: .1rem 0 0; color: var(--ink-soft); }
+.site-profile-reminder :is(a, button) { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; color: var(--accent); }
+.site-profile-reminder a { gap: .3rem; padding-inline: .35rem; font-weight: 700; text-decoration: underline; text-underline-offset: .16em; }
+.site-profile-reminder button { flex: none; width: 2.75rem; border: 0; border-radius: .45rem; background: transparent; cursor: pointer; }
+.site-profile-reminder button:hover { background: var(--paper); }
+.site-profile-reminder :is(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media print { .site-header { display: none; } }
 @media (max-width: 640px) {
   .site-navigation { grid-template-columns: 1fr auto; gap: .25rem .5rem; }
   .site-navigation-pages { grid-column: 1 / -1; grid-row: 2; justify-content: start; }
   .site-navigation-pages a { padding: .5rem; }
+  .site-profile-reminder { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 .55rem; }
+  .site-profile-reminder > svg { align-self: start; margin-top: .25rem; }
+  .site-profile-reminder a { grid-column: 2; justify-self: start; padding-inline: 0; }
+  .site-profile-reminder button { grid-column: 3; grid-row: 1 / span 2; align-self: start; }
 }
 
 .site-options-button {

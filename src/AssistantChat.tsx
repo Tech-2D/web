@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowUpRight, CalendarDays, ChevronDown, Maximize2, Minimize2, Plus, Sparkles, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, Maximize2, Minimize2, Plus, Sparkles, X } from 'lucide-react'
 import type { User } from 'firebase/auth'
 import { KanbanCardFace } from './KanbanCardFace'
 import { AssistantWelcome } from './AssistantWelcome'
@@ -51,7 +51,6 @@ function AssistantLauncherHint() {
 
   return <span className="assistant-launcher-hint" data-visible={visible} aria-hidden="true">
     <span>{launcherHints[hint]}</span>
-    <span className="assistant-launcher-hint-action">Conversar com o D2 <ArrowUpRight size={13} /></span>
   </span>
 }
 
@@ -298,12 +297,15 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const pose = busy ? 'pensando' : error ? 'repouso' : d2.reaction
 
   return <div ref={chat} className="agenda-assistant" hidden={covered} data-expanded={open && expanded ? 'true' : undefined}>
-    <button ref={toggle} className="agenda-assistant-toggle assistant-primary" type="button" aria-expanded={open} onClick={() => {
+    <button ref={toggle} className="agenda-assistant-toggle assistant-primary" type="button" aria-label="Assistente" aria-expanded={open} onClick={() => {
       if (open) close()
       else { reactD2('saudacao'); setOpen(true) }
     }}>
-      <img className="d2-launcher-avatar" src={d2Avatar} alt="" width="28" height="28" /> Assistente
-      {!open && !covered && <AssistantLauncherHint />}
+      <img className="d2-launcher-avatar" src={d2Avatar} alt="" width="28" height="28" />
+      <span className="assistant-launcher-copy">
+        <span>Assistente</span>
+        {!open && !covered && <AssistantLauncherHint />}
+      </span>
     </button>
     {open && <section className="agenda-assistant-panel" aria-label="Assistente" onKeyDown={e => { if (e.key === 'Escape') close() }}>
       <header>

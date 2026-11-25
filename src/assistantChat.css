@@ -26,44 +26,45 @@
 }
 .assistant-primary:hover:not(:disabled) { background: var(--accent-hover, var(--accent)); }
 .assistant-primary:disabled { cursor: default; }
-.agenda-assistant-toggle { position: relative; display: flex; margin-left: auto; box-shadow: var(--shadow); }
-.assistant-launcher-hint {
-  position: absolute;
-  inset-inline-end: 0;
-  bottom: calc(100% + .55rem);
-  display: grid;
-  gap: .3rem;
+.agenda-assistant-toggle {
+  display: flex;
+  justify-content: flex-start;
   box-sizing: border-box;
-  width: min(15rem, calc(100vw - var(--chat-left) - var(--chat-right)));
-  padding: .65rem .75rem;
-  border: 1px solid var(--line);
-  border-radius: .75rem;
-  background: var(--paper);
-  color: var(--text);
+  inline-size: 8.75rem;
+  max-inline-size: calc(100vw - var(--chat-left) - var(--chat-right));
+  margin-inline-start: auto;
+  padding: .5rem .8rem;
   box-shadow: var(--shadow);
-  font-size: .8125rem;
-  font-weight: 600;
-  line-height: 1.4;
   text-align: start;
+  transition: inline-size .24s ease;
+}
+.assistant-launcher-copy { display: block; min-width: 0; }
+.assistant-launcher-hint {
+  display: grid;
+  grid-template-rows: 0fr;
+  max-inline-size: max(0px, calc(100vw - var(--chat-left) - var(--chat-right) - 4rem));
+  opacity: 0;
   visibility: hidden;
+  font-size: .75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  transition: grid-template-rows .24s ease, opacity .2s ease, visibility .24s;
 }
-.assistant-launcher-hint[data-visible="true"],
-.agenda-assistant-toggle:focus-visible .assistant-launcher-hint { visibility: visible; }
+.assistant-launcher-hint > span { min-height: 0; overflow: hidden; }
+.agenda-assistant-toggle:has(.assistant-launcher-hint[data-visible="true"]),
+.agenda-assistant-toggle:focus-visible:has(.assistant-launcher-hint) { inline-size: 18rem; }
+.assistant-launcher-hint[data-visible="true"], .agenda-assistant-toggle:focus-visible .assistant-launcher-hint {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
 @media (hover: hover) {
-  .agenda-assistant-toggle:hover .assistant-launcher-hint { visibility: visible; }
+  .agenda-assistant-toggle:hover:has(.assistant-launcher-hint) { inline-size: 18rem; }
+  .agenda-assistant-toggle:hover .assistant-launcher-hint { grid-template-rows: 1fr; opacity: 1; visibility: visible; }
 }
-.assistant-launcher-hint-action { display: inline-flex; align-items: center; gap: .2rem; color: var(--accent); font-size: .75rem; }
-.assistant-launcher-hint::after {
-  content: "";
-  position: absolute;
-  inset-inline-end: 1.2rem;
-  bottom: -.27rem;
-  width: .5rem;
-  height: .5rem;
-  transform: rotate(45deg);
-  border: solid var(--line);
-  border-width: 0 1px 1px 0;
-  background: var(--paper);
+[data-motion="reduzido"] :is(.agenda-assistant-toggle, .assistant-launcher-hint) { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .agenda-assistant-toggle, .assistant-launcher-hint { transition: none; }
 }
 .d2-launcher-avatar {
   flex: none;
