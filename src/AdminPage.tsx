@@ -7,6 +7,7 @@ import { StorageAdminPanel } from './StorageAdminPanel'
 import { RepresentativesPanel } from './RepresentativesPanel'
 import { ActiveRepresentativesPanel } from './ActiveRepresentativesPanel'
 import { SiteAccessPanel } from './SiteAccessPanel'
+import { AssistantAdminPanel } from './AssistantAdminPanel'
 import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
 import { AdministratorsPanel } from './AdministratorsPanel'
@@ -55,7 +56,7 @@ type AdminPageProps = {
 }
 
 type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
-  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'users' | 'schedules' | 'scheduleImport'
+  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport'
 
 type AdminSection = {
   label: string
@@ -823,6 +824,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
         { id: 'updates', label: 'Atualizações do sistema', icon: History },
         { id: 'feedback', label: 'Feedback do portal', icon: MessageSquareText, count: pendingFeedbackCount },
         { id: 'access' as const, label: 'Estatísticas de acesso', icon: ChartNoAxesCombined },
+        { id: 'assistant', label: 'Assistente D2', icon: MessageSquareText },
       ],
     },
   )
@@ -1137,6 +1139,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   )}
                   {isSuperAdmin && adminTab === 'storage' && <StorageAdminPanel />}
                   {isSuperAdmin && adminTab === 'access' && <SiteAccessPanel key={user.uid} user={user} />}
+                  {isSuperAdmin && adminTab === 'assistant' && <AssistantAdminPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'users' && <AgendaUsersPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'administrators' && <AdministratorsPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'updates' && (
