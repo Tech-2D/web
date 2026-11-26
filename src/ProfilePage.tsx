@@ -5,6 +5,9 @@ import { signOut } from './sessionActions'
 import { auth } from './firebase'
 import { Camera, Check, CheckCircle2, ChevronRight, GraduationCap, LoaderCircle, LogOut, MapPin, Search, UserRound, Users, ArrowLeft } from 'lucide-react'
 import { sitePaths } from './sitePaths'
+import { ClassLinkForm } from './ClassLinkForm'
+import { useClassLink } from './classLink'
+import { savePreferredTurma } from './classPreference'
 import './profiles.css'
 
 const API = 'https://tech-2d-auth-email.vercel.app'
@@ -21,6 +24,8 @@ async function request(path: string, init?: RequestInit) {
 
 export function ProfilePage() {
   const [user, setUser] = useState<User | null>(auth.currentUser)
+  const classLink = useClassLink(user)
+  const linkedClass = classLink.data?.link?.className
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [mine, setMine] = useState<Profile | null>(null)
   const [fields, setFields] = useState<Fields>(empty)
@@ -74,7 +79,7 @@ export function ProfilePage() {
     const profile = {
       displayName: fields.displayName.trim(),
       company: fields.company.trim(),
-      className: fields.className.trim(),
+      className: linkedClass ?? fields.className.trim(),
       room: fields.room.trim(),
       floor: fields.floor.trim(),
     }
@@ -133,7 +138,7 @@ export function ProfilePage() {
         <aside className="profiles-identity">
           <ProfileAvatar profile={preview} large />
           <h3>{fields.displayName.trim() || 'Seu nome no portal'}</h3>
-          {(fields.company || fields.className) && <p>{[fields.company, fields.className].filter(Boolean).join(' · ')}</p>}
+          {(fields.company || linkedClass) && <p>{[fields.company, linkedClass].filter(Boolean).join(' · ')}</p>}
           {!loading && !loadError && <span className="profiles-published">{mine ? <><CheckCircle2 size={15} />Perfil publicado</> : 'Ainda não publicado'}</span>}
           {user && <>
             {!loading && !loadError && <div className="profiles-photo">
@@ -154,6 +159,17 @@ export function ProfilePage() {
         </aside>
         <section className="profiles-edit" aria-labelledby="profiles-edit-title">
           <div className="profiles-section-heading"><h3 id="profiles-edit-title">Informações do perfil</h3><p>É assim que as pessoas vão encontrar você no portal.</p></div>
+          {user && <section id="vinculo-turma" aria-labelledby="vinculo-turma-title" className="profile-class-link">
+            <h4 id="vinculo-turma-title">Minha turma</h4>
+            {classLink.error ? <><p role="alert">{classLink.error}</p>
+              <button type="button" className="profiles-link" onClick={classLink.reload}>Tentar novamente</button></>
+              : classLink.data ? <ClassLinkForm user={user} data={classLink.data} onSave={result => {
+                classLink.update(result)
+                if (result.link) savePreferredTurma(result.link.className)
+                setRefresh(value => value + 1)
+              }} /> : <p role="status">Carregando sua turma…</p>}
+            {classLink.data?.link?.requestedClass && <button type="button" className="profiles-link" onClick={classLink.reload}>Atualizar situação do pedido</button>}
+          </section>}
           {!user ? <form onSubmit={authenticate} className="profiles-form"><p>Entre na sua conta para editar seu perfil.</p>
             <label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" /></label>
             <label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete={register ? 'new-password' : 'current-password'} /></label>
@@ -163,8 +179,7 @@ export function ProfilePage() {
           loadError ? <div className="profiles-empty" role="alert"><p>{loadError}</p><button type="button" className="profiles-link" onClick={() => setProfileReload(n => n + 1)}>Tentar novamente</button></div> : <form onSubmit={save} className="profiles-form">
             <fieldset disabled={busy}><legend>Sobre você</legend>
               <label>Nome<span className="profiles-field-help">Como você quer ser chamado</span><input autoComplete="name" value={fields.displayName} onChange={e => setFields({ ...fields, displayName: e.target.value })} maxLength={80} minLength={2} required placeholder="Seu nome" /></label>
-              <div className="profiles-pair"><label>Empresa <span className="profiles-optional">Opcional</span><input autoComplete="organization" value={fields.company} onChange={e => setFields({ ...fields, company: e.target.value })} maxLength={100} placeholder="Empresa ou instituição" /></label>
-              <label>Turma <span className="profiles-optional">Opcional</span><input value={fields.className} onChange={e => setFields({ ...fields, className: e.target.value })} maxLength={80} placeholder="Ex.: 2º Tec D" /></label></div>
+              <label>Empresa <span className="profiles-optional">Opcional</span><input autoComplete="organization" value={fields.company} onChange={e => setFields({ ...fields, company: e.target.value })} maxLength={100} placeholder="Empresa ou instituição" /></label>
             </fieldset>
             <fieldset disabled={busy}><legend>Onde encontrar você</legend><p>Preencha se quiser compartilhar sua localização na escola.</p>
               <div className="profiles-pair"><label>Sala <span className="profiles-optional">Opcional</span><input value={fields.room} onChange={e => setFields({ ...fields, room: e.target.value })} maxLength={80} placeholder="Ex.: 12" /></label><label>Andar <span className="profiles-optional">Opcional</span><input value={fields.floor} onChange={e => setFields({ ...fields, floor: e.target.value })} maxLength={30} placeholder="Ex.: 2º andar" /></label></div>

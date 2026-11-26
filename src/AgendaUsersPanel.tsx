@@ -15,12 +15,12 @@ const sites = { agenda: 'Agenda', professores: 'Professores', pegaki: 'Notas', k
 const siteKeys = Object.keys(sites) as (keyof typeof sites)[]
 type ActivityDay = Record<keyof typeof sites, number> & { date: string; visits: number; messages: number }
 type AccountAnalytics = {
-  profile: { name: string | null; email: string | null; className: string | null; classSource: 'assignment' | 'profile' | 'preference' | null;
+  profile: { name: string | null; email: string | null; className: string | null; classSource: 'membership' | 'assignment' | 'profile' | 'preference' | null;
     role: 'superadmin' | 'representante' | 'user'; blockedUntil: string | null }
   daily: ActivityDay[]
 }
 const accessLabels = { superadmin: 'Administrador geral', representante: 'Representante', user: 'Usuário' }
-const classLabels = { assignment: 'Turma sob sua responsabilidade', profile: 'Informada no perfil', preference: 'Preferência da Agenda' }
+const classLabels = { membership: 'Vinculada ao perfil', assignment: 'Turma sob sua responsabilidade', profile: 'Informada no perfil', preference: 'Preferência da Agenda' }
 const number = new Intl.NumberFormat('pt-BR')
 const formatDay = (value: string) => visitDate.format(new Date(value))
 

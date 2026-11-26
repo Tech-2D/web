@@ -103,3 +103,6 @@
 .profiles-back-link { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); font-size: .8125rem; text-decoration: none; }
 .profiles-header { flex-wrap: wrap; }
 .site-navigation-actions a[aria-current="page"] { background: var(--surface-alt); color: var(--accent); }
+
+.profile-class-link { border-bottom: 1px solid var(--line); margin-bottom: 1rem; padding-bottom: 1rem; scroll-margin-top: 1rem; }
+.profile-class-link h4 { margin: 0 0 .7rem; }

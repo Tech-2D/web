@@ -12,6 +12,7 @@ import { RecoveryAdminPanel } from './RecoveryAdminPanel'
 import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
 import { AgendaYearResetPanel } from './AgendaYearResetPanel'
+import { ClassLinkAdminPanel } from './ClassLinkAdminPanel'
 import { AdministratorsPanel } from './AdministratorsPanel'
 import { ATTACHMENTS_ENABLED, deleteActivityWithAttachments, formatAttachmentSize, MAX_ATTACHMENTS, removeAttachment, uploadAttachment, validateAttachment } from './attachments'
 import { addDoc, collection, deleteDoc, doc, knownDocument, onSnapshot, query, serverTimestamp, updateDoc, where, writeBatch } from './dataClient'
@@ -58,7 +59,7 @@ type AdminPageProps = {
 }
 
 type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
-  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport' | 'recovery' | 'yearReset'
+  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport' | 'recovery' | 'yearReset' | 'classLinks'
 
 type AdminSection = {
   id: string
@@ -76,6 +77,7 @@ const adminDescriptions: Record<AdminTabId, string> = {
   scheduleImport: 'Adicione vários horários à grade a partir de um arquivo JSON.',
   representatives: 'Consulte quem representa cada turma e avalie novos pedidos.',
   administrators: 'Gerencie quem tem acesso completo ao painel.',
+  classLinks: 'Revise os pedidos para corrigir a turma vinculada ao perfil.',
   classes: 'Avalie os pedidos para abrir a Agenda de outras turmas.',
   users: 'Consulte a atividade das contas e gerencie bloqueios do portal.',
   updates: 'Publique novidades no histórico de atualizações.',
@@ -843,6 +845,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
       tabs: [
         { id: 'representatives', label: 'Representantes e pedidos', icon: UserCheck, count: representativeRequests.length },
         { id: 'administrators', label: 'Administradores', icon: ShieldCheck },
+        { id: 'classLinks', label: 'Trocas de turma', icon: GraduationCap },
         { id: 'classes', label: 'Pedidos de novas turmas', icon: GraduationCap, count: classRequests.length },
         { id: 'users' as const, label: 'Contas de usuários', icon: UserRound },
       ],
@@ -1187,6 +1190,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   )}
                   {isSuperAdmin && adminTab === 'storage' && <StorageAdminPanel />}
                   {isSuperAdmin && adminTab === 'yearReset' && <AgendaYearResetPanel key={user.uid} user={user} />}
+                  {isSuperAdmin && adminTab === 'classLinks' && <ClassLinkAdminPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'access' && <SiteAccessPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'assistant' && <AssistantAdminPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'recovery' && <RecoveryAdminPanel key={user.uid} user={user} classNames={classNames} />}

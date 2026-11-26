@@ -75,6 +75,10 @@ Em **Administração → Turmas e acessos → Contas de usuários**, selecione *
 
 Em **Administração → Manutenção → Virada de ano**, administradores gerais podem revisar a limpeza das atividades, repetições, anexos vinculados e acessos de representantes. A ação é definitiva e exige a frase de confirmação e a senha da conta. Se a Agenda mudar após a prévia, revise as contagens novamente. [Especificação da limpeza](https://github.com/Tech-2D/api/tree/main/specs/limpeza-ano-letivo)
 
+### Turma vinculada ao perfil
+
+Quando a conta ainda não tem vínculo, a Agenda pede que a pessoa confirme uma turma do catálogo. Em **Perfil → Minha turma**, ela pode trocar a turma depois de 30 dias ou pedir uma correção. Os administradores gerais revisam os pedidos em **Administração → Turmas e acessos → Trocas de turma**. O seletor do calendário serve para consultar outras turmas. [Especificação do vínculo](https://github.com/Tech-2D/api/tree/main/specs/vinculo-turma)
+
 ## Rodar localmente
 
 O [AGENTS.md](AGENTS.md) descreve o fluxo de desenvolvimento por tarefa e indica onde encontrar o índice do ecossistema.

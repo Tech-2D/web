@@ -30,7 +30,9 @@ import { markNotificationsSeenNow, readLastSeen } from './notifications'
 import { canCreateForSelectedClass } from './quickCreate'
 import { activeNotices, canManageNotices } from './notices'
 import { useNow, useTurmaNotices } from './useNotices'
-import { readPreferredTurma, savePreferredTurma } from './classPreference'
+import { savePreferredTurma } from './classPreference'
+import { useClassLink } from './classLink'
+import { ClassLinkForm } from './ClassLinkForm'
 import { teacherFinderTodayUrl } from './teacherFinder'
 import { observeCatalog, type CatalogMeta } from './publicQueries'
 import { latestUnseenUpdate, markSystemUpdateSeen, readSeenSystemUpdateId, type SystemUpdate } from './systemUpdates'
@@ -82,8 +84,7 @@ const emptyForm: Omit<ActivityInput, 'turmaId'> = {
 }
 
 function App() {
-  const [preferredTurma, setPreferredTurma] = useState<string | null>(readPreferredTurma)
-  const [turmaId, setTurmaId] = useState<string | null>(readPreferredTurma)
+  const [turmaId, setTurmaId] = useState<string | null>(null)
   const [classNames, setClassNames] = useState<string[]>([...CLASS_NAMES])
   const [classRequestOpen, setClassRequestOpen] = useState(false)
   const [subjectFilter, setSubjectFilter] = useState('')
@@ -115,7 +116,13 @@ function App() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [noticesOpen, setNoticesOpen] = useState(false)
   const [calendarUser, setCalendarUser] = useState<User | null>(null)
-  const { period, checking: checkingRecovery } = useRecoveryMode(calendarUser, !adminOpen && !kanbanOpen && !moreOptionsOpen)
+  const classLink = useClassLink(calendarUser)
+  const preferredTurma = classLink.data?.link?.className ?? null
+  useEffect(() => {
+    setTurmaId(preferredTurma)
+    if (preferredTurma) savePreferredTurma(preferredTurma)
+  }, [preferredTurma])
+  const { period, checking: checkingRecovery } = useRecoveryMode(calendarUser, Boolean(preferredTurma) && !adminOpen && !kanbanOpen && !moreOptionsOpen)
   const [regularCalendarVersion, setRegularCalendarVersion] = useState<string>()
   const recoveryVersion = period ? period.id + ':' + period.startsAt : undefined
   const showRecovery = Boolean(period && recoveryVersion !== regularCalendarVersion && !linkedActivityId && !compareMode)
@@ -139,9 +146,6 @@ function App() {
 
   useEffect(() => {
     function syncPreferences(event: StorageEvent) {
-      if (event.key === null || event.key === 'tech-2d:preferredClass' || event.key === 'agenda:turma') {
-        setPreferredTurma(readPreferredTurma())
-      }
       if (event.key === null || event.key === MENU_SHORTCUTS_KEY) setMenuShortcuts(readMenuShortcuts())
       if (event.key === null || event.key === VLIBRAS_KEY) setShowVLibras(readStoredVLibras())
       if (event.key === null || ['agenda:theme', 'agenda:neon', 'agenda:fontScale', 'agenda:highContrast', 'agenda:reduceMotion'].includes(event.key)) {
@@ -292,12 +296,6 @@ function App() {
 
   function chooseTurma(value: string) {
     setTurmaId(value)
-  }
-
-  function choosePreferredTurma(value: string) {
-    setPreferredTurma(value)
-    setTurmaId(value)
-    savePreferredTurma(value)
   }
 
   function closeLinkedActivity() {
@@ -522,6 +520,26 @@ function App() {
     </div>
   )
 
+  if (!kanbanOpen && !preferredTurma) return (
+    <div className="app-shell portal-frame">
+      <SiteNavigation active="agenda" role={calendarProfile?.role} />
+      <main className="main-content portal-main">
+        <section className="interface-panel portal-toolbar">
+          <PageHeading icon={Calendar} title="Qual é a sua turma?" />
+          {classLink.error ? <>
+            <p role="alert">{classLink.error}</p>
+            <button type="button" className="portal-control" onClick={classLink.reload}>Tentar novamente</button>
+          </> : calendarUser && classLink.data ? <>
+            <p>Confirme sua turma para abrir a Agenda. Depois, você pode alterá-la pelo Perfil após 30 dias ou pedir uma correção à administração.</p>
+            <ClassLinkForm user={calendarUser} data={classLink.data} onSave={classLink.update} />
+            <button type="button" className="text-button" onClick={() => setClassRequestOpen(true)}>Minha turma não aparece</button>
+          </> : <p role="status">Carregando suas informações de turma…</p>}
+        </section>
+      </main>
+      {classRequestOpen && <ClassRequestDialog classNames={classLink.data?.classes ?? classNames} onClose={() => setClassRequestOpen(false)} />}
+    </div>
+  )
+
   return (
     <div className="app-shell portal-frame">
       <SiteNavigation active={kanbanOpen ? 'kanban' : 'agenda'} role={calendarProfile?.role} notifications={{ onOpen: () => openMenuDialog('notifications'), count: unseenNotifications }} menu={{ open: menuOpen, onOpen: () => setMenuOpen(true), hasPending: hasPendingMenuItems }} />
@@ -540,8 +558,6 @@ function App() {
       ) : moreOptionsOpen ? (
         <MoreOptionsPage
           turmaId={preferredTurma}
-          classNames={classNames}
-          onChooseTurma={choosePreferredTurma}
           onBack={closeMoreOptions}
           sections={menuSections}
           shortcuts={menuShortcuts}
@@ -713,7 +729,6 @@ function App() {
       {linkedActivityId && <ActivityLinkDialog key={linkedActivityId} id={linkedActivityId} onClose={closeLinkedActivity} onViewCalendar={viewLinkedActivity}
         onCreateCard={ASSISTANT_ENDPOINT && calendarUser ? prepareActivityCard : undefined} />}
 
-      {!turmaId && !checkingRecovery && !showRecovery && !kanbanOpen && !moreOptionsOpen && !linkedActivityId && !activeMenuDialog && !menuOpen && <TurmaPickerModal classNames={classNames} onChoose={choosePreferredTurma} onRequest={() => setClassRequestOpen(true)} onHelp={() => setDocsOpen(true)} />}
 
       {menuOpen && (
         <IntegratedMenu
@@ -793,10 +808,8 @@ class DialogLoadBoundary extends Component<{ children: ReactNode }, { failed: bo
   }
 }
 
-function MoreOptionsPage({ turmaId, classNames, onChooseTurma, onBack, sections, shortcuts, onToggleShortcut, onResetShortcuts }: {
+function MoreOptionsPage({ turmaId, onBack, sections, shortcuts, onToggleShortcut, onResetShortcuts }: {
   turmaId: string | null
-  classNames: string[]
-  onChooseTurma: (turmaId: string) => void
   onBack: () => void
   sections: MoreOptionSection[]
   shortcuts: MenuShortcutId[]
@@ -829,15 +842,9 @@ function MoreOptionsPage({ turmaId, classNames, onChooseTurma, onBack, sections,
             {section.id === 'turma' && (
               <div className="menu-customize-note">
                 <div><h3 id="preferred-class-title">Turma padrão</h3>
-                  <p>A Agenda abre nesta turma quando você usa este navegador.</p>
+                  <p>{turmaId} é a turma vinculada ao seu perfil.</p>
                 </div>
-                <div className="turma-select-inline">
-                  <select aria-labelledby="preferred-class-title" value={turmaId ?? ''} onChange={(event) => onChooseTurma(event.target.value)}>
-                    <option value="" disabled>Selecione uma turma</option>
-                    {turmaId && !classNames.includes(turmaId) && <option value={turmaId}>{turmaId}</option>}
-                    {classNames.map(name => <option key={name} value={name}>{name}</option>)}
-                  </select>
-                </div>
+                <a className="portal-control" href={sitePaths.profile + '#vinculo-turma'}>Gerenciar minha turma</a>
               </div>
             )}
             {section.id === 'conta' && (
@@ -1010,34 +1017,6 @@ function ConfigDialog({
   )
 }
 
-
-function TurmaPickerModal({ classNames, onChoose, onRequest, onHelp }: { classNames: string[]; onChoose: (turmaId: string) => void; onRequest: () => void; onHelp: () => void }) {
-  const [search, setSearch] = useState('')
-  const options = classNames.filter((name) => name.toLowerCase().includes(search.trim().toLowerCase()))
-  return (
-    <div className="modal-backdrop" role="presentation">
-      <section className="turma-picker" role="dialog" aria-modal="true" aria-labelledby="turma-picker-title">
-        <div className="login-symbol"><Calendar /></div>
-        <h3 id="turma-picker-title">Qual é a sua turma?</h3>
-        <p>Escolha uma turma para consultar as atividades sem login. Você pode alterar sua turma em Mais opções e filtrar outras turmas no topo da página.</p>
-        <button type="button" className="text-button agenda-first-visit-guide" onClick={onHelp}>O que posso fazer na Agenda?</button>
-        <input
-          aria-label="Buscar turma"
-          placeholder="Buscar turma"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          autoFocus
-        />
-        <div className="turma-options">
-          {options.length === 0 ? <p className="admin-empty">Nenhuma turma encontrada.</p> : options.map((name) => (
-            <button type="button" key={name} onClick={() => onChoose(name)}>{name}</button>
-          ))}
-        </div>
-        <button type="button" className="access-switch" onClick={onRequest}>Minha turma não aparece? Solicite uma agenda</button>
-      </section>
-    </div>
-  )
-}
 
 function SuggestDialog({ turmaId, onClose }: { turmaId: string; onClose: () => void }) {
   const [form, setForm] = useState(emptyForm)

@@ -210,3 +210,7 @@
 @media (max-width: 640px) {
   .portal-frame :is(.portal-control, .portal-search) { min-height: 2.625rem; }
 }
+
+.class-link-form { align-items: end; }
+.class-link-form p { width: 100%; margin: 0; }
+.class-link-form label { display: grid; gap: .35rem; min-width: 0; }
