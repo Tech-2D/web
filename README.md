@@ -71,6 +71,10 @@ Depois de salvar os horários, informe a duração de 1 a 90 dias e clique em **
 
 Em **Administração → Turmas e acessos → Contas de usuários**, selecione **Ver análise** em uma conta para consultar a turma, as permissões, a situação do acesso e a atividade registrada em 7 ou 30 dias. [Especificação da análise por conta](https://github.com/Tech-2D/api/tree/main/specs/analise-conta)
 
+### Limpeza de virada de ano
+
+Em **Administração → Manutenção → Virada de ano**, administradores gerais podem revisar a limpeza das atividades, repetições, anexos vinculados e acessos de representantes. A ação é definitiva e exige a frase de confirmação e a senha da conta. Se a Agenda mudar após a prévia, revise as contagens novamente. [Especificação da limpeza](https://github.com/Tech-2D/api/tree/main/specs/limpeza-ano-letivo)
+
 ## Rodar localmente
 
 O [AGENTS.md](AGENTS.md) descreve o fluxo de desenvolvimento por tarefa e indica onde encontrar o índice do ecossistema.

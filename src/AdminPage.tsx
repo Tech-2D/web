@@ -11,6 +11,7 @@ import { AssistantAdminPanel } from './AssistantAdminPanel'
 import { RecoveryAdminPanel } from './RecoveryAdminPanel'
 import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
+import { AgendaYearResetPanel } from './AgendaYearResetPanel'
 import { AdministratorsPanel } from './AdministratorsPanel'
 import { ATTACHMENTS_ENABLED, deleteActivityWithAttachments, formatAttachmentSize, MAX_ATTACHMENTS, removeAttachment, uploadAttachment, validateAttachment } from './attachments'
 import { addDoc, collection, deleteDoc, doc, knownDocument, onSnapshot, query, serverTimestamp, updateDoc, where, writeBatch } from './dataClient'
@@ -57,7 +58,7 @@ type AdminPageProps = {
 }
 
 type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
-  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport' | 'recovery'
+  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport' | 'recovery' | 'yearReset'
 
 type AdminSection = {
   id: string
@@ -84,6 +85,7 @@ const adminDescriptions: Record<AdminTabId, string> = {
   recovery: 'Prepare os horários das aulas e defina quando a recuperação aparece na Agenda.',
   retention: 'Defina por quanto tempo as atividades da turma ficam na Agenda.',
   storage: 'Consulte o espaço ocupado e gerencie os anexos das atividades.',
+  yearReset: 'Revise os dados da Agenda que serão limpos na virada de ano.',
 }
 
 export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, quickEditActivity, systemUpdates, onReturnToCalendar }: AdminPageProps) {
@@ -863,7 +865,10 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
     icon: Database,
     tabs: [
       { id: 'retention', label: 'Exclusão de atividades antigas', icon: Trash2 },
-      ...(isSuperAdmin ? [{ id: 'storage' as const, label: 'Armazenamento de arquivos', icon: Archive }] : []),
+      ...(isSuperAdmin ? [
+        { id: 'storage' as const, label: 'Armazenamento de arquivos', icon: Archive },
+        { id: 'yearReset' as const, label: 'Virada de ano', icon: CalendarDays },
+      ] : []),
     ],
   })
   const activeSection = adminSections.find(section => section.tabs.some(tab => tab.id === adminTab)) ?? adminSections[0]
@@ -1181,6 +1186,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                     </>
                   )}
                   {isSuperAdmin && adminTab === 'storage' && <StorageAdminPanel />}
+                  {isSuperAdmin && adminTab === 'yearReset' && <AgendaYearResetPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'access' && <SiteAccessPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'assistant' && <AssistantAdminPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'recovery' && <RecoveryAdminPanel key={user.uid} user={user} classNames={classNames} />}
