@@ -235,8 +235,6 @@ function App() {
   const unseenSystemUpdate = updatesReady && !updatesError
     ? latestUnseenUpdate(systemUpdates, seenSystemUpdateId)
     : null
-  const activeMenuDialog = notificationsOpen || updatesOpen || noticesOpen
-    || suggestOpen || classRequestOpen || feedbackOpen || mySuggestionsOpen || configOpen || docsOpen
   const acknowledgeSystemUpdate = useCallback((id: string) => {
     markSystemUpdateSeen(id)
     setSeenSystemUpdateId(id)
