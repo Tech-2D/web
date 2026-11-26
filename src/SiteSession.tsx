@@ -7,6 +7,7 @@ import { auth } from './firebase'
 import { requestPasswordReset } from './passwordReset'
 import { API_BASE } from './apiBase'
 import { signOut } from './sessionActions'
+import { siteLogoUrl } from './sitePaths'
 import d2Avatar from './assets/d2/d2.webp'
 import './siteSession.css'
 
@@ -149,7 +150,7 @@ function AccountEntry({ destination }: { destination: string }) {
   return (
     <main className="site-entry">
       <section className="site-entry-intro" aria-labelledby="site-entry-title">
-        <p className="site-entry-brand">Tech 2D</p>
+        <p className="site-entry-brand"><img src={siteLogoUrl} alt="" width={40} height={40} />Tech 2D</p>
         <h1 id="site-entry-title">Uma conta para o seu dia na Tech.</h1>
         <p>Entre para abrir {destination}.</p>
         <ul>

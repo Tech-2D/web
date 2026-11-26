@@ -89,7 +89,8 @@
   border: 1px solid var(--line);
   border-radius: 1.4rem 0 0 1.4rem;
 }
-.site-entry-brand { color: var(--ink); font-weight: 800; letter-spacing: .02em; margin: 0 0 1.25rem; }
+.site-entry-brand { display: flex; align-items: center; gap: .65rem; color: var(--ink); font-weight: 800; letter-spacing: .02em; margin: 0 0 1.25rem; }
+.site-entry-brand img { display: block; flex: none; }
 .site-entry h1 { font-size: clamp(2rem, 4.5vw, 3.5rem); font-weight: 750; line-height: 1.06; letter-spacing: -.04em; margin: 0 0 .9rem; }
 .site-entry-intro > p:last-of-type, .site-entry-card > p { color: var(--ink-soft); margin: 0; }
 .site-entry-intro ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem .5rem; padding: 1rem 0 0; margin: 1rem 0 0; list-style: none; border-top: 1px solid var(--line); }

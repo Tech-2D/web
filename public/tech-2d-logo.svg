@@ -1,11 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">2ºD Tech</title>
-  <desc id="desc">Monograma azul 2ºD com a palavra Tech sobre fundo branco.</desc>
-  <rect width="512" height="512" rx="72" fill="#ffffff"/>
-  <g fill="#6b82f5" font-family="Arial Black, Arial, sans-serif" font-style="italic" font-weight="900">
-    <text x="72" y="300" font-size="224" letter-spacing="-10">2</text>
-    <text x="262" y="300" font-size="224" letter-spacing="-10">D</text>
-  </g>
-  <circle cx="247" cy="142" r="20" fill="none" stroke="#6b82f5" stroke-width="13"/>
-  <text x="256" y="399" fill="#6b82f5" font-family="Arial, sans-serif" font-size="66" font-weight="800" letter-spacing="13" text-anchor="middle">TECH</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Tech 2D</title>
+  <rect width="64" height="64" rx="15" fill="#0a2dc4"/>
+  <path fill="#fff" d="M10 25a10 10 0 0 1 20 0c0 4-2 6-5.5 9L17 40h13v6H10v-6l10.5-10c2.5-2.2 3.5-3.4 3.5-5a4 4 0 0 0-8 0z"/>
+  <path fill="#b7d7ff" fill-rule="evenodd" d="M35 17h7a14.5 14.5 0 0 1 0 29h-7zm6 6v17h1a8.5 8.5 0 0 0 0-17z"/>
 </svg>

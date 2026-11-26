@@ -4,7 +4,7 @@ import { collection, doc, getDoc, limit, onSnapshot, query, where } from './data
 import { isFeedbackCompleted } from './feedbackStatus'
 import { auth, db } from './firebase'
 import { agendaMenuUrl } from './menuShortcuts'
-import { sitePaths } from './sitePaths'
+import { siteLogoUrl, sitePaths } from './sitePaths'
 import { SiteOptions } from './SiteOptions'
 import { SiteOptionsButton } from './SiteOptionsButton'
 import type { AdminRole, Feedback } from './types'
@@ -83,7 +83,9 @@ export function SiteNavigation({ active, role, menu, notifications }: {
   return (
     <header className="site-header">
       <nav className="site-navigation" aria-label="Navegação principal">
-        <a className="site-brand" href={sitePaths.agenda} aria-label="Tech 2D, início">Tech 2D</a>
+        <a className="site-brand" href={sitePaths.agenda} aria-label="Tech 2D, início">
+          <img src={siteLogoUrl} alt="" width={32} height={32} />Tech 2D
+        </a>
         <div className="site-navigation-pages">
           <a href={sitePaths.agenda} aria-current={active === 'agenda' ? 'page' : undefined}><CalendarDays size={17} aria-hidden="true" />Agenda</a>
           <a href={sitePaths.professores} aria-current={active === 'professores' ? 'page' : undefined}><MapPin size={17} aria-hidden="true" />Professores</a>

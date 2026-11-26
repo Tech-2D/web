@@ -10,7 +10,18 @@
   color: var(--text, var(--color-ink));
 }
 .site-navigation a { text-decoration: none; color: inherit; }
-.site-navigation .site-brand { font-size: 1rem; font-weight: 800; letter-spacing: -.04em; }
+.site-navigation .site-brand {
+  display: inline-flex;
+  width: max-content;
+  align-items: center;
+  gap: .5rem;
+  border-radius: .65rem;
+  white-space: nowrap;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+.site-brand img { display: block; flex: none; }
 .site-navigation-pages { display: flex; justify-content: center; flex-wrap: wrap; gap: .35rem; }
 .site-navigation-actions { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; }
 .site-navigation-pages a { display: inline-flex; align-items: center; gap: .4rem; padding: .55rem .75rem; border-radius: .625rem; font-size: .8125rem; font-weight: 600; }
