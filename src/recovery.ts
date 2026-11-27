@@ -56,6 +56,8 @@ export const formatRecoveryTime = (value: string) => periodDate.format(new Date(
 
 export function useRecoveryMode(user: User | null, enabled: boolean) {
   const [current, setCurrent] = useState<{ uid: string; period: RecoveryEdition | null }>()
+  const [failedUid, setFailedUid] = useState<string>()
+  const [attempt, setAttempt] = useState(0)
   useEffect(() => {
     if (!user || !enabled) return
     const account = user
@@ -72,6 +74,7 @@ export function useRecoveryMode(user: User | null, enabled: boolean) {
         const { period, nextCheckAt } = await recoveryRequest<{ period: RecoveryEdition | null; nextCheckAt?: string }>(account, false, controller.signal)
         if (controller.signal.aborted) return
         setCurrent({ uid: account.uid, period })
+        setFailedUid(undefined)
         window.clearTimeout(expiry)
         if (period) {
           const remaining = Math.max(100, Date.parse(period.endsAt) - Date.now())
@@ -81,7 +84,7 @@ export function useRecoveryMode(user: User | null, enabled: boolean) {
         }
         if (nextCheckAt) delay = Math.max(500, Math.min(delay, Date.parse(nextCheckAt) - Date.now()))
       } catch {
-        if (!controller.signal.aborted) setCurrent({ uid: account.uid, period: null })
+        if (!controller.signal.aborted) setFailedUid(account.uid)
       } finally {
         loading = false
         if (!controller.signal.aborted) next = window.setTimeout(load, delay)
@@ -97,10 +100,12 @@ export function useRecoveryMode(user: User | null, enabled: boolean) {
       window.removeEventListener('focus', load)
       document.removeEventListener('visibilitychange', load)
     }
-  }, [enabled, user])
+  }, [enabled, user, attempt])
 
   const resolved = current?.uid === user?.uid
-  const period = enabled && resolved ? current?.period : null
+  const error = Boolean(enabled && user && failedUid === user.uid)
+  const period = enabled && resolved && !error ? current?.period : null
   return { period: period && Date.parse(period.endsAt) > Date.now() ? period : null,
-    checking: Boolean(enabled && user && !resolved) }
+    checking: Boolean(enabled && user && !resolved && !error), error,
+    retry: () => { setCurrent(undefined); setFailedUid(undefined); setAttempt(value => value + 1) } }
 }

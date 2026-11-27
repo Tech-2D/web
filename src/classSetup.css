@@ -79,7 +79,6 @@
 .class-setup-form[aria-busy="false"] .primary-button:disabled { cursor: default; }
 .class-setup :is(.primary-button, .class-setup-help):focus-visible { outline: 2px solid var(--interface-accent); outline-offset: 3px; }
 .class-setup-content .class-setup-note { margin: 1.05rem 0 0; padding-top: .85rem; border-top: 1px solid var(--line); font-size: .8125rem; }
-.class-setup-content .class-setup-loading { display: flex; align-items: center; gap: .55rem; margin-bottom: 0; }
 .class-setup-dialog-loading {
   position: fixed;
   z-index: 30;

@@ -1,17 +1,16 @@
 import { agendaMenuUrl } from "../menuShortcuts";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { doc, getDoc } from "../dataClient";
-import { isClassPreferenceChange } from "../classPreference";
+import { auth } from "../firebase";
+import { useClassLink } from "../classLink";
+import { SessionLoading } from "../SiteSession";
 import { observeCatalog } from "../professores/publicQueries";
-import { savePreferredClass } from "../professores/classPreference";
 import type { Schedule } from "../professores/types";
 import { useNotebook } from "./lib/useNotebook";
 import { ChevronDown, Search } from "lucide-react";
 import { calculateSemesters, DEFAULT_N1_WEIGHT, type InputMode, type Modes, type Situation } from "./lib/grades";
 import type { Year } from "./data/subjects";
-import { findTechClass, readNotakiClass, subjectsForClass, TECH_CLASSES } from "./classSubjects";
+import { findTechClass, subjectsForClass, TECH_CLASSES } from "./classSubjects";
 import { Formulas } from "./components/Formulas";
 import { Summary } from "./components/Summary";
 import { GRID, SITUATION, SubjectRow, toGrade, type Grades } from "./components/SubjectRow";
@@ -52,41 +51,25 @@ const swapIn = (m: InputMode) => (m === "media" ? "animate-swap-in-right" : "ani
 const GRADE_FIELDS = ["s1n1", "s1n2", "s2n1", "s2n2", "s1avg", "s2avg", "rec"] as const;
 
 export default function App() {
-  const [user, setUser] = useState<User | null | undefined>(CLOUD_GRADES_ENABLED ? undefined : null);
-  useEffect(() => { if (CLOUD_GRADES_ENABLED) return onAuthStateChanged(auth, setUser); }, []);
-  const [preferredClass, setPreferredClass] = useState(readNotakiClass);
-  const [profileClass, setProfileClass] = useState<string | null>();
+  const [user, setUser] = useState<User | null>(null);
+  const classLink = useClassLink(user);
+  useEffect(() => onAuthStateChanged(auth, setUser), []);
+  const [selectedClass, setSelectedClass] = useState<string>();
   const [choosingClass, setChoosingClass] = useState(false);
-  const uid = auth.currentUser?.uid;
-  useEffect(() => {
-    const sync = (event: StorageEvent) => {
-      if (isClassPreferenceChange(event)) setPreferredClass(readNotakiClass());
-    };
-    window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
-  }, []);
-  useEffect(() => {
-    if (preferredClass || !uid) return;
-    let active = true;
-    void getDoc(doc(db, "userProfiles", uid)).then(record => {
-      const name: unknown = record.data()?.className;
-      if (active) setProfileClass(typeof name === "string" && name.trim() ? name.trim() : null);
-    }).catch(() => { if (active) setProfileClass(null); });
-    return () => { active = false; };
-  }, [preferredClass, uid]);
-
-  const className = preferredClass ?? profileClass ?? null;
-  const turma = findTechClass(className);
-  if (user === undefined) return <NotakiStatus><p role="status">Carregando sua conta…</p></NotakiStatus>;
-  if (!preferredClass && uid && profileClass === undefined) return <NotakiStatus><p role="status">Buscando sua turma…</p></NotakiStatus>;
+  if (!user || (!classLink.data && !classLink.error)) return <SessionLoading message="Buscando sua turma…" />;
+  if (classLink.error) return <NotakiStatus>
+    <p role="alert">{classLink.error}</p><button type="button" className="portal-control" onClick={classLink.reload}>Tentar novamente</button>
+  </NotakiStatus>;
+  const className = classLink.data?.link?.className ?? null;
+  const linkedTechClass = findTechClass(className);
+  const turma = linkedTechClass ?? findTechClass(selectedClass ?? null);
   if (!turma || choosingClass) return (
     <NotakiStatus className={className ?? undefined}>
       <label className="flex flex-wrap items-center gap-2">
         <span>{className && !turma ? "Escolha uma turma do Tech" : "Qual é a sua turma?"}</span>
         <select className="portal-control" value={turma?.name ?? ""} onChange={event => {
           const name = event.target.value;
-          savePreferredClass(name);
-          setPreferredClass(name);
+          setSelectedClass(name);
           setChoosingClass(false);
         }}>
           <option value="" disabled>Selecione a turma</option>
@@ -96,7 +79,8 @@ export default function App() {
       {choosingClass && <button type="button" className="portal-control" onClick={() => setChoosingClass(false)}>Voltar</button>}
     </NotakiStatus>
   );
-  return <ClassGrades key={turma.name} turma={turma} user={user} onChangeClass={() => setChoosingClass(true)} />;
+  return <ClassGrades key={turma.name} turma={turma} user={user}
+    onChangeClass={linkedTechClass ? undefined : () => setChoosingClass(true)} />;
 }
 
 function NotakiStatus({ className, children }: { className?: string; children: ReactNode }) {
@@ -108,8 +92,8 @@ function NotakiStatus({ className, children }: { className?: string; children: R
 
 function ClassGrades({ turma, user, onChangeClass }: {
   turma: { name: string; year: Year };
-  user: User | null;
-  onChangeClass: () => void;
+  user: User;
+  onChangeClass?: () => void;
 }) {
   const [academicYear, setAcademicYear] = useState(() => new Date().getFullYear());
   const [subjects, setSubjects] = useState<string[]>();
@@ -126,7 +110,7 @@ function ClassGrades({ turma, user, onChangeClass }: {
       <button type="button" className="portal-control" onClick={() => { setFailed(false); setRetry(value => value + 1); }}>Tentar novamente</button>
     </> : subjects ? <>
       <p>Nenhuma disciplina cadastrada na grade desta turma.</p>
-      <button type="button" className="portal-control" onClick={onChangeClass}>Alterar turma padrão</button>
+      {onChangeClass && <button type="button" className="portal-control" onClick={onChangeClass}>Escolher outra turma</button>}
     </> : <p role="status">Carregando as disciplinas da turma…</p>}
   </NotakiStatus>;
 
@@ -138,11 +122,11 @@ function GradesView({ className, year, subjects, user, academicYear, onAcademicY
   className: string;
   year: Year;
   subjects: string[];
-  user: User | null;
+  user: User;
   academicYear: number;
   onAcademicYear: (year: number) => void;
 }) {
-  const cloud = useNotebook(user, year, academicYear);
+  const cloud = useNotebook(user, year, academicYear, CLOUD_GRADES_ENABLED);
   const { grades, setGrades, modes, setModes } = cloud;
   const [filter, setFilter] = useState<Filter>("todas");
   const [query, setQuery] = useState("");

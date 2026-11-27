@@ -7,6 +7,7 @@ import { auth } from './firebase'
 import { requestPasswordReset } from './passwordReset'
 import { API_BASE } from './apiBase'
 import { signOut } from './sessionActions'
+import { resetQueuedSession } from './queuedWrites'
 import { siteLogoUrl } from './sitePaths'
 import d2Avatar from './assets/d2/d2.webp'
 import './siteSession.css'
@@ -27,7 +28,32 @@ function accountError(error: unknown, mode: Mode) {
 
 export function SiteSession({ destination, children }: { destination: string; children: ReactNode }) {
   const [session, setSession] = useState<User | null | undefined>()
-  useEffect(() => onAuthStateChanged(auth, user => setSession(user && !user.isAnonymous ? user : null), () => setSession(null)), [])
+  useEffect(() => {
+    let previousUid: string | null | undefined
+    function update(user: User | null) {
+      const account = user && !user.isAnonymous ? user : null
+      const uid = account?.uid ?? null
+      if (previousUid !== undefined && uid !== previousUid) resetQueuedSession()
+      previousUid = uid
+      setSession(account)
+    }
+    return onAuthStateChanged(auth, update, () => update(null))
+  }, [])
+  useEffect(() => {
+    const suspend = (event: PageTransitionEvent) => {
+      if (event.persisted) document.documentElement.dataset.siteRestorePending = ''
+    }
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted) window.location.reload()
+    }
+    window.addEventListener('pagehide', suspend)
+    window.addEventListener('pageshow', restore)
+    return () => {
+      window.removeEventListener('pagehide', suspend)
+      window.removeEventListener('pageshow', restore)
+      delete document.documentElement.dataset.siteRestorePending
+    }
+  }, [])
   return session === undefined ? <SessionLoading /> : session
     ? <PortalAccess key={session.uid} user={session}>{children}</PortalAccess>
     : <AccountEntry destination={destination} />
@@ -91,7 +117,7 @@ function PortalAccess({ user, children }: { user: User; children: ReactNode }) {
   </main>
 }
 
-function SessionLoading() {
+export function SessionLoading({ message = 'Verificando sua sessão…' }: { message?: string }) {
   return (
     <main className="site-entry-check">
       <div className="site-entry-check-card site-session-loading" role="status">
@@ -99,7 +125,7 @@ function SessionLoading() {
           <img src={d2Avatar} alt="" width="72" height="72" />
         </div>
         <span className="site-entry-check-brand" aria-hidden="true">Tech 2D</span>
-        <p>Verificando sua sessão…</p>
+        <p>{message}</p>
         <span className="site-session-progress" aria-hidden="true" />
       </div>
     </main>

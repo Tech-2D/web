@@ -93,7 +93,7 @@ export function SiteNavigation({ active, role, menu, notifications, showProfileR
           <a href={sitePaths.pegaki} aria-current={active === 'pegaki' ? 'page' : undefined}><ClipboardList size={17} aria-hidden="true" />Notas</a>
           <a href={sitePaths.kanban} aria-current={active === 'kanban' ? 'page' : undefined}><Columns3 size={17} aria-hidden="true" />Kanban</a>
           {role === 'superadmin' ? <AdminNavigationLink active={active === 'admin'} /> :
-            (panelLabel || active === 'admin') && <a href={sitePaths.admin} aria-current={active === 'admin' ? 'page' : undefined}><KeyRound size={17} aria-hidden="true" />{panelLabel ?? 'Painel'}</a>}
+            panelLabel && <a href={sitePaths.admin} aria-current={active === 'admin' ? 'page' : undefined}><KeyRound size={17} aria-hidden="true" />{panelLabel}</a>}
         </div>
         <div className="site-navigation-actions">
           {notifications ? <button type="button" className="site-options-button" onClick={notifications.onOpen}

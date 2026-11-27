@@ -185,7 +185,7 @@ export const onSnapshot = typed<typeof native.onSnapshot>((ref:Ref,next:(value:u
       const value=await (ref.isCollection ? getMany(ref) : getOne(ref))
       const content=JSON.stringify(ref.isCollection ? (value as Awaited<ReturnType<typeof getMany>>).docs.map(d=>d.data()) : (value as Awaited<ReturnType<typeof getOne>>).data())
       if(!stopped && content !== last) {next(value);last=content}
-    } catch(cause) {if(!stopped) error?.(cause)}
+    } catch(cause) {last='';if(!stopped) error?.(cause)}
     finally {running=false;if(!stopped) timer=setTimeout(()=>void refresh(),30000)}
   }
   const wake=(event:Event)=>{

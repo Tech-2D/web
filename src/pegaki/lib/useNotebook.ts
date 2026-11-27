@@ -10,14 +10,12 @@ type PendingDraft = { version: number; draft: Draft }
 const serialize = (draft: Draft) => JSON.stringify(draft)
 const empty = (): Draft => ({ grades: {}, modes: { s1: 'notas', s2: 'notas' } })
 
-function localDraft(year: Year): Draft {
+function localDraft(key: string): Draft {
   try {
-    const legacy = JSON.parse(localStorage.getItem('aprovae:mode') || 'null')
-    return {
-      grades: JSON.parse(localStorage.getItem(`aprovae:v4:grades:${year}`) || '{}'),
-      modes: JSON.parse(localStorage.getItem('aprovae:modes') || 'null') || { s1: legacy === 'media' ? 'media' : 'notas', s2: legacy === 'media' ? 'media' : 'notas' },
-    }
+    const draft = JSON.parse(localStorage.getItem(key) || 'null')
+    if (draft?.grades && ['notas', 'media'].includes(draft.modes?.s1) && ['notas', 'media'].includes(draft.modes?.s2)) return draft
   } catch { return empty() }
+  return empty()
 }
 
 function readPending(key: string): PendingDraft | null {
@@ -29,9 +27,11 @@ function readPending(key: string): PendingDraft | null {
   } catch { return null }
 }
 
-export function useNotebook(user: User | null, year: Year, academicYear: number) {
+export function useNotebook(account: User, year: Year, academicYear: number, cloudEnabled = true) {
+  const user = cloudEnabled ? account : null
+  const offlineKey = `pegaki:local:${account.uid}:${academicYear}:${year}`
   const pendingKey = `pegaki:pending:${user?.uid}:${academicYear}:${year}`
-  const [draft, setDraft] = useState<Draft>(() => user ? empty() : localDraft(year))
+  const [draft, setDraft] = useState<Draft>(() => user ? empty() : localDraft(offlineKey))
   const [saved, setSaved] = useState(() => serialize(draft))
   const [loading, setLoading] = useState(Boolean(user))
   const [saving, setSaving] = useState(false)
@@ -52,12 +52,9 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
   const persist = useCallback((next: Draft) => {
     try {
       if (user) localStorage.setItem(pendingKey, JSON.stringify({ version: version.current, draft: next }))
-      else {
-        localStorage.setItem(`aprovae:v4:grades:${year}`, JSON.stringify(next.grades))
-        localStorage.setItem('aprovae:modes', JSON.stringify(next.modes))
-      }
+      else localStorage.setItem(offlineKey, serialize(next))
     } catch { /* Automatic network saves remain available when browser storage is blocked. */ }
-  }, [user, pendingKey, year])
+  }, [user, pendingKey, offlineKey])
 
   useEffect(() => {
     if (!user) return
@@ -193,7 +190,7 @@ export function useNotebook(user: User | null, year: Year, academicYear: number)
       try { localStorage.removeItem(pendingKey) } catch { /* Reload can still read the account. */ }
       setRevision(value => value + 1)
     },
-    canImport: Boolean(user) && ready && !error && !dirty && Object.keys(draft.grades).length === 0 && Object.keys(localDraft(year).grades).length > 0,
-    importLocal: () => change(() => localDraft(year)),
+    canImport: Boolean(user) && ready && !error && !dirty && Object.keys(draft.grades).length === 0 && Object.keys(localDraft(offlineKey).grades).length > 0,
+    importLocal: () => change(() => localDraft(offlineKey)),
   }
 }

@@ -6,7 +6,7 @@ type SessionSource = {
   subscribeProfile: (uid: string, change: (profile: AdminProfile | null) => void, error: () => void) => Stop
   publish: (profile: AdminProfile | null) => void
   reset: () => void
-  ready?: () => void
+  ready?: (verified: boolean) => void
 }
 
 // Invalida respostas de listeners antigos antes de conferir a nova conta.
@@ -22,12 +22,12 @@ export function observeCalendarSession(source: SessionSource): Stop {
     source.publish(null)
     source.reset()
     if (!uid) return
-    const publish = (profile: AdminProfile | null) => {
+    const publish = (profile: AdminProfile | null, verified = true) => {
       if (currentRevision !== revision) return
       source.publish(profile && ['representante', 'superadmin'].includes(profile.role) ? profile : null)
-      source.ready?.()
+      source.ready?.(verified)
     }
-    stopProfile = source.subscribeProfile(uid, publish, () => publish(null))
+    stopProfile = source.subscribeProfile(uid, publish, () => publish(null, false))
   })
   return () => { active = false; revision += 1; stopAccount(); stopProfile() }
 }

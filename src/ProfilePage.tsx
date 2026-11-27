@@ -139,7 +139,7 @@ export function ProfilePage() {
       </nav>
       {error && <p role="alert" className="profiles-error">{error}</p>}
       {notice && <p role="status" className="profiles-notice"><CheckCircle2 size={17} />{notice}</p>}
-      {tab === 'mine' ? <div className="profiles-body">
+      {tab === 'mine' ? loading ? <div className="profiles-loading" role="status"><LoaderCircle size={24} aria-hidden="true" />Carregando seu perfil…</div> : <div className="profiles-body">
         <aside className="profiles-identity">
           <ProfileAvatar profile={preview} large />
           <h3>{fields.displayName.trim() || 'Seu nome no portal'}</h3>
@@ -182,8 +182,7 @@ export function ProfilePage() {
             <label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete={register ? 'new-password' : 'current-password'} /></label>
             <button type="submit" className="profiles-primary" disabled={busy}>{register ? 'Criar conta' : 'Entrar'}</button>
             <button type="button" className="profiles-link" onClick={() => setRegister(!register)}>{register ? 'Já tenho conta' : 'Criar uma conta'}</button>
-          </form> : loading ? <div className="profiles-loading" role="status"><LoaderCircle size={24} /><span>Carregando seu perfil…</span></div> :
-          loadError ? <div className="profiles-empty" role="alert"><p>{loadError}</p><button type="button" className="profiles-link" onClick={() => setProfileReload(n => n + 1)}>Tentar novamente</button></div> : <form onSubmit={save} className="profiles-form">
+          </form> : loadError ? <div className="profiles-empty" role="alert"><p>{loadError}</p><button type="button" className="profiles-link" onClick={() => setProfileReload(n => n + 1)}>Tentar novamente</button></div> : <form onSubmit={save} className="profiles-form">
             <fieldset disabled={busy}><legend>Sobre você</legend>
               <label>Nome<span className="profiles-field-help">Como você quer ser chamado</span><input autoComplete="name" value={fields.displayName} onChange={e => setFields({ ...fields, displayName: e.target.value })} maxLength={80} minLength={2} required placeholder="Seu nome" /></label>
               <label>Empresa <span className="profiles-optional">Opcional</span><input autoComplete="organization" value={fields.company} onChange={e => setFields({ ...fields, company: e.target.value })} maxLength={100} placeholder="Empresa ou instituição" /></label>

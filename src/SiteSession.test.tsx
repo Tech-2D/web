@@ -40,3 +40,16 @@ it('shows separate instructions for a confirmed account block', async () => {
   expect(screen.getByText('Fale com a administração do portal para obter ajuda.')).toBeDefined()
   expect(screen.queryByText('Conteúdo protegido')).toBeNull()
 })
+
+it('hides protected content when the browser preserves the page for back navigation', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 204 })))
+  const view = render(<SiteSession destination="a Agenda"><p>Conteúdo protegido</p></SiteSession>)
+  await screen.findByText('Conteúdo protegido')
+
+  window.dispatchEvent(Object.assign(new Event('pagehide'), { persisted: false }))
+  expect(document.documentElement.hasAttribute('data-site-restore-pending')).toBe(false)
+  window.dispatchEvent(Object.assign(new Event('pagehide'), { persisted: true }))
+  expect(document.documentElement.hasAttribute('data-site-restore-pending')).toBe(true)
+  view.unmount()
+  expect(document.documentElement.hasAttribute('data-site-restore-pending')).toBe(false)
+})

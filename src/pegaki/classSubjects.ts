@@ -1,6 +1,4 @@
-import { readPreferredTurma } from '../classPreference'
 import { CLASS_NAMES } from '../professores/classNames'
-import { readPreferredClass } from '../professores/classPreference'
 import { normalize } from '../professores/schedule'
 import type { Schedule } from '../professores/types'
 import type { Year } from './data/subjects'
@@ -19,10 +17,6 @@ function classKey(name: string) {
 export function findTechClass(name: string | null): TechClass | undefined {
   if (!name) return undefined
   return TECH_CLASSES.find(turma => classKey(turma.name) === classKey(name))
-}
-
-export function readNotakiClass() {
-  return readPreferredClass() ?? readPreferredTurma()
 }
 
 // A grade pode usar outra grafia. Preserve as chaves da API e dos cadernos antigos.

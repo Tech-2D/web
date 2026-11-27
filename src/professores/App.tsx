@@ -26,6 +26,7 @@ import { AccountSiteNavigation } from '../AccountSiteNavigation'
 import { PageHeading } from '../PageHeading'
 import { RecoverySchedule } from '../RecoverySchedule'
 import { useRecoveryMode } from '../recovery'
+import { SessionLoading } from '../SiteSession'
 import { requestPasswordReset } from './passwordReset'
 import { observeCatalog, invalidateCatalog } from './publicQueries'
 import {
@@ -104,7 +105,7 @@ function App() {
   const [highContrast, setHighContrast] = useState(readStoredHighContrast)
   const [reduceMotion, setReduceMotion] = useState(readStoredReduceMotion)
   const [user, setUser] = useState<User | null>(null)
-  const { period } = useRecoveryMode(user, true)
+  const { period, checking: checkingRecovery, error: recoveryError, retry: retryRecovery } = useRecoveryMode(user, true)
   const [scheduleMode, setScheduleMode] = useState<'regular' | 'recovery' | null>(() =>
     new URLSearchParams(window.location.search).has('view') ? 'regular' : null)
   const showRecovery = Boolean(period && scheduleMode !== 'regular')
@@ -256,6 +257,21 @@ function App() {
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     setAdminOpen(false)
   }
+
+  if (!user || (scheduleMode !== 'regular' && checkingRecovery) || (adminOpen && !authChecked)) {
+    return <SessionLoading message={adminOpen ? 'Verificando o acesso à grade…' : 'Carregando os horários…'} />
+  }
+  if (scheduleMode !== 'regular' && recoveryError && !adminOpen) return (
+    <div className="app-shell portal-frame">
+      <AccountSiteNavigation active="professores" />
+      <main id="inicio" className="main-content portal-main">
+        <div className="state-card"><p role="alert">Não foi possível verificar os horários de recuperação.</p>
+          <button type="button" className="portal-control" onClick={retryRecovery}>Tentar novamente</button>
+          <button type="button" className="portal-control" onClick={() => setScheduleMode('regular')}>Abrir grade regular</button>
+        </div>
+      </main>
+    </div>
+  )
 
   return (
     <div className="app-shell portal-frame">

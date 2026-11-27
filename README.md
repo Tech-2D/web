@@ -91,6 +91,8 @@ Em **Administração → Manutenção → Virada de ano**, administradores gerai
 
 Antes de abrir o calendário, alunos e representantes confirmam uma turma do catálogo. A Agenda mostra somente as atividades dessa turma. Em **Perfil → Minha turma → Gerenciar vínculo**, a pessoa pode trocar de turma depois de 30 dias ou pedir uma correção. Administradores gerais mantêm o seletor de turmas, a comparação e as atividades gerais. Eles revisam pedidos em **Administração → Turmas e acessos → Trocas de turma**. [Especificação do vínculo](https://github.com/Tech-2D/api/tree/main/specs/vinculo-turma)
 
+A Agenda aguarda a sessão, as permissões e o vínculo aplicáveis antes de abrir a tela definitiva. Professores verifica a recuperação antes de escolher a grade inicial e Notas usa a turma confirmada da conta. Rascunhos do Kanban só são exibidos depois que a API confirma o acesso. Ao restaurar uma página pelo histórico do navegador, o portal recarrega e verifica a sessão.
+
 ## Rodar localmente
 
 O [AGENTS.md](AGENTS.md) descreve o fluxo de desenvolvimento por tarefa e indica onde encontrar o índice do ecossistema.

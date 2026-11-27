@@ -1,3 +1,5 @@
+html[data-site-restore-pending] body { display: none; }
+
 .site-entry, .site-entry-check { color: var(--text); background: var(--app-bg, var(--bg)); }
 .site-entry-check { min-height: 100dvh; display: grid; place-items: center; inline-size: 100%; padding: 1rem; }
 .site-entry-check-card {

@@ -48,10 +48,10 @@ export function SharedKanban({user,invite,activities}:{user:User;invite:string |
   useEffect(()=>{
     if(!selected){setCurrent(null);return}
     let active=true,authorized=false,unsubscribe:()=>void=()=>{}
-    setOpening(true);setCurrent(null);setError('');setStale(false);setEditor(null);version.current=null;dragging.current=false
+    setOpening(true);setCurrent(null);setError('');setStale(false);setEditor(null);setSharing(false);version.current=null;dragging.current=false
     const ref=doc(db,'sharedKanban',selected)
     const stopQueue=subscribeQueuedDocument(ref,state=>{
-      if(!active || !authorized && !state.pending)return
+      if(!active || !authorized)return
       const next=queuedViewData<SharedBoard>(state)
       version.current=state.confirmed?.version || version.current;setCurrent(next);setBoards(bs=>bs.map(b=>b.board.id===selected ? next : b));setStale(!!state.failed);setError(state.failed?.message || '');setNotice(state.pending ? 'Alteração na fila de salvamento.' : 'Quadro confirmado no banco.')
     })
@@ -64,17 +64,26 @@ export function SharedKanban({user,invite,activities}:{user:User;invite:string |
       version.current=pending?.pending ? pending.confirmed?.version || documentVersion(ref) : documentVersion(ref)
       setCurrent(pending?.pending ? queuedViewData<SharedBoard>(pending) : snapshot.data() as SharedBoard)
       unsubscribe=onSnapshot(ref,latest=>{
-        if(!active || operation.current || queuedDocument(ref)?.pending)return
-        if(!latest.exists()){setCurrent(null);setBoards(bs=>bs.filter(b=>b.board.id!==selected));setError('Este quadro foi excluído.');return}
+        if(!active)return
+        if(!latest.exists()){authorized=false;setCurrent(null);setEditor(null);setSharing(false);setBoards(bs=>bs.filter(b=>b.board.id!==selected));setError('Este quadro foi excluído.');return}
+        if(!authorized){
+          authorized=true
+          const next=latest.data() as SharedBoard
+          version.current=documentVersion(ref);setCurrent(next);setError('');setStale(false)
+          setBoards(bs=>bs.some(record=>record.board.id===selected) ? bs.map(record=>record.board.id===selected ? next : record) : [...bs,next])
+          return
+        }
+        if(operation.current || queuedDocument(ref)?.pending)return
         if(documentVersion(ref)!==version.current){
           if(editLock.current || dragging.current){setStale(true);setNotice('Outra pessoa atualizou este quadro. Atualize para continuar sem sobrescrever as alterações dela.')}
           else{seedQueuedDocument(ref,'shared');const next=latest.data() as SharedBoard;version.current=documentVersion(ref);setCurrent(next);setBoards(bs=>bs.map(b=>b.board.id===selected ? next : b));setStale(false);setError('');setNotice('Quadro atualizado com as alterações do grupo.')}
         }
-      },()=>{if(active){setCurrent(null);setEditor(null);setBoards(bs=>bs.filter(b=>b.board.id!==selected));setError('Não foi possível confirmar seu acesso. O dono pode ter removido sua participação. Atualize para conferir.')}})
-    }).catch(()=>{if(active){setCurrent(null);setStale(true);setError('Este quadro não está disponível ou você ainda não tem acesso.')}}).finally(()=>{if(active)setOpening(false)})
+      },()=>{if(active){authorized=false;setCurrent(null);setEditor(null);setSharing(false);setBoards(bs=>bs.filter(b=>b.board.id!==selected));setError('Não foi possível confirmar seu acesso. O dono pode ter removido sua participação. Atualize para conferir.')}})
+    }).catch(()=>{if(active){authorized=false;setCurrent(null);setStale(true);setBoards(bs=>bs.filter(b=>b.board.id!==selected));setError('Este quadro não está disponível ou você ainda não tem acesso.')}}).finally(()=>{if(active)setOpening(false)})
     return()=>{active=false;unsubscribe();stopQueue()}
   },[selected,user.uid,refresh,setEditor])
-  const board=current?.board,owner=current?.ownerId===user.uid,disabled=busy || opening || stale
+  const confirmed=current?.board.id===selected ? current : null
+  const board=confirmed?.board,owner=confirmed?.ownerId===user.uid,disabled=busy || opening || stale
   function reload(){if(current && queuedDocument(doc(db,'sharedKanban',current.board.id))?.pending){setError('Revise a fila de salvamento antes de recarregar este quadro.');return}if(editor && !window.confirm('Descartar o formulário não salvo e atualizar o quadro?'))return;setEditor(null);setRefresh(n=>n+1)}
   async function saveBoard(next:KanbanBoard) {
     if(!current || operation.current || !version.current || stale)return false
@@ -117,7 +126,7 @@ export function SharedKanban({user,invite,activities}:{user:User;invite:string |
       <p className="kb-hint">Todos os participantes podem organizar tarefas. As mudanças são conferidas por versão; se outra pessoa editar, atualize antes de continuar.</p>
       <KanbanBoardView shared key={board.id} board={board} disabled={disabled} search={search} priority={priority} canAddTask={board.tasks.length<200} assignees={assignees} onChange={saveBoard} onInteractionChange={active=>{dragging.current=active}} onEditTask={task=>{setError('');setEditor({kind:'task',columnId:task.columnId,task})}} onEditColumn={column=>{setError('');setEditor({kind:'column',column})}} onAddTask={columnId=>{setError('');setEditor({kind:'task',columnId})}}/>
     </>}</section></div>
-    {sharing && current && owner && <SharedAccessDialog user={user} record={current} onClose={()=>setSharing(false)}/>}
+    {sharing && confirmed && owner && <SharedAccessDialog user={user} record={confirmed} onClose={()=>setSharing(false)}/>}
     {editor && <EditorDialog title={editor.kind==='new' ? 'Novo quadro compartilhado' : editor.kind==='board' ? 'Personalizar quadro compartilhado' : editor.kind==='column' ? 'Configurar coluna' : 'Tarefa compartilhada'} busy={busy} error={error} stale={stale} onReload={reload} onClose={()=>{setEditor(null);setError('')}}>
       {editor.kind==='new' ? <><p>Você será o dono. Depois de criar, use “Compartilhar e acessos” para convidar e aprovar participantes.</p><BoardForm disabled={busy} onDelete={()=>{}} onSave={async(name,color,compact,template)=>{await create({...createBoard(name,template,color),compact})}}/></> : editor.kind==='board' && board ? <BoardForm board={board} disabled={disabled} canDelete={owner} onDelete={()=>void remove()} onDuplicate={async()=>{await create(copyBoardTemplate(board))}} onSave={async(name,color,compact)=>{if(await saveBoard({...board,name,color,compact}))setEditor(null)}}/> : editor.kind==='column' && board ? <ColumnForm column={editor.column} disabled={disabled} onDelete={async()=>{try{const next=removeColumn(board,editor.column!.id);if(window.confirm('Excluir esta coluna vazia?') && await saveBoard(next))setEditor(null)}catch(e){setError((e as Error).message)}}} onSave={async column=>{if(await saveBoard({...board,columns:editor.column ? board.columns.map(c=>c.id===column.id ? column : c) : [...board.columns,column]}))setEditor(null)}}/> : editor.kind==='task' && board ? <TaskForm activities={activities} files={{scope:'shared',board:board.id}} assignees={assignees} task={editor.task} columnId={editor.columnId} columns={board.columns} disabled={disabled} onDelete={async()=>{const saved=await saveBoard({...board,tasks:board.tasks.filter(t=>t.id!==editor.task!.id)});if(saved)setEditor(null);return saved}} onSave={async task=>{if(await saveBoard({...board,tasks:editor.task ? board.tasks.map(t=>t.id===task.id ? task : t) : [...board.tasks,task]}))setEditor(null)}}/> : null}
     </EditorDialog>}

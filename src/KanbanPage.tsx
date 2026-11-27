@@ -97,7 +97,7 @@ function Workspace({user,activities,refreshKey}:{user:User;activities:Activity[]
     setLoading(true);setError('');setNotice('')
     const ref=doc(db,'personalKanban',user.uid)
     const stopQueue=subscribeQueuedDocument(ref,state=>{
-      if(!active || !authorized && !state.pending)return
+      if(!active || !authorized)return
       setWorkspace(queuedViewData<WorkspaceData>(state));setStale(!!state.failed);setError(state.failed?.message || '');setNotice(state.pending ? 'Alteração na fila de salvamento.' : 'Alterações confirmadas no banco.')
     })
     getDoc(ref).then(snapshot=>{
@@ -108,7 +108,7 @@ function Workspace({user,activities,refreshKey}:{user:User;activities:Activity[]
       if(pending?.pending){setWorkspace(queuedViewData<WorkspaceData>(pending));setStale(!!pending.failed);return}
       const data = snapshot.exists() ? snapshot.data() as WorkspaceData : {ownerId:user.uid,schemaVersion:1 as const,boards:[]}
       setWorkspace(data);setStale(false)
-    }).catch(()=>{if(active){if(!queuedDocument(ref)?.pending)setWorkspace(null);setStale(true);setError('Não foi possível confirmar o acesso ao Kanban. Confira sua conta e tente recarregar.')}}).finally(()=>{if(active)setLoading(false)})
+    }).catch(()=>{if(active){setWorkspace(null);setStale(true);setError('Não foi possível confirmar o acesso ao Kanban. Confira sua conta e tente recarregar.')}}).finally(()=>{if(active)setLoading(false)})
     return ()=>{active=false;stopQueue()}
   },[user.uid,reload,refreshKey])
   const board=workspace?.boards.find(b=>b.id===selected) || workspace?.boards[0]
@@ -133,7 +133,7 @@ function Workspace({user,activities,refreshKey}:{user:User;activities:Activity[]
   }
   async function changeBoard(next:KanbanBoard) {return workspace ? save(replaceBoard(workspace.boards,next)) : false}
   function refresh() {
-    if(queuedDocument(doc(db,'personalKanban',user.uid))?.pending){setError('Use a fila de salvamento para copiar ou revisar seus rascunhos antes de recarregar.');return}
+    if(workspace && queuedDocument(doc(db,'personalKanban',user.uid))?.pending){setError('Aguarde a fila de salvamento antes de recarregar.');return}
     if (editor && !window.confirm('Recarregar e descartar as alterações ainda não salvas deste formulário?')) return
     setEditor(null);setReload(n=>n+1)
   }

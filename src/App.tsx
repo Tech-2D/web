@@ -12,6 +12,7 @@ import { FirebaseError } from 'firebase/app'
 import { PageHeading } from './PageHeading'
 import { AgendaClosureScreen } from './AgendaClosureScreen'
 import { useAgendaClosure } from './agendaClosure'
+import { SessionLoading } from './SiteSession'
 import { useRecoveryMode } from './recovery'
 import { SiteNavigation } from './SiteNavigation'
 import { addDoc, collection, doc, getDoc, serverTimestamp } from './dataClient'
@@ -105,7 +106,7 @@ function App() {
   const [quickCreateDate, setQuickCreateDate] = useState<string | null>(null)
   const [quickEditActivity, setQuickEditActivity] = useState<Activity | null>(null)
   const [calendarProfile, setCalendarProfile] = useState<AdminProfile | null>(null)
-  const [profileReady, setProfileReady] = useState(false)
+  const [profileReady, setProfileReady] = useState<boolean | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuShortcuts, setMenuShortcuts] = useState(readMenuShortcuts)
   const [linkedMenuDialog, setLinkedMenuDialog] = useState(() => readAgendaMenuDialog(window.location.hash))
@@ -178,7 +179,7 @@ function App() {
       subscribeProfile: subscribeAdminProfile,
       publish: setCalendarProfile,
       reset: () => {
-        setProfileReady(false)
+        setProfileReady(null)
         setSelectedTurma(null)
         setCompareMode(false)
         setTurmaActivities([])
@@ -186,7 +187,7 @@ function App() {
         setQuickCreateDate(null)
         setQuickEditActivity(null)
       },
-      ready: () => setProfileReady(true),
+      ready: setProfileReady,
     })
     return stop
   }, [])
@@ -516,35 +517,59 @@ function App() {
     storeMenuShortcuts(next)
   }
 
+  if (!calendarUser) return <SessionLoading />
+  if (profileReady === null && !kanbanOpen) return <SessionLoading message={adminOpen ? 'Verificando o acesso ao painel…' : 'Carregando a Agenda…'} />
+  if (profileReady === false && !kanbanOpen) return <main id="inicio" className="main-content">
+    <div className="state-card">
+      <p role="alert">Não foi possível verificar suas permissões. Tente novamente.</p>
+      <button type="button" className="secondary-button" onClick={() => window.location.reload()}>Tentar novamente</button>
+    </div>
+  </main>
+
   if (adminOpen) return (
     <div className="app-shell portal-frame admin-shell">
       <SiteNavigation active="admin" role={calendarProfile?.role} />
       <SyncStatus />
-      {ASSISTANT_ENDPOINT && calendarUser &&
+      {ASSISTANT_ENDPOINT && calendarProfile &&
         <Suspense fallback={null}><AssistantChat key={calendarUser.uid} account={calendarUser}
           preferredClass={assistantClass} endpoint={ASSISTANT_ENDPOINT} welcomeActivities={calendarActivities} /></Suspense>}
       <DialogLoadBoundary>
         <Suspense fallback={<main className="main-content"><p role="status">Carregando painel…</p></main>}>
-          <AdminPage publicTurmaId={turmaId} classNames={classNames} quickCreateDate={quickCreateDate} quickEditActivity={quickEditActivity} systemUpdates={systemUpdates} onReturnToCalendar={closeAdmin} />
+          <AdminPage key={`${calendarUser.uid}:${calendarProfile?.role ?? ''}:${calendarProfile?.turmaId ?? ''}`}
+            publicTurmaId={turmaId} classNames={classNames} quickCreateDate={quickCreateDate} quickEditActivity={quickEditActivity} systemUpdates={systemUpdates} onReturnToCalendar={closeAdmin} />
         </Suspense>
       </DialogLoadBoundary>
     </div>
   )
 
-  if (calendarRoute && (closure.screen || closure.waiting || closure.error)) return (
+  if (calendarRoute && closure.waiting) return <SessionLoading message="Carregando a Agenda…" />
+
+  if (calendarRoute && (closure.screen || closure.error)) return (
     <div className="app-shell portal-frame">
       <SiteNavigation active="agenda" role={calendarProfile?.role} />
       <main id="inicio" className="main-content portal-main agenda-closure-view">
         {closure.screen ? <AgendaClosureScreen screen={closure.screen} /> : <div className="state-card">
-          {closure.error ? <><p role="alert">Não foi possível verificar o estado da Agenda.</p>
-            <button type="button" className="portal-control" onClick={closure.retry}>Tentar novamente</button></>
-            : <p role="status"><LoaderCircle className="spin" aria-hidden="true" /> Carregando Agenda…</p>}
+          <p role="alert">Não foi possível verificar o estado da Agenda.</p>
+          <button type="button" className="portal-control" onClick={closure.retry}>Tentar novamente</button>
         </div>}
       </main>
     </div>
   )
 
-  if (!kanbanOpen && !canBrowseClasses && !preferredTurma) return (
+  if (!kanbanOpen && !canBrowseClasses && !classLink.data && !classLink.error) {
+    return <SessionLoading message="Carregando a Agenda…" />
+  }
+
+  if (!kanbanOpen && !canBrowseClasses && classLink.error) return (
+    <main id="inicio" className="main-content portal-main">
+      <div className="state-card">
+        <p role="alert">{classLink.error}</p>
+        <button type="button" className="portal-control" onClick={classLink.reload}>Tentar novamente</button>
+      </div>
+    </main>
+  )
+
+  if (!kanbanOpen && !canBrowseClasses && !preferredTurma && classLink.data) return (
     <div className="app-shell portal-frame">
       <SiteNavigation active="agenda" role={calendarProfile?.role} showProfileReminder={false} />
       <main id="inicio" className="main-content portal-main class-setup">
@@ -555,14 +580,8 @@ function App() {
           <div className="class-setup-content">
             <h1 id="class-setup-title">Qual é a sua turma?</h1>
             <p>Escolha sua turma para ver o calendário, as atividades e os avisos da sua sala.</p>
-            {!profileReady ? <p className="class-setup-loading" role="status"><LoaderCircle className="spin" size={18} aria-hidden="true" /> Verificando acesso à Agenda…</p>
-            : classLink.error ? <>
-              <p className="form-error" role="alert">{classLink.error}</p>
-              <button type="button" className="portal-control" onClick={classLink.reload}>Tentar novamente</button>
-            </> : calendarUser && classLink.data ? <>
-              <ClassLinkForm user={calendarUser} data={classLink.data} onSave={classLink.update} onMissingClass={() => setClassRequestOpen(true)} />
-              <p className="class-setup-note">Você pode trocar de turma pelo Perfil após 30 dias. Se precisar corrigir a escolha antes disso, peça ajuda à administração.</p>
-            </> : <p className="class-setup-loading" role="status"><LoaderCircle className="spin" size={18} aria-hidden="true" /> Carregando turmas…</p>}
+            <ClassLinkForm user={calendarUser} data={classLink.data} onSave={classLink.update} onMissingClass={() => setClassRequestOpen(true)} />
+            <p className="class-setup-note">Você pode trocar de turma pelo Perfil após 30 dias. Se precisar corrigir a escolha antes disso, peça ajuda à administração.</p>
           </div>
         </section>
       </main>
