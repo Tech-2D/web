@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { RecoverySchedule } from './RecoverySchedule'
 import { formatRecoveryTime, type RecoveryEdition } from './recovery'
 
@@ -22,7 +22,9 @@ it('starts with the selected class and keeps shared lessons visible when the fil
   expect(screen.getByText('Plantão')).toBeTruthy()
   expect(screen.getByText('Professora Ana')).toBeTruthy()
   expect(screen.getByText('Sala 8')).toBeTruthy()
-  expect(screen.getByRole('heading', { name: /7 de dezembro/ })).toBeTruthy()
+  expect(screen.getByRole('table', { name: 'Horários por dia' })).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: /07\/12.*segunda-feira/ })).toBeTruthy()
+  expect(screen.getByRole('rowheader', { name: '09:30' })).toBeTruthy()
   expect(screen.getByRole('status').textContent).toBe('2 aulas em 1 dia')
   expect(screen.queryByText('Inglês')).toBeNull()
   expect(screen.queryByText(period.title)).toBeNull()
@@ -45,12 +47,29 @@ it('highlights and filters exam dates for the active class, including old schedu
     ],
   }
   render(<RecoverySchedule period={period} turmaId="2° TECH D" />)
-  expect(screen.getByRole('link', { name: /1 de dezembro.*1 prova/ }).getAttribute('href')).toBe('#recuperacao-2026-12-01')
+  const examDate = screen.getByRole('link', { name: /1 de dezembro.*1 prova/ })
+  expect(examDate.getAttribute('href')).toBe('#recuperacao-2026-12-01')
   expect(screen.queryByRole('link', { name: /4 de dezembro/ })).toBeNull()
-  expect(screen.getByRole('heading', { name: /1 de dezembro.*Dia de prova/ })).toBeTruthy()
+  const examColumn = screen.getByRole('columnheader', { name: /01\/12.*1 prova/ })
+  examColumn.scrollIntoView = vi.fn()
+  fireEvent.click(examDate)
+  expect(document.activeElement).toBe(examColumn)
+  expect(examColumn.scrollIntoView).toHaveBeenCalledWith({ block: 'start', inline: 'nearest' })
   expect(screen.getByText('Sociologia')).toBeTruthy()
-  fireEvent.click(screen.getByRole('checkbox', { name: 'Mostrar só provas' }))
+  const filter = screen.getByRole('button', { name: 'Mostrar só provas' })
+  expect(filter.getAttribute('aria-pressed')).toBe('false')
+  fireEvent.click(filter)
+  expect(filter.getAttribute('aria-pressed')).toBe('true')
   expect(screen.queryByText('Estatística')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Lista' }))
+  expect(screen.getByRole('heading', { name: /1 de dezembro.*Dia de prova/ })).toBeTruthy()
+  expect(screen.queryByText('Estatística')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Grade' }))
+  expect(screen.getByRole('table', { name: 'Horários por dia' })).toBeTruthy()
+  fireEvent.click(filter)
+  expect(filter.getAttribute('aria-pressed')).toBe('false')
+  expect(screen.getByText('Estatística')).toBeTruthy()
+  fireEvent.click(filter)
   fireEvent.change(screen.getByRole('combobox', { name: 'Turma' }), { target: { value: '2° TECH E' } })
   expect(screen.getByRole('link', { name: /4 de dezembro/ })).toBeTruthy()
   expect(screen.queryByText('Sociologia')).toBeNull()

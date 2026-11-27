@@ -9,3 +9,9 @@ Usar a paleta do tema e a tipografia do portal. Destacar o número do dia em um 
 ## Local da grade publicada
 
 Renderizar a grade de recuperação em Professores, com alternância para a grade regular. Retirar a substituição do calendário na Agenda e manter um atalho durante o período ativo.
+
+Organizar o cabeçalho das provas em uma linha de título e filtro, seguida por atalhos que quebram linha conforme a largura disponível.
+
+Usar um botão com `aria-pressed`, ícone e cores do tema para indicar o estado do filtro. Validar a alternância nas duas direções.
+
+Reaproveitar a estrutura da tabela de Professores para a recuperação, agrupando os horários por data e início. Manter os detalhes em cada horário e fazer os atalhos de prova apontarem para a coluna ou dia correspondente.

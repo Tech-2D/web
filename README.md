@@ -73,7 +73,7 @@ Em **Administração → Agenda da turma → Recuperação**, administradores ge
 
 A grade aceita mais de 200 horários. O arquivo deve ter até 1 MB. Informe **Tipo** como Aula ou Prova no Excel ou use `"kind": "exam"` no JSON. O sufixo ` (Prova)` também funciona nos arquivos existentes.
 
-Depois de salvar os horários, informe a duração de 1 a 90 dias e clique em **Ativar recuperação**. Durante a vigência, **Professores** oferece as visualizações **Recuperação** e **Grade regular**. Na recuperação, é possível procurar por professor, matéria, turma ou local e filtrar as provas. A Agenda continua exibindo o calendário e oferece um atalho para Professores. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
+Depois de salvar os horários, informe a duração de 1 a 90 dias e clique em **Ativar recuperação**. Durante a vigência, **Professores** oferece as visualizações **Recuperação** e **Grade regular**. Na recuperação, a grade organiza dias e horários e pode ser alternada com a lista. Ambas permitem buscar por professor, matéria, turma ou local e filtrar as provas. A Agenda continua exibindo o calendário e oferece um atalho para Professores. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
 
 ### Análise por conta
 
