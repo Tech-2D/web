@@ -31,6 +31,8 @@ Use **Selecionar** para marcar cartões e mover ou excluir o grupo. Você pode a
 
 No Assistente, peça seus cartões do Meu Kanban ou faça consultas da Agenda, do Kanban e do Cadê o Professor na mesma mensagem.
 
+As novas respostas do D2 aparecem com efeito de digitação, incluindo listas e notas. Com movimento reduzido, o texto completo aparece de imediato.
+
 ## Agenda da turma
 
 Calendário mensal com tarefas, lições, trabalhos e eventos por turma. Representantes e o superadministrador criam, editam e excluem atividades.

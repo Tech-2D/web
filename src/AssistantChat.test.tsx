@@ -218,22 +218,54 @@ describe('contrato do chat integrado', () => {
     expect(frame().getAttribute('data-pose')).toBe('respondendo')
   })
 
-  it('revela a resposta aos poucos, com o texto completo disponível para leitores de tela', async () => {
+  it('digita uma resposta de Notas sem desmontar a lista nem duplicar o texto acessível', async () => {
     vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] })
-    const answer = 'A próxima atividade da turma é o trabalho de inglês na sexta-feira.'
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ answer })))
+    const highlights = new Map<string, Set<Range>>()
+    vi.stubGlobal('CSS', { highlights })
+    vi.stubGlobal('Highlight', class extends Set<Range> {
+      constructor(range: Range) { super([range]) }
+    })
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({
+      notes_operation: 'grades_extreme',
+      answer: 'Sua maior nota em 2026 é **10,00**\n\n- Estatística · Média informada do 1º semestre\n- Desenvolvimento · Média informada do 2º semestre',
+    })))
     chat()
-    await act(async () => send('O que vem por aí?'))
-    const fullText = screen.getByText(answer)
-    expect(fullText.closest('[aria-hidden="true"]')).toBeNull()
-    const visual = fullText.parentElement?.querySelector('[aria-hidden="true"]')
-    expect(visual?.textContent).toBe('')
-    act(() => vi.advanceTimersByTime(400))
-    expect(visual?.textContent?.length).toBeGreaterThan(0)
-    expect(visual?.textContent?.length).toBeLessThan(answer.length)
-    act(() => vi.advanceTimersByTime(1400))
-    expect(document.querySelector('.assistant-typing-text')).toBeNull()
-    expect(screen.getByText(answer)).toBeDefined()
+    await act(async () => send('Qual é minha maior nota?'))
+    const fullGrade = screen.getByText('10,00')
+    expect(fullGrade.tagName).toBe('STRONG')
+    expect(fullGrade.closest('[aria-hidden="true"]')).toBeNull()
+    const items = screen.getAllByRole('listitem')
+    expect(items).toHaveLength(2)
+    expect(items.every(item => item.hasAttribute('data-d2-pending'))).toBe(true)
+    const range = [...highlights.get('d2-untyped')!][0]
+    const full = range.toString()
+    act(() => vi.advanceTimersByTime(1150))
+    expect(range.toString().length).toBeLessThan(full.length)
+    expect(range.toString()).toContain('Desenvolvimento')
+    act(() => vi.advanceTimersByTime(2800))
+    expect(highlights.size).toBe(0)
+    expect(items.every(item => !item.hasAttribute('data-d2-pending'))).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar assistente' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Assistente' }))
+    expect(highlights.size).toBe(0)
+    expect(screen.getAllByRole('listitem')).toHaveLength(2)
+  })
+
+  it('exibe a resposta completa imediatamente quando o usuário reduz o movimento', async () => {
+    const highlights = new Map()
+    vi.stubGlobal('CSS', { highlights })
+    vi.stubGlobal('Highlight', vi.fn())
+    document.documentElement.dataset.motion = 'reduzido'
+    try {
+      vi.stubGlobal('fetch', vi.fn(async () => Response.json({ answer: 'Aula prevista para **agora**.' })))
+      chat()
+      send('Onde está o professor?')
+      expect(await screen.findByText('agora')).toBeTruthy()
+      expect(highlights.size).toBe(0)
+      expect(document.querySelector('[data-typing]')).toBeNull()
+    } finally {
+      delete document.documentElement.dataset.motion
+    }
   })
 
   it('encaminha o “sim” ao chat e inclui os campos da prévia para o servidor decidir se deve gravar', async () => {

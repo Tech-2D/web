@@ -4,6 +4,7 @@ import type { User } from 'firebase/auth'
 import { KanbanCardFace } from './KanbanCardFace'
 import { AssistantWelcome } from './AssistantWelcome'
 import { AssistantReply } from './AssistantReply'
+import { AssistantTyping } from './AssistantTyping'
 import type { WelcomeActivity } from './assistantWelcomeContext'
 import { PRIORITIES } from './kanban'
 import type { Activity, AssistantActivityReference, Batch, BatchInput, CardInput, Draft, Fields, Kanban, KanbanResult } from './assistantContract'
@@ -68,7 +69,6 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const [turns, setTurns] = useState<Turn[]>([])
   const [enteringNotes, setEnteringNotes] = useState<Turn | null>(null)
   const [typingTurn, setTypingTurn] = useState<Turn | null>(null)
-  const [typedText, setTypedText] = useState('')
   const [message, setMessage] = useState('')
   const [linkedActivity, setLinkedActivity] = useState<AssistantActivityReference | null>(null)
   const [busy, setBusy] = useState(false)
@@ -89,26 +89,8 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const launcher = useAssistantLauncherPosition()
 
   useEffect(() => {
-    if (!typingTurn) return
-    const characters = Array.from(typingTurn.text)
-    const duration = Math.min(1400, 200 + characters.length * 15)
-    let started: number | undefined
-    let frame = requestAnimationFrame(reveal)
-    function reveal(now: number) {
-      started ??= now
-      const progress = Math.min(1, (now - started) / duration)
-      if (progress === 1) {
-        setTypingTurn(null)
-        return
-      }
-      setTypedText(characters.slice(0, Math.floor(characters.length * progress)).join(''))
-      frame = requestAnimationFrame(reveal)
-    }
-    return () => cancelAnimationFrame(frame)
-  }, [typingTurn])
-
-  useEffect(() => {
-    if (transcript.current) transcript.current.scrollTop = transcript.current.scrollHeight
+    const area = transcript.current
+    if (area && !area.querySelector('[data-typing]')) area.scrollTop = area.scrollHeight
   }, [turns, kanban, open, busy, error])
   useLayoutEffect(() => {
     if (input.current) fitMessageInput(input.current)
@@ -216,11 +198,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
         formatted: Boolean(data.notes_operation) || markdownSyntax.test(data.answer) }
       setTurns(old => [...old, reply])
       if (reply.operation && transcript.current && !chat.current?.hidden) setEnteringNotes(reply)
-      if (!reply.formatted && transcript.current && !chat.current?.hidden && document.documentElement.dataset.motion !== 'reduzido'
-        && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-        setTypedText('')
-        setTypingTurn(reply)
-      }
+      if (transcript.current && !chat.current?.hidden) setTypingTurn(reply)
       reactD2(data.kanban?.state === 'saved' || data.kanban?.state === 'batch_saved' ? 'confirmacao' : 'respondendo')
       if (path === '/api/kanban' || data.kanban) {
         setKanban(data.kanban ?? null)
@@ -352,15 +330,13 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
         {turns.map((turn, index) => <div className={turn.cards?.length || turn.kanbanResult ? 'assistant-result-turn' : 'assistant-message'} key={index}>
           <div className={turn.user ? 'assistant-turn user' : turn.operation ? 'assistant-turn assistant-turn-notes' : 'assistant-turn'}
             data-entering={turn === enteringNotes || undefined}>
-            {turn.user ? turn.text : turn.formatted ? <AssistantReply text={turn.text} operation={turn.operation} />
-              : <span className={turn === typingTurn ? 'assistant-typing-text' : undefined}>
-              <span>{turn.text}</span>
-              {turn === typingTurn && <span aria-hidden="true">{typedText}<i /></span>}
-            </span>}
+            {turn.user ? turn.text : <AssistantTyping active={turn === typingTurn && !covered}>
+              {turn.formatted ? <AssistantReply text={turn.text} operation={turn.operation} /> : turn.text}
+            </AssistantTyping>}
           </div>
           {!!turn.cards?.length && <div className="assistant-result-list">
             {turn.cards.map((card, index) => <ActivityResult key={card.id ?? index} activity={card}
-              agendaPath={agendaPath} onOpen={() => { setEnteringNotes(null); setOpen(false) }} onPrepare={() => prepareFromResult(card)} />)}
+              agendaPath={agendaPath} onOpen={() => { setEnteringNotes(null); setTypingTurn(null); setOpen(false) }} onPrepare={() => prepareFromResult(card)} />)}
           </div>}
           {turn.kanbanResult && <div className="assistant-result-list" aria-label="Meu Kanban">
             {turn.kanbanResult.cards.map((card, index) => <article className="assistant-activity-card" key={index}>

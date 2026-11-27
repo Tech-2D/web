@@ -5,3 +5,4 @@
 - [x] Documentar a apresentação no guia do portal.
 - [x] Ampliar o cartão e animar a chegada da resposta. Os testes do chat verificam a entrada e que ela não se repete ao reabrir.
 - [x] Publicar no GitHub Pages e confirmar que os arquivos públicos do chat contêm a animação e o estilo de largura total. Workflow `45925015372`, commit `c88fc2b`.
+- [x] Validar a digitação de listas de Notas, a leitura do histórico e a preferência por movimento reduzido. A suíte do portal passou com 265 testes e a prévia foi conferida no Edge a 960 e 390 px.

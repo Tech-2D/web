@@ -339,24 +339,25 @@
   .assistant-notes-reply > .assistant-notes-metrics { --notes-delay: 240ms; }
   .assistant-notes-reply > .assistant-markdown { --notes-delay: 320ms; }
 }
-.assistant-typing-text { display: grid; }
-.assistant-typing-text > span { grid-area: 1 / 1; min-width: 0; }
-.assistant-typing-text > span:first-child { color: transparent; }
-.assistant-typing-text > span[aria-hidden] { user-select: none; }
-.assistant-typing-text i {
+.assistant-typing-content { position: relative; }
+.assistant-typing-caret {
+  pointer-events: none;
   position: absolute;
-  display: inline-block;
-  width: .12em;
-  height: 1em;
-  margin: .15em 0 0 .1em;
-  border-radius: .1em;
+  width: 2px;
+  border-radius: 2px;
   background: var(--accent);
 }
-[data-motion="reduzido"] .assistant-typing-text > span:first-child { color: inherit; }
-[data-motion="reduzido"] .assistant-typing-text > span[aria-hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="reduzido"]) .assistant-typing-content::highlight(d2-untyped) {
+    color: transparent;
+    text-decoration-color: transparent;
+    text-shadow: none;
+  }
+  :root:not([data-motion="reduzido"]) .assistant-typing-content li[data-d2-pending]::marker { color: transparent; }
+}
+[data-motion="reduzido"] .assistant-typing-caret { display: none; }
 @media (prefers-reduced-motion: reduce) {
-  .assistant-typing-text > span:first-child { color: inherit; }
-  .assistant-typing-text > span[aria-hidden] { display: none; }
+  .assistant-typing-caret { display: none; }
 }
 .assistant-result-list { display: grid; gap: .5rem; min-width: 0; }
 .assistant-activity-card {
