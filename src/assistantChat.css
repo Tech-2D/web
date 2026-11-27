@@ -291,7 +291,8 @@
 .assistant-markdown code { font-size: .9em; }
 .assistant-markdown pre { overflow-x: auto; padding: .5rem; background: var(--paper); border-radius: .35rem; }
 .assistant-turn-notes {
-  max-inline-size: min(100%, 28rem);
+  align-self: stretch;
+  max-width: 100%;
   min-inline-size: 0;
   background: var(--paper);
   border: 1px solid var(--line);
@@ -323,6 +324,21 @@
 .assistant-notes-metrics > div { border-block-start: 1px solid var(--line); padding-block-start: .4rem; }
 .assistant-notes-metrics dd { margin: .05rem 0 0; font-size: .95rem; font-weight: 650; font-variant-numeric: tabular-nums; }
 .assistant-notes-scenario { margin: 0; font-size: .85rem; color: var(--text); }
+@keyframes assistant-notes-reveal {
+  from { opacity: 0; transform: translateY(.4rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="reduzido"]) .assistant-turn-notes[data-entering] {
+    animation: assistant-notes-reveal 200ms ease-out backwards;
+  }
+  :root:not([data-motion="reduzido"]) .assistant-turn-notes[data-entering] .assistant-notes-reply > * {
+    animation: assistant-notes-reveal 260ms ease-out var(--notes-delay, 45ms) backwards;
+  }
+  .assistant-notes-reply > :is(.assistant-notes-scenario, .assistant-notes-overview) { --notes-delay: 140ms; }
+  .assistant-notes-reply > .assistant-notes-metrics { --notes-delay: 240ms; }
+  .assistant-notes-reply > .assistant-markdown { --notes-delay: 320ms; }
+}
 .assistant-typing-text { display: grid; }
 .assistant-typing-text > span { grid-area: 1 / 1; min-width: 0; }
 .assistant-typing-text > span:first-child { color: transparent; }

@@ -45,12 +45,17 @@ describe('contrato do chat integrado', () => {
     chat()
     send('Como estou em Banco de Dados?')
 
-    await screen.findByRole('region', { name: 'Notas de Matemática 9-Banco de Dados, 2026' })
+    const card = await screen.findByRole('region', { name: 'Notas de Matemática 9-Banco de Dados, 2026' })
+    expect(card.closest('.assistant-turn-notes')?.hasAttribute('data-entering')).toBe(true)
     expect(screen.getByText('média anual').parentElement?.textContent).toBe('média anual9,30')
     expect(screen.getByText('aprovação direta')).toBeTruthy()
     expect(screen.getAllByText('9,00')).toHaveLength(1)
     expect(screen.getAllByText('9,45')).toHaveLength(1)
     expect(screen.queryByText(/Média informada/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar assistente' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Assistente' }))
+    expect(screen.getByRole('region', { name: 'Notas de Matemática 9-Banco de Dados, 2026' })
+      .closest('.assistant-turn-notes')?.hasAttribute('data-entering')).toBe(false)
   })
 
   it('renderiza Markdown do assistente e mantém o texto do usuário literal', async () => {
