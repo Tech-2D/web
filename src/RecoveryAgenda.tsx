@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarClock, GraduationCap } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Clock3, GraduationCap, MapPin, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { PageHeading } from './PageHeading'
 import { formatRecoveryTime, type RecoveryEdition, type RecoveryLesson } from './recovery'
@@ -7,6 +7,9 @@ import './recovery.css'
 const dayLabel = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long',
 })
+const weekdayLabel = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', weekday: 'long' })
+const monthLabel = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', month: 'long' })
+const lessonCount = (count: number) => count + (count === 1 ? ' aula' : ' aulas')
 
 export function RecoveryAgenda({ period, turmaId, onCalendar }: {
   period: RecoveryEdition
@@ -24,17 +27,29 @@ export function RecoveryAgenda({ period, turmaId, onCalendar }: {
     lessons.push(lesson)
     days.set(lesson.date, lessons)
   }
+  const total = [...days.values()].reduce((count, lessons) => count + lessons.length, 0)
 
   return (
     <main id="inicio" className="main-content portal-main recovery">
-      <section className="interface-panel recovery-panel" aria-labelledby="recovery-schedule">
+      <div className="interface-panel recovery-panel recovery-overview">
         <div className="recovery-heading">
           <PageHeading icon={GraduationCap} title="Recuperação" />
           <button type="button" className="portal-control recovery-action" onClick={onCalendar}><ArrowLeft size={17} /> Ver Agenda normal</button>
         </div>
-        <p className="recovery-window">{formatRecoveryTime(period.startsAt)} até {formatRecoveryTime(period.endsAt)} · Brasília</p>
-        <div className="recovery-heading">
-          <h2 id="recovery-schedule"><CalendarClock size={21} /> Horários das aulas</h2>
+        <div className="recovery-period">
+          <CalendarClock size={17} aria-hidden="true" />
+          <div>
+            <span>Período de recuperação</span>
+            <p><time dateTime={period.startsAt}>{formatRecoveryTime(period.startsAt)}</time> até <time dateTime={period.endsAt}>{formatRecoveryTime(period.endsAt)}</time> · Brasília</p>
+          </div>
+        </div>
+      </div>
+      <section className="interface-panel recovery-panel recovery-schedule" aria-labelledby="recovery-schedule">
+        <div className="recovery-heading recovery-schedule-heading">
+          <div>
+            <h2 id="recovery-schedule">Horários das aulas</h2>
+            {total > 0 && <p role="status">{lessonCount(total)} em {days.size} {days.size === 1 ? 'dia' : 'dias'}</p>}
+          </div>
           <label className="recovery-filter">Turma
             <select className="portal-control" value={filter} onChange={event => setSelection(event.target.value)}>
               <option value="">Todas as turmas</option>
@@ -42,23 +57,40 @@ export function RecoveryAgenda({ period, turmaId, onCalendar }: {
             </select>
           </label>
         </div>
-        {days.size === 0 ? <p>{period.lessons.length ? 'Nenhuma aula cadastrada para esta turma.' : 'Os horários de recuperação ainda não foram divulgados.'}</p> :
-          [...days].map(([date, lessons]) => (
+        {days.size === 0 ? <div className="recovery-schedule-empty">
+          <CalendarClock size={24} aria-hidden="true" />
+          <p>{period.lessons.length ? 'Nenhuma aula cadastrada para esta turma.' : 'Os horários de recuperação ainda não foram divulgados.'}</p>
+          {filter && period.lessons.length > 0 && <button type="button" className="portal-control" onClick={() => setSelection('')}>Ver todas as turmas</button>}
+        </div> : [...days].map(([date, lessons]) => {
+          const day = new Date(date + 'T12:00:00Z')
+          return (
             <div className="recovery-day" key={date}>
-              <h3><time dateTime={date}>{dayLabel.format(new Date(date + 'T12:00:00Z'))}</time></h3>
-              <ul>
+              <h3><time className="recovery-day-heading" dateTime={date}>
+                <span className="sr-only">{dayLabel.format(day)}</span>
+                <span className="recovery-day-number" aria-hidden="true">{day.getUTCDate()}</span>
+                <span className="recovery-day-label" aria-hidden="true"><span>{weekdayLabel.format(day)}</span><small>{monthLabel.format(day)}</small></span>
+              </time></h3>
+              <ul className="recovery-day-list">
                 {lessons.map((lesson, index) => (
-                  <li key={index}>
-                    <span className="recovery-time">{lesson.start}–{lesson.end}</span>
-                    <div>
-                      <strong>{lesson.subject}</strong>
-                      <p>{[lesson.className ?? 'Todas as turmas', lesson.teacher, lesson.room].filter(Boolean).join(' · ')}</p>
+                  <li className="recovery-class-card" key={index}>
+                    <div className="recovery-time">
+                      <Clock3 size={16} aria-hidden="true" />
+                      <span><time dateTime={date + 'T' + lesson.start}>{lesson.start}</time>–<time dateTime={date + 'T' + lesson.end}>{lesson.end}</time></span>
                     </div>
+                    <div className="recovery-class-details">
+                      <strong>{lesson.subject}</strong>
+                      {(lesson.teacher || lesson.room) && <div className="recovery-class-meta">
+                        {lesson.teacher && <span><UserRound size={15} aria-hidden="true" />{lesson.teacher}</span>}
+                        {lesson.room && <span><MapPin size={15} aria-hidden="true" />{lesson.room}</span>}
+                      </div>}
+                    </div>
+                    <span className="recovery-class-label">{lesson.className ?? 'Todas as turmas'}</span>
                   </li>
                 ))}
               </ul>
             </div>
-          ))}
+          )
+        })}
       </section>
     </main>
   )

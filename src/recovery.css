@@ -11,13 +11,84 @@
 .recovery-actions input[type="number"] { width: 8rem; }
 .recovery-filter { font-weight: 600; }
 .recovery-window { margin: .35rem 0 .75rem; font-size: .9rem; }
-.recovery-day { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: .85rem; }
-.recovery-day h3 { font-size: .95rem; margin: 0 0 .5rem; }
-.recovery-day h3::first-letter { text-transform: uppercase; }
-.recovery-day ul { display: grid; gap: .5rem; list-style: none; margin: 0; padding: 0; }
-.recovery-day li { display: flex; gap: .75rem; align-items: start; padding: .75rem; background: var(--surface-alt); border-radius: .65rem; }
-.recovery-day li p { margin: .2rem 0 0; font-size: .9rem; }
-.recovery-time { flex-shrink: 0; font-variant-numeric: tabular-nums; font-weight: 650; color: var(--interface-accent); }
+.recovery-overview {
+  border-inline-start: .25rem solid var(--interface-accent);
+  background: linear-gradient(110deg, var(--interface-subtle), var(--interface-surface) 74%);
+}
+.recovery-period {
+  display: flex;
+  align-items: start;
+  gap: .6rem;
+  margin-top: 1rem;
+  color: var(--ink-soft);
+  font-size: .875rem;
+}
+.recovery-period svg { flex: none; margin-top: .12rem; color: var(--interface-accent); }
+.recovery-period span { display: block; color: var(--interface-text); font-weight: 700; }
+.recovery-period p { margin: .15rem 0 0; line-height: 1.55; }
+.recovery-period time { display: inline-block; }
+.recovery-schedule-heading { padding-bottom: .95rem; border-bottom: 1px solid var(--line); }
+.recovery-schedule-heading p { margin: .25rem 0 0; color: var(--ink-soft); font-size: .85rem; }
+.recovery-schedule .recovery-filter { flex-wrap: wrap; min-width: 0; font-size: .875rem; }
+.recovery-schedule .recovery-filter select { min-height: 44px; max-width: min(100%, 18rem); }
+.recovery-day { margin-top: 1.15rem; }
+.recovery-day + .recovery-day { border-top: 1px solid var(--line); margin-top: 1.35rem; padding-top: 1.15rem; }
+.recovery-day h3 { margin: 0 0 .65rem; font-size: 1rem; }
+.recovery-day-heading { display: flex; gap: .7rem; align-items: center; }
+.recovery-day-number {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: .65rem;
+  background: var(--interface-accent);
+  color: var(--interface-on-accent);
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+}
+.recovery-day-label { display: grid; line-height: 1.25; }
+.recovery-day-label > span::first-letter { text-transform: uppercase; }
+.recovery-day-label small { margin-top: .2rem; color: var(--ink-soft); font-weight: 500; }
+.recovery-day-list { display: grid; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+.recovery-class-card {
+  display: grid;
+  grid-template-columns: 8.25rem minmax(0, 1fr) auto;
+  gap: .75rem 1rem;
+  align-items: center;
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  background: var(--interface-surface);
+}
+.recovery-time {
+  display: flex;
+  gap: .4rem;
+  align-items: center;
+  border-inline-end: 1px solid var(--line);
+  font-size: .875rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--interface-accent);
+}
+.recovery-class-details { min-width: 0; overflow-wrap: anywhere; }
+.recovery-class-details strong { font-size: .95rem; }
+.recovery-class-meta { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin-top: .25rem; color: var(--ink-soft); font-size: .85rem; }
+.recovery-class-meta span { display: inline-flex; align-items: center; gap: .3rem; min-width: 0; }
+.recovery-class-meta svg, .recovery-time svg { flex: none; }
+.recovery-class-label {
+  justify-self: start;
+  max-width: min(100%, 14rem);
+  padding: .25rem .55rem;
+  border-radius: .45rem;
+  background: var(--interface-subtle);
+  color: var(--interface-accent);
+  font-size: .75rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.recovery-schedule-empty { display: grid; justify-items: center; gap: .65rem; padding: 1.75rem 1rem; text-align: center; color: var(--ink-soft); }
+.recovery-schedule-empty p { margin: 0; }
 .recovery-form { display: grid; gap: 1.35rem; justify-items: start; }
 .recovery-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; width: 100%; }
 .recovery-form legend { font-size: 1.05rem; font-weight: 700; margin-bottom: .7rem; }
@@ -60,5 +131,7 @@ button.recovery-primary:disabled { opacity: .55; cursor: default; }
 @media (max-width: 600px) {
   .recovery-fields { grid-template-columns: minmax(0, 1fr); }
   .recovery-fields .recovery-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .recovery-day li { flex-wrap: wrap; gap: .35rem .65rem; }
+  .recovery-class-card { grid-template-columns: minmax(0, 1fr); gap: .4rem; padding: .75rem; }
+  .recovery-time { border-inline-end: 0; }
+  .recovery-class-label { margin-top: .15rem; }
 }
