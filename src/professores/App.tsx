@@ -24,6 +24,8 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } fr
 import { FirebaseError } from 'firebase/app'
 import { AccountSiteNavigation } from '../AccountSiteNavigation'
 import { PageHeading } from '../PageHeading'
+import { RecoverySchedule } from '../RecoverySchedule'
+import { useRecoveryMode } from '../recovery'
 import { requestPasswordReset } from './passwordReset'
 import { observeCatalog, invalidateCatalog } from './publicQueries'
 import {
@@ -102,6 +104,10 @@ function App() {
   const [highContrast, setHighContrast] = useState(readStoredHighContrast)
   const [reduceMotion, setReduceMotion] = useState(readStoredReduceMotion)
   const [user, setUser] = useState<User | null>(null)
+  const { period } = useRecoveryMode(user, true)
+  const [scheduleMode, setScheduleMode] = useState<'regular' | 'recovery' | null>(() =>
+    new URLSearchParams(window.location.search).has('view') ? 'regular' : null)
+  const showRecovery = Boolean(period && scheduleMode !== 'regular')
   const [adminRole, setAdminRole] = useState<'admin' | 'superadmin' | null>(null)
   const isAdmin = adminRole !== null
   const [authChecked, setAuthChecked] = useState(false)
@@ -260,6 +266,11 @@ function App() {
       </Suspense>}
 
       <main id="inicio" className="main-content portal-main">
+        {period && <div className="interface-segments professor-schedule-mode" role="group" aria-label="Tipo de horário">
+          <button type="button" aria-pressed={showRecovery} onClick={() => setScheduleMode('recovery')}>Recuperação</button>
+          <button type="button" aria-pressed={!showRecovery} onClick={() => setScheduleMode('regular')}>Grade regular</button>
+        </div>}
+        {period && showRecovery ? <RecoverySchedule key={period.id} period={period} turmaId={readPreferredTurma()} /> : <>
         <div className="professor-controls interface-panel portal-toolbar">
           <PageHeading icon={MapPin} title="Encontre seu professor" />
 
@@ -312,6 +323,7 @@ function App() {
                 </table>
               </div>}
         </section>
+        </>}
       </main>
 
       {menuOpen && (
@@ -327,7 +339,7 @@ function App() {
           </>}
           options={menuOptionSections({ hasTurma: true, actions: {}, unreadCount: 0, hasUnseenUpdate: false }).flatMap(section => section.items.map(option => {
             if (option.id === 'settings') return { ...option, onClick: () => { setMenuOpen(false); setConfigOpen(true) } }
-            if (option.id === 'todayClasses') return { ...option, onClick: () => { setView('today'); setMenuOpen(false) } }
+            if (option.id === 'todayClasses') return { ...option, onClick: () => { setScheduleMode('regular'); setView('today'); setMenuOpen(false) } }
             if (option.id === 'teachers') return { ...option, href: undefined, onClick: () => setMenuOpen(false) }
             return { ...option, href: option.href ?? agendaMenuUrl(option.id) }
           }))}

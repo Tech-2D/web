@@ -72,11 +72,12 @@ function ProfileCompletionReminder({ uid }: { uid: string }) {
   </aside>
 }
 
-export function SiteNavigation({ active, role, menu, notifications }: {
+export function SiteNavigation({ active, role, menu, notifications, showProfileReminder = true }: {
   active?: 'agenda' | 'professores' | 'pegaki' | 'admin' | 'kanban' | 'profile'
   role?: AdminRole
   menu?: { open: boolean; onOpen: () => void; hasPending?: boolean }
   notifications?: { onOpen: () => void; count: number }
+  showProfileReminder?: boolean
 }) {
   const panelLabel = role === 'representante' ? 'Representante' : null
   const account = auth.currentUser
@@ -104,7 +105,7 @@ export function SiteNavigation({ active, role, menu, notifications }: {
           {menu ? <SiteOptionsButton {...menu} /> : <SiteOptions />}
         </div>
       </nav>
-      {active !== 'profile' && account && !account.isAnonymous && <ProfileCompletionReminder key={account.uid} uid={account.uid} />}
+      {showProfileReminder && active !== 'profile' && account && !account.isAnonymous && <ProfileCompletionReminder key={account.uid} uid={account.uid} />}
     </header>
   )
 }

@@ -1,7 +1,8 @@
-import { ArrowLeft, CalendarClock, ClipboardList, Clock3, GraduationCap, MapPin, UserRound } from 'lucide-react'
+import { CalendarClock, ClipboardList, Clock3, GraduationCap, MapPin, Search, UserRound, X } from 'lucide-react'
 import { useState } from 'react'
 import { PageHeading } from './PageHeading'
 import { formatRecoveryTime, recoveryKind, recoverySubject, type RecoveryEdition, type RecoveryLesson } from './recovery'
+import { normalize } from './professores/schedule'
 import './recovery.css'
 
 const dayLabel = new Intl.DateTimeFormat('pt-BR', {
@@ -14,19 +15,24 @@ const lessonCount = (count: number) => count + (count === 1 ? ' aula' : ' aulas'
 const examCount = (count: number) => count + (count === 1 ? ' prova' : ' provas')
 const isExam = (lesson: RecoveryLesson) => recoveryKind(lesson) === 'exam'
 
-export function RecoveryAgenda({ period, turmaId, onCalendar }: {
+export function RecoverySchedule({ period, turmaId }: {
   period: RecoveryEdition
   turmaId: string | null
-  onCalendar: () => void
 }) {
   const [selection, setSelection] = useState<string>()
   const [onlyExams, setOnlyExams] = useState(false)
-  const filter = selection ?? turmaId ?? ''
+  const [search, setSearch] = useState('')
+  const terms = normalize(search).split(/\s+/).filter(Boolean)
+  const filter = selection ?? (terms.length ? '' : turmaId ?? '')
   const classes = [...new Set([...period.lessons.map(lesson => lesson.className), turmaId]
     .filter((name): name is string => Boolean(name)))].sort((a, b) => a.localeCompare(b, 'pt-BR'))
   const days = new Map<string, RecoveryLesson[]>()
   for (const lesson of period.lessons) {
     if (filter && lesson.className && lesson.className !== filter) continue
+    if (terms.length) {
+      const searchable = normalize([lesson.teacher, recoverySubject(lesson.subject), lesson.room, lesson.className].join(' '))
+      if (!terms.every(term => searchable.includes(term))) continue
+    }
     const lessons = days.get(lesson.date) ?? []
     lessons.push(lesson)
     days.set(lesson.date, lessons)
@@ -41,11 +47,10 @@ export function RecoveryAgenda({ period, turmaId, onCalendar }: {
   const totals = [!onlyExams && lessonTotal > 0 ? lessonCount(lessonTotal) : '', examTotal ? examCount(examTotal) : ''].filter(Boolean)
 
   return (
-    <main id="inicio" className="main-content portal-main recovery">
+    <div className="recovery">
       <div className="interface-panel recovery-panel recovery-overview">
         <div className="recovery-heading">
           <PageHeading icon={GraduationCap} title="Recuperação" />
-          <button type="button" className="portal-control recovery-action" onClick={onCalendar}><ArrowLeft size={17} /> Ver Agenda normal</button>
         </div>
         <div className="recovery-period">
           <CalendarClock size={17} aria-hidden="true" />
@@ -60,6 +65,15 @@ export function RecoveryAgenda({ period, turmaId, onCalendar }: {
           <div>
             <h2 id="recovery-schedule">Horários da recuperação</h2>
             {visibleDays.length > 0 && <p role="status">{totals.join(' e ')} em {visibleDays.length} {visibleDays.length === 1 ? 'dia' : 'dias'}</p>}
+          </div>
+        </div>
+        <div className="recovery-search-row">
+          <div className="portal-search">
+            <Search size={18} aria-hidden="true" />
+            <input type="search" aria-label="Buscar na recuperação" placeholder="Buscar professor, matéria, turma ou local"
+              value={search} onChange={event => setSearch(event.target.value)} />
+            {search && <button type="button" className="portal-control recovery-clear-search" aria-label="Limpar busca"
+              onClick={() => setSearch('')}><X size={16} aria-hidden="true" /></button>}
           </div>
           <label className="recovery-filter">Turma
             <select className="portal-control" value={filter} onChange={event => setSelection(event.target.value)}>
@@ -91,7 +105,7 @@ export function RecoveryAgenda({ period, turmaId, onCalendar }: {
         </div>}
         {visibleDays.length === 0 ? <div className="recovery-schedule-empty">
           <CalendarClock size={24} aria-hidden="true" />
-          <p>{onlyExams ? 'Nenhuma prova marcada para a turma selecionada.' : period.lessons.length ? 'Nenhum horário cadastrado para esta turma.' : 'Os horários de recuperação ainda não foram divulgados.'}</p>
+          <p>{terms.length ? 'Nenhum resultado para essa busca.' : onlyExams ? 'Nenhuma prova marcada para a turma selecionada.' : period.lessons.length ? 'Nenhum horário cadastrado para esta turma.' : 'Os horários de recuperação ainda não foram divulgados.'}</p>
           {!onlyExams && filter && period.lessons.length > 0 && <button type="button" className="portal-control" onClick={() => setSelection('')}>Ver todas as turmas</button>}
         </div> : visibleDays.map(({ date, day, lessons, exams }) => {
           return (
@@ -113,10 +127,10 @@ export function RecoveryAgenda({ period, turmaId, onCalendar }: {
                         <strong>{recoverySubject(lesson.subject)}</strong>
                         {isExam(lesson) && <span className="recovery-exam-badge">Prova</span>}
                       </div>
-                      {(lesson.teacher || lesson.room) && <div className="recovery-class-meta">
+                      <div className="recovery-class-meta">
                         {lesson.teacher && <span><UserRound size={15} aria-hidden="true" />{lesson.teacher}</span>}
-                        {lesson.room && <span><MapPin size={15} aria-hidden="true" />{lesson.room}</span>}
-                      </div>}
+                        <span><MapPin size={15} aria-hidden="true" />{lesson.room || 'Local não informado'}</span>
+                      </div>
                     </div>
                     <span className="recovery-class-label">{lesson.className ?? 'Todas as turmas'}</span>
                   </li>
@@ -126,6 +140,6 @@ export function RecoveryAgenda({ period, turmaId, onCalendar }: {
           )
         })}
       </section>
-    </main>
+    </div>
   )
 }

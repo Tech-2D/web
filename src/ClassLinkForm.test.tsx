@@ -32,3 +32,19 @@ it('sends a correction request while the class is locked', async () => {
   expect(await screen.findByText('Pedido enviado à administração.')).toBeTruthy()
   expect(classLinkRequest).toHaveBeenCalledWith(user, false, { action: 'request', className: classes[1] })
 })
+
+it('requires a selection in the Agenda and offers the missing class action', async () => {
+  const onMissingClass = vi.fn()
+  vi.mocked(classLinkRequest).mockRejectedValueOnce(new Error('Confira a conexão e tente novamente.'))
+  render(<ClassLinkForm user={user} data={{ classes, link: null, canChange: true, availableAt: null }}
+    onSave={vi.fn()} onMissingClass={onMissingClass} />)
+  const submit = screen.getByRole<HTMLButtonElement>('button', { name: 'Confirmar e abrir Agenda' })
+  expect(submit.disabled).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: 'Minha turma não aparece' }))
+  expect(onMissingClass).toHaveBeenCalledOnce()
+  fireEvent.change(screen.getByLabelText('Sua turma'), { target: { value: classes[0] } })
+  fireEvent.click(submit)
+  expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Salvando…' }).disabled).toBe(true)
+  expect((await screen.findByRole('alert')).textContent).toBe('Confira a conexão e tente novamente.')
+  expect(submit.disabled).toBe(false)
+})
