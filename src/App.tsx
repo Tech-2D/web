@@ -1,7 +1,7 @@
 import { registerAccount } from './registration'
 import { Component, type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
-import { BookOpen, Calendar, CalendarClock, Check, ChevronLeft, ChevronRight, DoorOpen, ExternalLink, LayoutGrid, Lightbulb, LoaderCircle, Plus, StickyNote, X } from 'lucide-react'
+import { BookOpen, Calendar, CalendarClock, CalendarDays, Check, ChevronLeft, ChevronRight, DoorOpen, ExternalLink, LayoutGrid, Lightbulb, LoaderCircle, Plus, StickyNote, UsersRound, X } from 'lucide-react'
 import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { signOut } from './sessionActions'
 import { requestPasswordReset } from './passwordReset'
@@ -10,10 +10,9 @@ import { AttachmentLinks } from './AttachmentLinks'
 import { ATTACHMENTS_ENABLED } from './attachments'
 import { FirebaseError } from 'firebase/app'
 import { PageHeading } from './PageHeading'
-import { RecoveryAgenda } from './RecoveryAgenda'
-import { useRecoveryMode } from './recovery'
 import { AgendaClosureScreen } from './AgendaClosureScreen'
 import { useAgendaClosure } from './agendaClosure'
+import { useRecoveryMode } from './recovery'
 import { SiteNavigation } from './SiteNavigation'
 import { addDoc, collection, doc, getDoc, serverTimestamp } from './dataClient'
 import { auth, db } from './firebase'
@@ -56,6 +55,7 @@ import { readActivityLink } from './activityLinks'
 import { isAdminRoute, legacyAdminUrl } from './adminRoute'
 import { sitePaths } from './sitePaths'
 import { useVLibras } from './useVLibras'
+import './classSetup.css'
 
 const CompareCalendar = lazy(() => import('./CompareCalendar').then(module => ({ default: module.CompareCalendar })))
 const ClassRequestDialog = lazy(() => import('./ClassRequestDialog').then(module => ({ default: module.ClassRequestDialog })))
@@ -126,10 +126,7 @@ function App() {
   }, [preferredTurma])
   const calendarRoute = !adminOpen && !kanbanOpen && !moreOptionsOpen
   const closure = useAgendaClosure(calendarUser, calendarRoute)
-  const { period, checking: checkingRecovery } = useRecoveryMode(calendarUser, Boolean(preferredTurma) && calendarRoute && !closure.screen)
-  const [regularCalendarVersion, setRegularCalendarVersion] = useState<string>()
-  const recoveryVersion = period ? period.id + ':' + period.startsAt : undefined
-  const showRecovery = Boolean(period && recoveryVersion !== regularCalendarVersion && !linkedActivityId && !compareMode)
+  const { period: activeRecovery } = useRecoveryMode(calendarUser, calendarRoute && !closure.screen)
   const [assistantPrefill, setAssistantPrefill] = useState<AssistantActivityReference | null>(null)
   const [docsOpen, setDocsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -312,7 +309,6 @@ function App() {
   }
 
   function viewLinkedActivity(activity: Activity) {
-    if (period) setRegularCalendarVersion(recoveryVersion)
     if (activity.turmaId) chooseTurma(activity.turmaId)
     const [year, month, day] = activity.date.split('-').map(Number)
     const date = new Date(year, month - 1, day)
@@ -537,21 +533,28 @@ function App() {
 
   if (!kanbanOpen && !preferredTurma) return (
     <div className="app-shell portal-frame">
-      <SiteNavigation active="agenda" role={calendarProfile?.role} />
-      <main className="main-content portal-main">
-        <section className="interface-panel portal-toolbar">
-          <PageHeading icon={Calendar} title="Qual é a sua turma?" />
-          {classLink.error ? <>
-            <p role="alert">{classLink.error}</p>
-            <button type="button" className="portal-control" onClick={classLink.reload}>Tentar novamente</button>
-          </> : calendarUser && classLink.data ? <>
-            <p>Confirme sua turma para abrir a Agenda. Depois, você pode alterá-la pelo Perfil após 30 dias ou pedir uma correção à administração.</p>
-            <ClassLinkForm user={calendarUser} data={classLink.data} onSave={classLink.update} />
-            <button type="button" className="text-button" onClick={() => setClassRequestOpen(true)}>Minha turma não aparece</button>
-          </> : <p role="status">Carregando suas informações de turma…</p>}
+      <SiteNavigation active="agenda" role={calendarProfile?.role} showProfileReminder={false} />
+      <main id="inicio" className="main-content portal-main class-setup">
+        <section className="interface-panel class-setup-card" aria-labelledby="class-setup-title">
+          <div className="class-setup-art" aria-hidden="true">
+            <div className="class-setup-calendar"><CalendarDays strokeWidth={1.45} /><span><UsersRound size={23} /></span></div>
+          </div>
+          <div className="class-setup-content">
+            <h1 id="class-setup-title">Qual é a sua turma?</h1>
+            <p>Escolha sua turma para ver o calendário, as atividades e os avisos da sua sala.</p>
+            {classLink.error ? <>
+              <p className="form-error" role="alert">{classLink.error}</p>
+              <button type="button" className="portal-control" onClick={classLink.reload}>Tentar novamente</button>
+            </> : calendarUser && classLink.data ? <>
+              <ClassLinkForm user={calendarUser} data={classLink.data} onSave={classLink.update} onMissingClass={() => setClassRequestOpen(true)} />
+              <p className="class-setup-note">Você pode trocar de turma pelo Perfil após 30 dias. Se precisar corrigir a escolha antes disso, peça ajuda à administração.</p>
+            </> : <p className="class-setup-loading" role="status"><LoaderCircle className="spin" size={18} aria-hidden="true" /> Carregando turmas…</p>}
+          </div>
         </section>
       </main>
-      {classRequestOpen && <ClassRequestDialog classNames={classLink.data?.classes ?? classNames} onClose={() => setClassRequestOpen(false)} />}
+      {classRequestOpen && <DialogLoadBoundary><Suspense fallback={<p className="class-setup-dialog-loading" role="status">Carregando pedido de turma…</p>}>
+        <ClassRequestDialog classNames={classLink.data?.classes ?? classNames} onClose={() => setClassRequestOpen(false)} />
+      </Suspense></DialogLoadBoundary>}
     </div>
   )
 
@@ -579,12 +582,6 @@ function App() {
           onToggleShortcut={toggleMenuShortcut}
           onResetShortcuts={resetMenuShortcuts}
         />
-      ) : checkingRecovery && !compareMode && !linkedActivityId && !selectedDay ? (
-        <main id="inicio" className="main-content portal-main">
-          <div className="state-card" role="status"><LoaderCircle className="spin" /><p>Carregando Agenda…</p></div>
-        </main>
-      ) : period && showRecovery ? (
-        <RecoveryAgenda key={recoveryVersion} period={period} turmaId={turmaId} onCalendar={() => setRegularCalendarVersion(recoveryVersion)} />
       ) : compareMode ? (
       <main id="inicio" className="main-content portal-main">
         <Suspense fallback={<div className="state-card"><LoaderCircle className="spin" /><p>Carregando…</p></div>}>
@@ -594,9 +591,12 @@ function App() {
       ) : (
       <main id="inicio" className="main-content portal-main">
         <div className="agenda-toolbar interface-panel portal-toolbar">
-          <PageHeading icon={Calendar} title="Agenda" />
-          {period && !linkedActivityId && <button type="button" className="portal-control recovery-return"
-            onClick={() => setRegularCalendarVersion(undefined)}>Ver horários de recuperação</button>}
+          <div className="portal-toolbar-heading">
+            <PageHeading icon={Calendar} title="Agenda" />
+            {activeRecovery && !linkedActivityId && <a className="portal-control agenda-recovery-link" href={sitePaths.professores}>
+              <CalendarClock size={16} aria-hidden="true" /> Horários de recuperação em Professores
+            </a>}
+          </div>
           <div className="agenda-heading portal-tool-row">
             <label className="turma-select-inline" aria-label="Turma selecionada">
               <select className="portal-control" value={turmaId ?? ''} onChange={(event) => chooseTurma(event.target.value)}>

@@ -65,9 +65,9 @@ A Agenda lê os avisos da turma em `GET /api/catalog/notices?class=…`. Represe
 
 Em **Administração → Agenda da turma → Recuperação**, administradores gerais podem editar a grade e importar horários de um Excel `.xlsx` ou JSON. A primeira linha da planilha deve conter **Data**, **Início**, **Fim** e **Matéria**. **Turma**, **Professor** e **Local** são opcionais. Use os nomes de matérias e turmas do catálogo da Agenda. O painel mostra um exemplo de JSON e permite revisar a grade antes de salvar.
 
-A grade aceita mais de 200 horários. O arquivo deve ter até 1 MB. Informe **Tipo** como Aula ou Prova no Excel ou use `"kind": "exam"` no JSON. O sufixo ` (Prova)` também funciona nos arquivos existentes. Na Agenda, as datas das provas acompanham a turma selecionada e permitem abrir o dia correspondente.
+A grade aceita mais de 200 horários. O arquivo deve ter até 1 MB. Informe **Tipo** como Aula ou Prova no Excel ou use `"kind": "exam"` no JSON. O sufixo ` (Prova)` também funciona nos arquivos existentes.
 
-Depois de salvar os horários, informe a duração de 1 a 90 dias e clique em **Ativar recuperação**. A Agenda abre a grade de recuperação imediatamente e volta à visão habitual ao final do prazo ou quando um administrador desliga o modo. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
+Depois de salvar os horários, informe a duração de 1 a 90 dias e clique em **Ativar recuperação**. Durante a vigência, **Professores** oferece as visualizações **Recuperação** e **Grade regular**. Na recuperação, é possível procurar por professor, matéria, turma ou local e filtrar as provas. A Agenda continua exibindo o calendário e oferece um atalho para Professores. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
 
 ### Análise por conta
 

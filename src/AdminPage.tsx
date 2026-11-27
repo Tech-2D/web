@@ -85,7 +85,7 @@ const adminDescriptions: Record<AdminTabId, string> = {
   feedback: 'Organize as sugestões de melhoria enviadas pelo portal.',
   access: 'Compare o uso da Agenda, Professores, Notas e Kanban.',
   assistant: 'Acompanhe as mensagens, as contas mais ativas e o limite diário do D2.',
-  recovery: 'Prepare os horários das aulas e defina quando a recuperação aparece na Agenda.',
+  recovery: 'Prepare os horários das aulas e defina quando a recuperação aparece em Professores.',
   retention: 'Defina por quanto tempo as atividades da turma ficam na Agenda.',
   storage: 'Consulte o espaço ocupado e gerencie os anexos das atividades.',
   yearReset: 'Revise os dados da Agenda que serão limpos na virada de ano.',

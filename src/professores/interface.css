@@ -1,4 +1,5 @@
 .professor-controls .search-section { gap: .625rem; margin-bottom: 0; }
+.professor-schedule-mode { width: fit-content; margin-bottom: .85rem; }
 .professor-controls .portal-search { flex: 1; }
 .professor-controls .schedule-filters { gap: .625rem; margin-bottom: 0; }
 .professor-controls .schedule-filters label { gap: .25rem; min-width: 0; color: var(--ink-soft); }
