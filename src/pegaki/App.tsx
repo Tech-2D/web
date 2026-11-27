@@ -1,4 +1,3 @@
-import { agendaMenuUrl } from "../menuShortcuts";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "../firebase";
@@ -13,6 +12,7 @@ import type { Year } from "./data/subjects";
 import { findTechClass, subjectsForClass, TECH_CLASSES } from "./classSubjects";
 import { Formulas } from "./components/Formulas";
 import { Summary } from "./components/Summary";
+import { GradeAnalysis } from "./components/GradeAnalysis";
 import { GRID, SITUATION, SubjectRow, toGrade, type Grades } from "./components/SubjectRow";
 import { SubjectDetail } from "./components/SubjectDetail";
 import { ExportPdf } from "./components/ExportPdf";
@@ -36,6 +36,7 @@ const EMPTY: Grades = {
 };
 
 type Filter = "todas" | Situation;
+type GradeSection = "grades" | "analysis";
 const FILTERS: Filter[] = ["todas", "aprovado", "aprovado-rec", "recuperacao", "reprovado", "andamento"];
 
 const MODES: { value: InputMode; label: string }[] = [
@@ -96,6 +97,7 @@ function ClassGrades({ turma, user, onChangeClass }: {
   onChangeClass?: () => void;
 }) {
   const [academicYear, setAcademicYear] = useState(() => new Date().getFullYear());
+  const [section, setSection] = useState<GradeSection>("grades");
   const [subjects, setSubjects] = useState<string[]>();
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -115,16 +117,18 @@ function ClassGrades({ turma, user, onChangeClass }: {
   </NotakiStatus>;
 
   return <GradesView key={academicYear} className={turma.name} year={turma.year} subjects={subjects}
-    user={user} academicYear={academicYear} onAcademicYear={setAcademicYear} />;
+    user={user} academicYear={academicYear} onAcademicYear={setAcademicYear} section={section} onSection={setSection} />;
 }
 
-function GradesView({ className, year, subjects, user, academicYear, onAcademicYear }: {
+function GradesView({ className, year, subjects, user, academicYear, onAcademicYear, section, onSection }: {
   className: string;
   year: Year;
   subjects: string[];
   user: User;
   academicYear: number;
   onAcademicYear: (year: number) => void;
+  section: GradeSection;
+  onSection: (section: GradeSection) => void;
 }) {
   const cloud = useNotebook(user, year, academicYear, CLOUD_GRADES_ENABLED);
   const { grades, setGrades, modes, setModes } = cloud;
@@ -215,7 +219,6 @@ function GradesView({ className, year, subjects, user, academicYear, onAcademicY
         <div className="portal-toolbar interface-panel">
           <AppHeader className={className} />
           <section aria-label="Notas da sua conta" className="portal-tool-row">
-          {user ? <>
             <label className="inline-flex items-center gap-2 text-sm">
               Ano letivo
               <span className="relative inline-flex">
@@ -230,14 +233,19 @@ function GradesView({ className, year, subjects, user, academicYear, onAcademicY
                 <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2" />
               </span>
             </label>
-            <span className="text-sm text-muted" role="status">{cloud.loading ? 'Carregando notas…' : cloud.saving ? 'Salvando…' : cloud.error ? (cloud.ready ? 'Salvamento pendente' : 'Não foi possível carregar as notas') : cloud.dirty ? 'Aguardando para salvar…' : 'Notas salvas na conta'}</span>
+            <span className="text-sm text-muted" role="status">{cloud.loading ? 'Carregando notas…' : cloud.saving ? 'Salvando…' : cloud.error ? (cloud.ready ? 'Salvamento pendente' : 'Não foi possível carregar as notas') : cloud.dirty ? 'Aguardando para salvar…' : CLOUD_GRADES_ENABLED ? 'Notas salvas na conta' : 'Notas salvas neste navegador'}</span>
             {cloud.canImport && <button type="button" className="text-sm text-brand-ink underline" onClick={cloud.importLocal}>Importar notas deste navegador</button>}
             {cloud.error && <p role="alert" className="w-full text-sm">{cloud.error}</p>}
             {!cloud.ready && !cloud.loading && <button type="button" className="portal-control" onClick={cloud.retry}>Tentar novamente</button>}
             {cloud.conflict && <button type="button" onClick={()=>{if(window.confirm('Recarregar as notas da conta e descartar as alterações desta tela?'))cloud.reload()}}>Recarregar notas da conta</button>}
-          </> : <><p className="flex-1 text-sm text-muted">{CLOUD_GRADES_ENABLED ? 'Suas notas ficam neste navegador. Entre para salvá-las na conta e acessar em outros dispositivos.' : 'Suas notas ficam salvas neste navegador.'}</p>{CLOUD_GRADES_ENABLED && <a className="text-sm text-brand-ink underline" href={agendaMenuUrl("profiles")}>Entrar ou criar conta</a>}</>}
           </section>
-          {cloud.ready && (
+          {cloud.ready && <div className="portal-tool-row">
+            <div className="interface-segments" role="group" aria-label="Visualização de Notas">
+              <button type="button" id="notaki-grades-view" aria-pressed={section === "grades"} onClick={() => onSection("grades")}>Boletim</button>
+              <button type="button" aria-pressed={section === "analysis"} onClick={() => onSection("analysis")}>Análise</button>
+            </div>
+          </div>}
+          {cloud.ready && section === "grades" && (
           <section className="portal-tool-row" aria-label="Como lançar as notas">
               {(["s1", "s2"] as const).map((sem, i) => (
                 <div key={sem} className="flex min-w-0 flex-wrap items-center gap-2">
@@ -261,7 +269,8 @@ function GradesView({ className, year, subjects, user, academicYear, onAcademicY
           )}
         </div>
 
-        {cloud.ready && <>
+        {cloud.ready && (section === "analysis" ? <GradeAnalysis rows={rows} onOpen={openSubject}
+          onGradeEntry={() => { onSection("grades"); document.getElementById("notaki-grades-view")?.focus(); }} /> : <>
         <Summary
           rows={rows}
           action={
@@ -388,10 +397,10 @@ function GradesView({ className, year, subjects, user, academicYear, onAcademicY
             <Formulas />
           </div>
         </details>
-        </>}
+        </>)}
       </main>
 
-      {detail && (
+      {cloud.ready && detail && (
         <SubjectDetail
           name={detail.name}
           modes={modes}

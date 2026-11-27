@@ -1,0 +1,40 @@
+.grade-analysis { display: grid; gap: 1rem; min-width: 0; }
+.grade-analysis-panel { padding: clamp(.9rem, 2.4vw, 1.4rem); min-width: 0; }
+.grade-analysis-heading { display: flex; align-items: flex-start; gap: .7rem; }
+.grade-analysis-heading h2, .grade-analysis-chart-header h2 { margin: 0; font-size: 1.1rem; font-weight: 750; }
+.grade-analysis-heading p, .grade-analysis-chart-header p { margin: .25rem 0 0; color: var(--ink-soft); font-size: .86rem; line-height: 1.5; }
+.grade-analysis-icon { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex: none; border-radius: .6rem; color: var(--interface-accent); background: var(--interface-subtle); }
+.grade-analysis-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; margin: 1rem 0 0; }
+.grade-analysis-stats > div { padding: .85rem; border-radius: .65rem; background: var(--interface-subtle); min-width: 0; }
+.grade-analysis-stats dt { font-size: .82rem; font-weight: 650; }
+.grade-analysis-stats dd { margin: .22rem 0 0; font-size: clamp(1.35rem, 3vw, 2rem); font-variant-numeric: tabular-nums; font-weight: 750; color: var(--interface-accent); line-height: 1.15; }
+.grade-analysis-stats small { display: block; margin-top: .25rem; color: var(--ink-soft); font-size: .76rem; font-weight: 500; line-height: 1.4; }
+.grade-analysis-priorities { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin: .9rem 0 0; padding: 0; }
+.portal-frame button.grade-analysis-priority { width: 100%; height: 100%; justify-content: space-between; gap: .55rem; padding: .65rem .72rem; text-align: start; }
+.grade-analysis-priority small { display: block; margin-top: .15rem; color: var(--ink-soft); font-size: .75rem; line-height: 1.4; font-weight: 500; }
+.grade-analysis-priority svg, .grade-analysis-subject svg { flex: none; color: var(--interface-accent); }
+.grade-analysis-chart-header { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: .65rem 1rem; }
+.grade-analysis-chart-header label { display: flex; align-items: center; gap: .5rem; font-size: .82rem; flex-wrap: wrap; }
+.grade-analysis-comparison { list-style: none; padding: 0; margin: .95rem 0 0; border-top: 1px solid var(--line); }
+.grade-analysis-row { display: grid; grid-template-columns: minmax(8rem, .85fr) minmax(0, 1.6fr) 4.4rem; align-items: center; gap: .65rem 1rem; padding: .68rem 0; }
+.grade-analysis-row + .grade-analysis-row { border-top: 1px solid var(--line); }
+.grade-analysis-subject { display: inline-flex; width: fit-content; max-width: 100%; justify-content: start; align-items: center; gap: .4rem; padding: .18rem; background: transparent; border: 0; font: inherit; font-size: .85rem; font-weight: 700; text-align: start; color: var(--interface-text); cursor: pointer; overflow-wrap: anywhere; }
+.grade-analysis-subject:hover { text-decoration: underline; }
+.grade-analysis-subject:focus-visible { outline: 2px solid var(--interface-accent); outline-offset: 2px; border-radius: .25rem; }
+.grade-analysis-bars { display: grid; gap: .36rem; min-width: 0; }
+.grade-analysis-bar { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr) 4.1rem; align-items: center; gap: .45rem; color: var(--ink-soft); font-size: .75rem; }
+.grade-analysis-bar-label { font-weight: 650; }
+.grade-analysis-track { background: var(--interface-subtle); border-radius: 1rem; block-size: .44rem; overflow: hidden; }
+.grade-analysis-track span { display: block; background: var(--interface-accent); block-size: 100%; border-radius: inherit; }
+.grade-analysis-bar[data-semester="1"] .grade-analysis-track span { opacity: .62; }
+.grade-analysis-bar-value { text-align: end; font-variant-numeric: tabular-nums; }
+.grade-analysis-delta { background: var(--interface-subtle); color: var(--ink-soft); justify-self: end; border-radius: .45rem; padding: .3rem .45rem; white-space: nowrap; font-size: .8rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.grade-analysis-delta[data-trend="up"] { color: var(--interface-accent); }
+.grade-analysis-empty { display: flex; align-items: center; flex-wrap: wrap; gap: .8rem; padding-block: .9rem .2rem; color: var(--ink-soft); font-size: .86rem; }
+@media (max-width: 640px) {
+  .grade-analysis-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grade-analysis-stats > div:last-child { grid-column: 1 / -1; }
+  .grade-analysis-priorities { grid-template-columns: minmax(0, 1fr); }
+  .grade-analysis-row { grid-template-columns: minmax(0, 1fr) auto; gap: .35rem .6rem; }
+  .grade-analysis-bars { grid-column: 1 / -1; grid-row: 2; }
+}
