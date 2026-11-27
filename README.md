@@ -12,7 +12,7 @@ A calculadora de notas foi criada por Arakaki e integrada a partir de `Tech-2D/p
 
 A área de Notas usa a paleta do site e as preferências `agenda:theme` e `agenda:neon`. O menu do portal dá acesso às configurações de aparência e acessibilidade.
 
-Em **Notas → Análise**, o aluno acompanha o ano letivo selecionado, compara as médias dos semestres e vê as disciplinas que pedem mais atenção. A variação média considera apenas disciplinas com as duas médias preenchidas.
+Em **Notas → Análise**, o aluno acompanha o ano letivo selecionado, compara as médias dos semestres e vê as disciplinas que pedem mais atenção. A média anual geral reúne as médias anuais do boletim. Ela e a variação média consideram as disciplinas com os dois semestres preenchidos.
 
 ## Arquitetura
 

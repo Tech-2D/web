@@ -17,6 +17,9 @@ it('compares the same disciplines, counts zero and keeps unfinished semesters pe
   const overview = within(screen.getByRole('region', { name: 'Minha evolução' }))
   expect(overview.getByText('+2,00')).toBeTruthy()
   expect(overview.getByText('2 disciplinas com as duas médias')).toBeTruthy()
+  const annual = within(overview.getByText('Média anual geral').parentElement!)
+  expect(annual.getByText('6,50')).toBeTruthy()
+  expect(annual.getByText('2 de 4 disciplinas com média anual completa')).toBeTruthy()
   const chart = within(screen.getByRole('region', { name: 'Comparativo por disciplina' }))
   expect(chart.getByText('0,00')).toBeTruthy()
   expect(chart.getByText('Pendente')).toBeTruthy()
@@ -33,6 +36,7 @@ it('returns to grade entry when there are no completed semester averages', () =>
   render(<GradeAnalysis onOpen={vi.fn()} onGradeEntry={onGradeEntry}
     rows={[{ name: 'Matemática', r: calculateFromAverages(null, null, null) }]} />)
   expect(screen.queryByRole('region', { name: 'Prioridades de estudo' })).toBeNull()
+  expect(screen.getByText('Disponível após preencher os dois semestres de uma disciplina')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Lançar notas' }))
   expect(onGradeEntry).toHaveBeenCalledOnce()
 })

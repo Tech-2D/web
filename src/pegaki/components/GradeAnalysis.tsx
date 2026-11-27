@@ -41,6 +41,7 @@ export function GradeAnalysis({ rows, onOpen, onGradeEntry }: {
   const first = comparisons.flatMap(({ r }) => r.m1 === null ? [] : [r.m1])
   const second = comparisons.flatMap(({ r }) => r.m2 === null ? [] : [r.m2])
   const paired = comparisons.flatMap(({ delta }) => delta === null ? [] : [delta])
+  const annual = comparisons.flatMap(({ r, delta }) => delta === null || r.annual === null ? [] : [r.annual])
   const averageDelta = gradeAverage(paired)
   const priorities = rows.flatMap(({ name, r }) => {
     const priority = studyPriority(r)
@@ -62,6 +63,8 @@ export function GradeAnalysis({ rows, onOpen, onGradeEntry }: {
       <dl className="grade-analysis-stats">
         <div><dt>Média do 1º semestre</dt><dd>{fmt(gradeAverage(first))}<small>{first.length} de {rows.length} disciplinas com média</small></dd></div>
         <div><dt>Média do 2º semestre</dt><dd>{fmt(gradeAverage(second))}<small>{second.length} de {rows.length} disciplinas com média</small></dd></div>
+        <div><dt>Média anual geral</dt><dd>{annual.length ? fmt(gradeAverage(annual)) : '—'}
+          <small>{annual.length ? `${annual.length} de ${rows.length} disciplinas com média anual completa` : 'Disponível após preencher os dois semestres de uma disciplina'}</small></dd></div>
         <div><dt>Variação média</dt><dd>{averageDelta === null ? '—' : deltaLabel(rounded(averageDelta))}
           <small>{paired.length ? `${paired.length} ${paired.length === 1 ? 'disciplina com as duas médias' : 'disciplinas com as duas médias'}` : 'Disponível quando houver uma disciplina com as duas médias'}</small></dd></div>
       </dl>
