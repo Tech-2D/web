@@ -7,6 +7,10 @@ export type Draft = { state: 'draft'; id: string; boards: Board[]; board_id: str
 export type Saved = { state: 'saved'; task: KanbanTask; board: Pick<Board, 'id' | 'name'>; column: Column; activity_title: string | null }
 export type Batch = { state: 'batch'; id: string; drafts: Draft[]; retry_only?: boolean }
 export type Kanban = Draft | Saved | Batch | { state: 'batch_saved'; cards: Saved[] } | { state: 'missing' }
+export type KanbanResult = {
+  cards: { title: string; board: string; due_date: string | null; situation: 'open' | 'done' }[]
+  has_more: boolean
+}
 export type AssistantActivityReference = { id: string; title: string; date: string; type: string }
 export type Activity = Omit<AssistantActivityReference, 'id'> & {
   id: string | null
@@ -22,6 +26,7 @@ export type AssistantResponse = {
   answer: string
   notes_operation?: string
   kanban?: Kanban | null
+  kanban_result?: KanbanResult
   cards?: Activity[]
   remaining_messages?: number | null
   unlimited_messages?: boolean
@@ -68,6 +73,13 @@ function kanban(value: unknown) {
   return value.state === 'batch_saved' && Array.isArray(value.cards) && value.cards.every(saved)
 }
 
+function kanbanResult(value: unknown) {
+  return object(value) && typeof value.has_more === 'boolean' &&
+    Array.isArray(value.cards) && value.cards.length <= 10 &&
+    value.cards.every(card => object(card) && string(card.title) && string(card.board) &&
+      (card.due_date === null || date(card.due_date)) && (card.situation === 'open' || card.situation === 'done'))
+}
+
 export function parseAssistantResponse(value: unknown): AssistantResponse {
   if (!object(value) || !string(value.answer) ||
     (value.notes_operation !== undefined && !string(value.notes_operation)) ||
@@ -76,6 +88,7 @@ export function parseAssistantResponse(value: unknown): AssistantResponse {
       string(card.type_label) && date(card.date) &&
       ['subject', 'teacher', 'time', 'recurrence_summary'].every(key => card[key] == null || string(card[key]))))) ||
     (value.kanban != null && !kanban(value.kanban)) ||
+    (value.kanban_result !== undefined && !kanbanResult(value.kanban_result)) ||
     (value.remaining_messages != null && (!Number.isInteger(value.remaining_messages) || Number(value.remaining_messages) < 0)) ||
     (value.unlimited_messages !== undefined && typeof value.unlimited_messages !== 'boolean')) {
     throw new TypeError('Resposta inválida do Assistente')

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Plus, Trash2, X } from 'lucide-react'
 import { KanbanActivityLinks, KanbanFiles } from './KanbanMaterials'
+import { KanbanDeleteDialog } from './KanbanDeleteDialog'
 import type { Activity } from './types'
 import { kanbanId, KANBAN_COLORS, KANBAN_TEMPLATES, PRIORITIES, type KanbanBoard, type KanbanColor, type KanbanColumn, type KanbanTask, type KanbanTemplate } from './kanban'
 
@@ -35,11 +36,12 @@ export function ColumnForm({column,disabled,onSave,onDelete}:{column?:KanbanColu
   const [name,setName]=useState(column?.name || ''),[color,setColor]=useState<KanbanColor>(column?.color || 'blue'),[done,setDone]=useState(column?.done || false)
   return <form className="kb-form" onSubmit={e=>{e.preventDefault();if(name.trim())void onSave({id:column?.id || kanbanId(),name:name.trim(),color,done})}}><fieldset disabled={disabled}><label>Nome da coluna<input required maxLength={60} value={name} placeholder="Ex.: Aguardando retorno" onChange={e=>setName(e.target.value)}/></label><ColorField value={color} onChange={setColor}/><label className="kb-check"><input type="checkbox" checked={done} onChange={e=>setDone(e.target.checked)}/> Contar as tarefas desta coluna como concluídas</label><div className="kb-form-actions">{column && <button type="button" className="kb-delete" onClick={()=>void onDelete()}><Trash2 size={16}/> Excluir coluna</button>}<button className="primary-button" disabled={!name.trim()}>Salvar coluna</button></div></fieldset></form>
 }
-export function TaskForm({task,columnId,columns,disabled,onSave,onDelete,assignees,activities,files}:{task?:KanbanTask;activities?:Activity[];files?:{scope:'personal'|'shared';board:string};columnId:string;columns:KanbanColumn[];disabled:boolean;onSave:(task:KanbanTask)=>Promise<void>;onDelete:()=>Promise<void>;assignees?:{uid:string;name:string}[]}) {
+export function TaskForm({task,columnId,columns,disabled,onSave,onDelete,assignees,activities,files}:{task?:KanbanTask;activities?:Activity[];files?:{scope:'personal'|'shared';board:string};columnId:string;columns:KanbanColumn[];disabled:boolean;onSave:(task:KanbanTask)=>Promise<void>;onDelete:()=>Promise<boolean | void>;assignees?:{uid:string;name:string}[]}) {
   const [draft,setDraft]=useState<KanbanTask>(()=>task ? {...task,checklist:task.checklist.map(i=>({...i}))} : {id:kanbanId(),columnId,title:'',description:'',priority:'none',dueDate:null,labels:[],checklist:[]})
   const [labels,setLabels]=useState(task?.labels.join(', ') || ''), [item,setItem]=useState(''), [validation,setValidation]=useState('')
+  const [confirmDelete,setConfirmDelete]=useState(false)
   const patch=(values:Partial<KanbanTask>)=>setDraft(d=>({...d,...values}))
-  return <form className="kb-form" onSubmit={e=>{
+  return <><form className="kb-form" onSubmit={e=>{
     e.preventDefault();const tags=[...new Set(labels.split(',').map(s=>s.trim()).filter(Boolean))]
     if(tags.length>6 || tags.some(t=>t.length>30)){setValidation('Use até 6 etiquetas de até 30 caracteres, separadas por vírgulas.');return}
     const checklist=draft.checklist.map(i=>({...i,text:i.text.trim()}))
@@ -53,5 +55,8 @@ export function TaskForm({task,columnId,columns,disabled,onSave,onDelete,assigne
       {activities && <KanbanActivityLinks activities={activities} ids={draft.activityIds || []} onChange={activityIds=>patch({activityIds})}/>}
       {files && (task ? <KanbanFiles key={files.scope + files.board + task.id} {...files} task={task.id}/> : <p className="kb-hint">Salve a tarefa para adicionar arquivos de estudo.</p>)}
     </section>}
-    {validation && <p className="kb-error" role="alert">{validation}</p>}<div className="kb-form-actions">{task && <button type="button" className="kb-delete" onClick={()=>void onDelete()}><Trash2 size={16}/> Excluir tarefa</button>}<button className="primary-button" disabled={!draft.title.trim()}>Salvar tarefa</button></div></fieldset></form>
+    {validation && <p className="kb-error" role="alert">{validation}</p>}<div className="kb-form-actions">{task && <button type="button" className="kb-delete" onClick={()=>setConfirmDelete(true)}><Trash2 size={16}/> Excluir tarefa</button>}<button className="primary-button" disabled={!draft.title.trim()}>Salvar tarefa</button></div></fieldset></form>
+    {confirmDelete && task && <KanbanDeleteDialog titles={[task.title]} shared={files?.scope === 'shared'}
+      disabled={disabled} onCancel={()=>setConfirmDelete(false)} onConfirm={onDelete} />}
+  </>
 }

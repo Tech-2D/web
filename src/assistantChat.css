@@ -361,6 +361,7 @@ a.assistant-activity-title:hover { color: var(--accent); }
 .assistant-activity-meta { color: var(--ink-soft); font-size: .78rem; }
 .assistant-activity-meta:empty { display: none; }
 .assistant-activity-meta small { display: block; }
+.assistant-kanban-result-meta { display: flex; flex-wrap: wrap; gap: .2rem .65rem; overflow-wrap: anywhere; }
 .assistant-activity-action {
   display: inline-flex;
   gap: .35rem;

@@ -24,13 +24,18 @@ export function reorder<T extends {id:string}>(items: T[], source: string, targe
   result.splice(to,0,item)
   return result
 }
+export function moveTasks(board: KanbanBoard, taskIds: string[], columnId: string, beforeId?: string, after = false): KanbanBoard {
+  const ids = new Set(taskIds)
+  if (!board.columns.some(column => column.id === columnId) || (beforeId && ids.has(beforeId))) return board
+  const moved = board.tasks.filter(task => ids.has(task.id))
+  if (!moved.length) return board
+  const tasks = board.tasks.filter(task => !ids.has(task.id))
+  const index = beforeId ? tasks.findIndex(task => task.id === beforeId && task.columnId === columnId) : -1
+  tasks.splice(index < 0 ? tasks.length : index + Number(after), 0, ...moved.map(task => ({ ...task, columnId })))
+  return { ...board, tasks }
+}
 export function moveTask(board: KanbanBoard, taskId: string, columnId: string, beforeId?: string, after = false): KanbanBoard {
-  const task = board.tasks.find(t=>t.id===taskId)
-  if (!task || !board.columns.some(c=>c.id===columnId) || beforeId === taskId) return board
-  const tasks = board.tasks.filter(t=>t.id!==taskId)
-  const index = beforeId ? tasks.findIndex(t=>t.id===beforeId && t.columnId===columnId) : -1
-  tasks.splice(index < 0 ? tasks.length : index + (after ? 1 : 0),0,{...task,columnId})
-  return {...board,tasks}
+  return moveTasks(board, [taskId], columnId, beforeId, after)
 }
 export function removeColumn(board: KanbanBoard, columnId: string): KanbanBoard {
   if (board.columns.length <= 1) throw Error('O quadro precisa ter pelo menos uma coluna.')

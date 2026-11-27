@@ -6,7 +6,7 @@ import { AssistantWelcome } from './AssistantWelcome'
 import { AssistantReply } from './AssistantReply'
 import type { WelcomeActivity } from './assistantWelcomeContext'
 import { PRIORITIES } from './kanban'
-import type { Activity, AssistantActivityReference, Batch, BatchInput, CardInput, Draft, Fields, Kanban } from './assistantContract'
+import type { Activity, AssistantActivityReference, Batch, BatchInput, CardInput, Draft, Fields, Kanban, KanbanResult } from './assistantContract'
 import { useAssistantTransport, type AssistantRoute } from './useAssistantTransport'
 import { useAssistantLauncherPosition } from './useAssistantLauncherPosition'
 export type { AssistantActivityReference } from './assistantContract'
@@ -18,7 +18,7 @@ import './kanban.css'
 import './assistantChat.css'
 import './d2Sprites.css'
 
-type Turn = { text: string; user?: boolean; cards?: Activity[]; operation?: string; formatted?: boolean }
+type Turn = { text: string; user?: boolean; cards?: Activity[]; kanbanResult?: KanbanResult; operation?: string; formatted?: boolean }
 type D2Reaction = 'repouso' | 'saudacao' | 'respondendo' | 'confirmacao'
 
 const noWelcomeActivities: readonly WelcomeActivity[] = []
@@ -211,7 +211,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
             ? `${data.remaining_messages} mensagens restantes hoje`
             : '')
       }
-      const reply = { text: data.answer, cards: data.cards, operation: data.notes_operation,
+      const reply = { text: data.answer, cards: data.cards, kanbanResult: data.kanban_result, operation: data.notes_operation,
         formatted: Boolean(data.notes_operation) || markdownSyntax.test(data.answer) }
       setTurns(old => [...old, reply])
       if (!reply.formatted && transcript.current && !chat.current?.hidden && document.documentElement.dataset.motion !== 'reduzido'
@@ -345,7 +345,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
             setLinkedActivity(null)
             void send('/api/chat', { message: question, preferred_class: preferredClass }, question)
           }} />}
-        {turns.map((turn, index) => <div className={turn.cards?.length ? 'assistant-result-turn' : 'assistant-message'} key={index}>
+        {turns.map((turn, index) => <div className={turn.cards?.length || turn.kanbanResult ? 'assistant-result-turn' : 'assistant-message'} key={index}>
           <div className={turn.user ? 'assistant-turn user' : turn.operation ? 'assistant-turn assistant-turn-notes' : 'assistant-turn'}>
             {turn.user ? turn.text : turn.formatted ? <AssistantReply text={turn.text} operation={turn.operation} />
               : <span className={turn === typingTurn ? 'assistant-typing-text' : undefined}>
@@ -356,6 +356,19 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
           {!!turn.cards?.length && <div className="assistant-result-list">
             {turn.cards.map((card, index) => <ActivityResult key={card.id ?? index} activity={card}
               agendaPath={agendaPath} onOpen={() => setOpen(false)} onPrepare={() => prepareFromResult(card)} />)}
+          </div>}
+          {turn.kanbanResult && <div className="assistant-result-list" aria-label="Meu Kanban">
+            {turn.kanbanResult.cards.map((card, index) => <article className="assistant-activity-card" key={index}>
+              <strong className="assistant-activity-title">{card.title}</strong>
+              <div className="assistant-activity-meta assistant-kanban-result-meta">
+                <span>{card.board}</span>
+                <span>{card.due_date ? card.due_date.split('-').reverse().join('/') : 'Sem prazo'}</span>
+                <span>{card.situation === 'done' ? 'Concluído' : 'Aberto'}</span>
+              </div>
+            </article>)}
+            {turn.kanbanResult.has_more && <small>Há mais cartões no Meu Kanban.</small>}
+            <a className="assistant-activity-action" href={agendaPath + '#kanban'}
+              onClick={() => { close(); onViewKanban?.() }}>Abrir Meu Kanban</a>
           </div>}
         </div>)}
         {kanban?.state === 'draft' && <DraftCard key={kanban.id} draft={kanban} busy={busy} retryOnly={retryOnly}

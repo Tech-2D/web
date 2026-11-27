@@ -32,6 +32,27 @@ afterEach(() => {
 })
 
 describe('contrato do chat integrado', () => {
+  it('mostra cartões pessoais com título e metadados separados junto à Agenda', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({
+      answer: '**Agenda**\n\nEncontrei uma prova.\n\n**Meu Kanban**\n\nEncontrei um cartão.',
+      cards: [{ id: 'exam', title: 'Prova de banco de dados', date: '2026-11-30', type: 'prova', type_label: 'Prova' }],
+      kanban_result: {
+        cards: [{ title: '**Revisar SQL**', board: 'Minhas coisas', due_date: '2026-11-29', situation: 'open' }],
+        has_more: false,
+      },
+    })))
+    render(<AssistantChat account={account} endpoint={endpoint} preferredClass="2° TECH D" agendaPath="/web/" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Assistente' }))
+    send('ambos')
+    expect(await screen.findByRole('link', { name: 'Prova de banco de dados' })).toBeTruthy()
+    const title = await screen.findByText('**Revisar SQL**')
+    expect(title.tagName).toBe('STRONG')
+    expect([...title.nextElementSibling!.children].map(item => item.textContent)).toEqual([
+      'Minhas coisas', '29/11/2026', 'Aberto',
+    ])
+    expect(screen.getByRole('link', { name: 'Abrir Meu Kanban' }).getAttribute('href')).toBe('/web/#kanban')
+  })
+
   it('destaca a média anual e mostra cada média semestral uma vez', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => Response.json({
       notes_operation: 'grades_lookup',
