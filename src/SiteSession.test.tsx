@@ -2,6 +2,8 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { SiteSession } from './SiteSession'
+import type { User } from 'firebase/auth'
+import type { AgendaSession } from './agendaSession'
 
 const account = vi.hoisted(() => ({ uid: 'fixture', getIdToken: async () => 'fixture-token' }))
 vi.mock('./firebase', async importOriginal => ({ ...await importOriginal<typeof import('./firebase')>(), auth: { currentUser: account } }))
@@ -52,4 +54,26 @@ it('hides protected content when the browser preserves the page for back navigat
   expect(document.documentElement.hasAttribute('data-site-restore-pending')).toBe(true)
   view.unmount()
   expect(document.documentElement.hasAttribute('data-site-restore-pending')).toBe(false)
+})
+
+it('waits for the Agenda context returned by the same bearer request', async () => {
+  let finish!: (response: Response) => void
+  const request = vi.fn(() => new Promise<Response>(resolve => { finish = resolve }))
+  vi.stubGlobal('fetch', request)
+  const content = vi.fn((_user: User, session: AgendaSession) => <p>{session.profile?.role} da turma {session.classLink.link?.className}</p>)
+
+  await act(async () => {
+    render(<SiteSession destination="a Agenda">{content}</SiteSession>)
+  })
+  expect(content).not.toHaveBeenCalled()
+  expect(request).toHaveBeenCalledTimes(1)
+  expect(request).toHaveBeenCalledWith(expect.stringMatching(/\/api\/session\/access\?agenda=1$/),
+    expect.objectContaining({ headers: { Authorization: 'Bearer fixture-token' } }))
+
+  finish(Response.json({
+    profile: { role: 'representante', turmaId: '2° TECH D' },
+    classLink: { classes: ['2° TECH D'], link: { className: '2° TECH D' }, canChange: false, availableAt: null },
+    screen: null,
+  }))
+  await screen.findByText('representante da turma 2° TECH D')
 })

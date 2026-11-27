@@ -1,5 +1,5 @@
 import { registerAccount } from './registration'
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, type User } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { ArrowRight, CalendarDays, ClipboardList, Columns3, Eye, EyeOff, MapPin, RefreshCw, ShieldAlert, ShieldOff } from 'lucide-react'
@@ -9,6 +9,8 @@ import { API_BASE } from './apiBase'
 import { signOut } from './sessionActions'
 import { resetQueuedSession } from './queuedWrites'
 import { siteLogoUrl } from './sitePaths'
+import type { AgendaSession } from './agendaSession'
+import type { ClassStatus } from './classLink'
 import d2Avatar from './assets/d2/d2.webp'
 import './siteSession.css'
 
@@ -26,7 +28,9 @@ function accountError(error: unknown, mode: Mode) {
   return mode === 'reset' ? 'O link não pôde ser enviado agora. Tente novamente.' : 'Não foi possível continuar. Tente novamente.'
 }
 
-export function SiteSession({ destination, children }: { destination: string; children: ReactNode }) {
+type AgendaContent = (user: User, agenda: AgendaSession, updateClass: (status: ClassStatus) => void) => ReactNode
+
+export function SiteSession({ destination, children }: { destination: string; children: ReactNode | AgendaContent }) {
   const [session, setSession] = useState<User | null | undefined>()
   useEffect(() => {
     let previousUid: string | null | undefined
@@ -59,26 +63,39 @@ export function SiteSession({ destination, children }: { destination: string; ch
     : <AccountEntry destination={destination} />
 }
 
-function PortalAccess({ user, children }: { user: User; children: ReactNode }) {
+function PortalAccess({ user, children }: { user: User; children: ReactNode | AgendaContent }) {
   const [status, setStatus] = useState<'checking' | 'allowed' | 'blocked' | 'unavailable'>('checking')
   const [attempt, retry] = useState(0)
+  const [agenda, setAgenda] = useState<AgendaSession>()
+  const classRevision = useRef(0)
+  const needsAgenda = typeof children === 'function'
   useEffect(() => {
     const controller = new AbortController()
     let checking = false
     async function checkAccess() {
       if (checking || document.hidden) return
       checking = true
+      const revision = classRevision.current
       try {
         const token = await user.getIdToken()
         if (controller.signal.aborted || auth.currentUser?.uid !== user.uid) return
-        const response = await fetch(API_BASE + '/api/session/access', {
+        const response = await fetch(API_BASE + '/api/session/access' + (needsAgenda ? '?agenda=1' : ''), {
           headers: { Authorization: 'Bearer ' + token },
           cache: 'no-store',
           redirect: 'error',
           signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
         })
         const blocked = response.status === 403 && (await response.json().catch(() => null))?.code === 'agenda-access-blocked'
-        if (!controller.signal.aborted) setStatus(blocked ? 'blocked' : response.status === 204 ? 'allowed' : 'unavailable')
+        const allowed = response.status === (needsAgenda ? 200 : 204)
+        if (needsAgenda && allowed) {
+          const next: AgendaSession = await response.json()
+          if (!Array.isArray(next?.classLink?.classes) || !Object.hasOwn(next, 'profile') || !Object.hasOwn(next, 'screen')) {
+            throw new Error('INVALID_AGENDA_SESSION')
+          }
+          if (!controller.signal.aborted) setAgenda(current => current && revision !== classRevision.current
+            ? { ...next, classLink: { ...next.classLink, ...current.classLink, classes: next.classLink.classes } } : next)
+        }
+        if (!controller.signal.aborted) setStatus(blocked ? 'blocked' : allowed ? 'allowed' : 'unavailable')
       } catch {
         if (!controller.signal.aborted) setStatus('unavailable')
       } finally {
@@ -97,9 +114,17 @@ function PortalAccess({ user, children }: { user: User; children: ReactNode }) {
       window.removeEventListener('focus', checkAccess)
       window.removeEventListener('online', checkAccess)
     }
-  }, [user, attempt])
+  }, [user, attempt, needsAgenda])
 
-  if (status === 'allowed') return <>{children}</>
+  function updateClass(link: ClassStatus) {
+    classRevision.current += 1
+    setAgenda(current => current && { ...current, classLink: { ...current.classLink, ...link } })
+  }
+
+  if (status === 'allowed') {
+    if (typeof children !== 'function') return <>{children}</>
+    return agenda ? <>{children(user, agenda, updateClass)}</> : <SessionLoading />
+  }
   if (status === 'checking') return <SessionLoading />
   const blocked = status === 'blocked'
   return <main className="site-entry-check">

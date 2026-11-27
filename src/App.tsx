@@ -11,17 +11,13 @@ import { ATTACHMENTS_ENABLED } from './attachments'
 import { FirebaseError } from 'firebase/app'
 import { PageHeading } from './PageHeading'
 import { AgendaClosureScreen } from './AgendaClosureScreen'
-import { useAgendaClosure } from './agendaClosure'
-import { SessionLoading } from './SiteSession'
 import { useRecoveryMode } from './recovery'
 import { SiteNavigation } from './SiteNavigation'
 import { addDoc, collection, doc, getDoc, serverTimestamp } from './dataClient'
 import { auth, db } from './firebase'
-import { CLASS_NAMES } from './classNames'
 import { SUBJECTS } from './subjects'
 import { MyFeedbackCredits } from './FeedbackCredits'
 import { canEditCalendarActivity } from './calendarPermissions'
-import { observeCalendarSession } from './calendarSession'
 import { movePeriod, periodTitle, type CalendarView } from './calendarViews'
 import { CalendarViewSwap, CalendarViewSwitch } from './CalendarViewSwap'
 import { PeriodAgenda } from './PeriodAgenda'
@@ -33,14 +29,14 @@ import { canCreateForSelectedClass } from './quickCreate'
 import { activeNotices, canManageNotices } from './notices'
 import { useNow, useTurmaNotices } from './useNotices'
 import { savePreferredTurma } from './classPreference'
-import { useClassLink } from './classLink'
+import type { ClassStatus } from './classLink'
+import type { AgendaSession } from './agendaSession'
 import { ClassLinkForm } from './ClassLinkForm'
 import { teacherFinderTodayUrl } from './teacherFinder'
 import { observeCatalog, type CatalogMeta } from './publicQueries'
 import { latestUnseenUpdate, markSystemUpdateSeen, readSeenSystemUpdateId, type SystemUpdate } from './systemUpdates'
 import { NEON_COLORS, NEON_COLOR_LABELS, NEON_COLOR_SWATCHES, THEME_LABELS, THEME_PREVIEW, THEMES, readStoredNeon, readStoredTheme, storeNeon, storeTheme, type NeonColor, type Theme } from './theme'
 import { FONT_SCALES, FONT_SCALE_LABELS, VLIBRAS_KEY, readStoredFontScale, readStoredHighContrast, readStoredReduceMotion, readStoredVLibras, storeFontScale, storeHighContrast, storeReduceMotion, storeVLibras, type FontScale } from './accessibility'
-import { subscribeAdminProfile } from './adminAccess'
 import { DEFAULT_MENU_SHORTCUTS, MENU_SHORTCUTS_KEY, readAgendaMenuDialog, readMenuShortcuts, storeMenuShortcuts, type MenuShortcutId } from './menuShortcuts'
 import { IntegratedMenu } from './IntegratedMenu'
 import { menuOptionSections, type MoreOption, type MoreOptionSection } from './menuCatalog'
@@ -86,9 +82,12 @@ const emptyForm: Omit<ActivityInput, 'turmaId'> = {
   time: null,
 }
 
-function App() {
+function App({ user: calendarUser, session, onClassSaved }: {
+  user: User; session: AgendaSession; onClassSaved: (status: ClassStatus) => void
+}) {
+  const { profile: calendarProfile, classLink, screen } = session
+  const { classes: classNames } = classLink
   const [selectedTurma, setSelectedTurma] = useState<string | null>(null)
-  const [classNames, setClassNames] = useState<string[]>([...CLASS_NAMES])
   const [classRequestOpen, setClassRequestOpen] = useState(false)
   const [subjectFilter, setSubjectFilter] = useState('')
   const [turmaActivities, setTurmaActivities] = useState<Activity[]>([])
@@ -105,8 +104,6 @@ function App() {
   const [adminOpen, setAdminOpen] = useState(() => isAdminRoute(window.location.pathname))
   const [quickCreateDate, setQuickCreateDate] = useState<string | null>(null)
   const [quickEditActivity, setQuickEditActivity] = useState<Activity | null>(null)
-  const [calendarProfile, setCalendarProfile] = useState<AdminProfile | null>(null)
-  const [profileReady, setProfileReady] = useState<boolean | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuShortcuts, setMenuShortcuts] = useState(readMenuShortcuts)
   const [linkedMenuDialog, setLinkedMenuDialog] = useState(() => readAgendaMenuDialog(window.location.hash))
@@ -119,17 +116,15 @@ function App() {
   const [mySuggestionsOpen, setMySuggestionsOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [noticesOpen, setNoticesOpen] = useState(false)
-  const [calendarUser, setCalendarUser] = useState<User | null>(null)
-  const classLink = useClassLink(calendarUser)
-  const preferredTurma = classLink.data?.link?.className ?? null
+  const preferredTurma = classLink.link?.className ?? null
   const canBrowseClasses = calendarProfile?.role === 'superadmin'
   const turmaId = canBrowseClasses ? selectedTurma ?? preferredTurma ?? classNames[0] : preferredTurma
   useEffect(() => {
     if (preferredTurma) savePreferredTurma(preferredTurma)
   }, [preferredTurma])
   const calendarRoute = !adminOpen && !kanbanOpen && !moreOptionsOpen
-  const closure = useAgendaClosure(calendarUser, calendarRoute)
-  const { period: activeRecovery } = useRecoveryMode(calendarUser, calendarRoute && !closure.screen)
+  const calendarClosed = calendarRoute && Boolean(screen)
+  const { period: activeRecovery } = useRecoveryMode(calendarUser, calendarRoute && !calendarClosed && Boolean(turmaId))
   const [assistantPrefill, setAssistantPrefill] = useState<AssistantActivityReference | null>(null)
   const [docsOpen, setDocsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -168,29 +163,6 @@ function App() {
     setThemeState(value)
     storeTheme(value)
   }
-
-  useEffect(() => {
-    const stop = observeCalendarSession({
-      subscribeAccount: change => onAuthStateChanged(auth, account => {
-        const uid = account?.uid ?? null
-        setCalendarUser(account)
-        change(uid)
-      }),
-      subscribeProfile: subscribeAdminProfile,
-      publish: setCalendarProfile,
-      reset: () => {
-        setProfileReady(null)
-        setSelectedTurma(null)
-        setCompareMode(false)
-        setTurmaActivities([])
-        setGlobalActivities([])
-        setQuickCreateDate(null)
-        setQuickEditActivity(null)
-      },
-      ready: setProfileReady,
-    })
-    return stop
-  }, [])
 
   useEffect(() => {
     if (calendarUser) void recordSiteAccess(kanbanOpen ? 'kanban' : 'agenda', calendarUser)
@@ -330,14 +302,13 @@ function App() {
 
   useEffect(() => {
     // A shared link loads only its activity; the full calendar starts when it is closed.
-    if (linkedActivityId || !calendarUser || !turmaId) return
+    if (linkedActivityId || calendarClosed || !turmaId) return
     let loaded = false
     setLoading(true)
     setTurmaActivities([])
-    type PublicAgenda = { activities: Activity[]; classes: string[]; updates: SystemUpdate[]; meta: CatalogMeta }
+    type PublicAgenda = { activities: Activity[]; updates: SystemUpdate[]; meta: CatalogMeta }
     return observeCatalog<PublicAgenda>('agenda', data => {
       loaded = true
-      setClassNames([...new Set([...CLASS_NAMES, ...data.classes])].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })))
       setTurmaActivities(turmaId ? data.activities.filter(item => item.turmaId === turmaId) : [])
       setGlobalActivities(data.activities.filter(item => item.turmaId === null))
       setSystemUpdates(data.updates)
@@ -355,7 +326,7 @@ function App() {
         setUpdatesError('Não foi possível carregar as atualizações. Tente novamente mais tarde.')
       }
     }, turmaId)
-  }, [calendarUser, turmaId, linkedActivityId, canBrowseClasses])
+  }, [turmaId, linkedActivityId, canBrowseClasses, calendarClosed])
 
   const calendarActivities = useMemo(() => [
     ...turmaActivities.filter(activity => activity.turmaId === turmaId),
@@ -517,15 +488,6 @@ function App() {
     storeMenuShortcuts(next)
   }
 
-  if (!calendarUser) return <SessionLoading />
-  if (profileReady === null && !kanbanOpen) return <SessionLoading message={adminOpen ? 'Verificando o acesso ao painel…' : 'Carregando a Agenda…'} />
-  if (profileReady === false && !kanbanOpen) return <main id="inicio" className="main-content">
-    <div className="state-card">
-      <p role="alert">Não foi possível verificar suas permissões. Tente novamente.</p>
-      <button type="button" className="secondary-button" onClick={() => window.location.reload()}>Tentar novamente</button>
-    </div>
-  </main>
-
   if (adminOpen) return (
     <div className="app-shell portal-frame admin-shell">
       <SiteNavigation active="admin" role={calendarProfile?.role} />
@@ -542,34 +504,16 @@ function App() {
     </div>
   )
 
-  if (calendarRoute && closure.waiting) return <SessionLoading message="Carregando a Agenda…" />
-
-  if (calendarRoute && (closure.screen || closure.error)) return (
+  if (calendarRoute && screen) return (
     <div className="app-shell portal-frame">
       <SiteNavigation active="agenda" role={calendarProfile?.role} />
       <main id="inicio" className="main-content portal-main agenda-closure-view">
-        {closure.screen ? <AgendaClosureScreen screen={closure.screen} /> : <div className="state-card">
-          <p role="alert">Não foi possível verificar o estado da Agenda.</p>
-          <button type="button" className="portal-control" onClick={closure.retry}>Tentar novamente</button>
-        </div>}
+        <AgendaClosureScreen screen={screen} />
       </main>
     </div>
   )
 
-  if (!kanbanOpen && !canBrowseClasses && !classLink.data && !classLink.error) {
-    return <SessionLoading message="Carregando a Agenda…" />
-  }
-
-  if (!kanbanOpen && !canBrowseClasses && classLink.error) return (
-    <main id="inicio" className="main-content portal-main">
-      <div className="state-card">
-        <p role="alert">{classLink.error}</p>
-        <button type="button" className="portal-control" onClick={classLink.reload}>Tentar novamente</button>
-      </div>
-    </main>
-  )
-
-  if (!kanbanOpen && !canBrowseClasses && !preferredTurma && classLink.data) return (
+  if (!kanbanOpen && !canBrowseClasses && !preferredTurma) return (
     <div className="app-shell portal-frame">
       <SiteNavigation active="agenda" role={calendarProfile?.role} showProfileReminder={false} />
       <main id="inicio" className="main-content portal-main class-setup">
@@ -580,13 +524,13 @@ function App() {
           <div className="class-setup-content">
             <h1 id="class-setup-title">Qual é a sua turma?</h1>
             <p>Escolha sua turma para ver o calendário, as atividades e os avisos da sua sala.</p>
-            <ClassLinkForm user={calendarUser} data={classLink.data} onSave={classLink.update} onMissingClass={() => setClassRequestOpen(true)} />
+            <ClassLinkForm user={calendarUser} data={classLink} onSave={onClassSaved} onMissingClass={() => setClassRequestOpen(true)} />
             <p className="class-setup-note">Você pode trocar de turma pelo Perfil após 30 dias. Se precisar corrigir a escolha antes disso, peça ajuda à administração.</p>
           </div>
         </section>
       </main>
       {classRequestOpen && <DialogLoadBoundary><Suspense fallback={<p className="class-setup-dialog-loading" role="status">Carregando pedido de turma…</p>}>
-        <ClassRequestDialog classNames={classLink.data?.classes ?? classNames} onClose={() => setClassRequestOpen(false)} />
+        <ClassRequestDialog classNames={classNames} onClose={() => setClassRequestOpen(false)} />
       </Suspense></DialogLoadBoundary>}
     </div>
   )

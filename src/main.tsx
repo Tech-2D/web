@@ -19,6 +19,8 @@ const destination = isAdminRoute(window.location.pathname) ? 'o Painel da Agenda
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <SiteSession destination={destination}><App /></SiteSession>
+    <SiteSession destination={destination}>
+      {(user, session, onClassSaved) => <App user={user} session={session} onClassSaved={onClassSaved} />}
+    </SiteSession>
   </StrictMode>,
 )
