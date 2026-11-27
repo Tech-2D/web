@@ -6,6 +6,16 @@ const classes = ['2° TECH D']
 const row = { data: '07/12/2026', início: '8:00', fim: '08:50', matéria: 'Matemática', turma: '2º tech d', local: 'Sala 8' }
 
 describe('importação de horários de recuperação', () => {
+  it('aceita uma grade com mais de 200 horários e mantém a distinção de prova', () => {
+    const rows = Array.from({ length: 243 }, (_, index) => ({
+      ...row,
+      data: new Date(Date.UTC(2026, 10, 27 + index)).toISOString().slice(0, 10),
+      matéria: index === 0 ? 'Ciência de Dados (Prova)' : 'Matemática',
+    }))
+    const result = parseRecoveryJson(JSON.stringify(rows), classes)
+    expect(result).toHaveLength(243)
+    expect(result[0].subject).toBe('Ciência de Dados (Prova)')
+  })
   it('importa um arquivo Excel com células de data e hora', async () => {
     const data = await readFile(new URL('../test/fixtures/horarios-recuperacao.xlsx', import.meta.url))
     const file = new File([new Uint8Array(data)], 'horarios-recuperacao.xlsx')

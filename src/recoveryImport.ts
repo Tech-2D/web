@@ -2,7 +2,10 @@ import { normalizeClassName } from './classRequests'
 import type { RecoveryLesson } from './recovery'
 import { SUBJECTS } from './subjects'
 
-export const MAX_RECOVERY_LESSONS = 200
+const recoverySubjects = [
+  ...SUBJECTS, 'Ciência de Dados', 'Matemática 12-Inovação e Tecnologia', 'Segurança Cibernética',
+]
+export const RECOVERY_SUBJECT_OPTIONS = recoverySubjects.flatMap(name => [name, name + ' (Prova)'])
 const columns = {
   date: ['data', 'date'],
   start: ['inicio', 'start', 'starttime'],
@@ -18,7 +21,7 @@ const required = columnNames.slice(0, 4)
 const columnKey = (value: string) => value.normalize('NFD').replace(/\p{M}|[\s_-]/gu, '').toLowerCase()
 const classKey = (name: string) => normalizeClassName(name).replace(/º/g, '°')
 const subjectKey = (name: string) => normalizeClassName(name).normalize('NFD').replace(/\p{M}/gu, '').replace(/\s*-\s*/g, '-')
-const availableSubjects = new Map(SUBJECTS.map(name => [subjectKey(name), name]))
+const availableSubjects = new Map(RECOVERY_SUBJECT_OPTIONS.map(name => [subjectKey(name), name]))
 const dayMs = 86400000
 
 function normalizeDate(value: unknown) {
@@ -50,7 +53,7 @@ function normalizeTime(value: unknown) {
 }
 
 function normalizeLessons(rows: { values: Record<string, unknown>; label: string }[], classes: string[]): RecoveryLesson[] {
-  if (!rows.length || rows.length > MAX_RECOVERY_LESSONS) throw new Error('O arquivo deve conter de 1 a 200 aulas.')
+  if (!rows.length) throw new Error('O arquivo precisa conter pelo menos um horário.')
   const available = new Map(classes.map(name => [classKey(name), name]))
   const seen = new Set<string>()
   return rows.map(({ values, label }) => {
@@ -91,7 +94,6 @@ export function parseRecoveryJson(text: string, classes: string[]) {
   let input: unknown
   try { input = JSON.parse(text) } catch { throw new Error('O arquivo não contém um JSON válido.') }
   if (!Array.isArray(input)) throw new Error('O JSON precisa conter uma lista de aulas.')
-  if (input.length > MAX_RECOVERY_LESSONS) throw new Error('O arquivo deve conter de 1 a 200 aulas.')
   return normalizeLessons(input.map((values, index) => {
     const label = 'Registro ' + (index + 1)
     if (!values || typeof values !== 'object' || Array.isArray(values)) throw new Error(label + ' — informe os campos da aula.')

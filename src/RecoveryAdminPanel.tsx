@@ -2,8 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import type { User } from 'firebase/auth'
 import { FileUp, Plus, Trash2 } from 'lucide-react'
 import { formatRecoveryTime, recoveryRequest, type RecoveryContent, type RecoveryLesson, type RecoveryPublication } from './recovery'
-import { importRecoveryFile, MAX_RECOVERY_LESSONS } from './recoveryImport'
-import { SUBJECTS } from './subjects'
+import { importRecoveryFile, RECOVERY_SUBJECT_OPTIONS } from './recoveryImport'
 import './recovery.css'
 
 type RecoveryState = { draft: RecoveryContent | null; publication: RecoveryPublication | null; publicationAvailable: boolean }
@@ -159,7 +158,7 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
               </label>
               <span id="recovery-import-format">Excel (.xlsx) ou JSON</span>
             </div>
-            <p>Use a primeira aba do Excel com Data, Início, Fim e Matéria. Turma, Professor e Local são opcionais. Use as matérias e turmas da Agenda. Até 200 aulas por arquivo.</p>
+            <p>Use a primeira aba do Excel com Data, Início, Fim e Matéria. Turma, Professor e Local são opcionais. Use as matérias e turmas da Agenda.</p>
             <details>
               <summary>Ver exemplo de JSON</summary>
               <pre>{JSON.stringify([{ data: '07/12/2026', início: '08:00', fim: '08:50', matéria: 'Matemática', turma: classNames[0] ?? '', professor: '', local: '' }], null, 2)}</pre>
@@ -182,14 +181,14 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
           {!!draft.lessons.length && <details className="recovery-lesson-list" open={manualOpen}
             onToggle={event => setManualOpen(event.currentTarget.open)} onInvalidCapture={() => setManualOpen(true)}>
             <summary>Revisar e editar {draft.lessons.length} {draft.lessons.length === 1 ? 'aula' : 'aulas'}</summary>
-            {draft.lessons.map((lesson, index) => (
+            {manualOpen && draft.lessons.map((lesson, index) => (
               <div className="recovery-lesson" key={index} role="group" aria-label={'Aula ' + (index + 1)}>
                 <div className="recovery-fields">
                   <label>Matéria<select className="portal-control" required value={lesson.subject} onChange={e => updateLesson(index, { subject: e.target.value })}>
                     <option value="" disabled>Selecione uma matéria</option>
-                    {lesson.subject && !SUBJECTS.some(subject => subject === lesson.subject) &&
+                    {lesson.subject && !RECOVERY_SUBJECT_OPTIONS.includes(lesson.subject) &&
                       <option value={lesson.subject} disabled>{lesson.subject} (fora do catálogo)</option>}
-                    {SUBJECTS.map(subject => <option key={subject}>{subject}</option>)}
+                    {RECOVERY_SUBJECT_OPTIONS.map(subject => <option key={subject}>{subject}</option>)}
                   </select></label>
                   <label>Turma<select className="portal-control" value={lesson.className ?? ''} onChange={e => updateLesson(index, { className: e.target.value })}>
                     <option value="">Todas as turmas</option>
@@ -209,7 +208,7 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
               </div>
             ))}
           </details>}
-          <button type="button" className="portal-control recovery-action" disabled={draft.lessons.length >= MAX_RECOVERY_LESSONS}
+          <button type="button" className="portal-control recovery-action"
             onClick={() => {
               updateLessons([...draft.lessons, { date: '', start: '', end: '', subject: '', className: '', teacher: '', room: '' }])
               setManualOpen(true)

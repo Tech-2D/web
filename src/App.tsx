@@ -12,6 +12,8 @@ import { FirebaseError } from 'firebase/app'
 import { PageHeading } from './PageHeading'
 import { RecoveryAgenda } from './RecoveryAgenda'
 import { useRecoveryMode } from './recovery'
+import { AgendaClosureScreen } from './AgendaClosureScreen'
+import { useAgendaClosure } from './agendaClosure'
 import { SiteNavigation } from './SiteNavigation'
 import { addDoc, collection, doc, getDoc, serverTimestamp } from './dataClient'
 import { auth, db } from './firebase'
@@ -122,7 +124,9 @@ function App() {
     setTurmaId(preferredTurma)
     if (preferredTurma) savePreferredTurma(preferredTurma)
   }, [preferredTurma])
-  const { period, checking: checkingRecovery } = useRecoveryMode(calendarUser, Boolean(preferredTurma) && !adminOpen && !kanbanOpen && !moreOptionsOpen)
+  const calendarRoute = !adminOpen && !kanbanOpen && !moreOptionsOpen
+  const closure = useAgendaClosure(calendarUser, calendarRoute)
+  const { period, checking: checkingRecovery } = useRecoveryMode(calendarUser, Boolean(preferredTurma) && calendarRoute && !closure.screen)
   const [regularCalendarVersion, setRegularCalendarVersion] = useState<string>()
   const recoveryVersion = period ? period.id + ':' + period.startsAt : undefined
   const showRecovery = Boolean(period && recoveryVersion !== regularCalendarVersion && !linkedActivityId && !compareMode)
@@ -515,6 +519,19 @@ function App() {
           <AdminPage publicTurmaId={turmaId} classNames={classNames} quickCreateDate={quickCreateDate} quickEditActivity={quickEditActivity} systemUpdates={systemUpdates} onReturnToCalendar={closeAdmin} />
         </Suspense>
       </DialogLoadBoundary>
+    </div>
+  )
+
+  if (calendarRoute && (closure.screen || closure.waiting || closure.error)) return (
+    <div className="app-shell portal-frame">
+      <SiteNavigation active="agenda" role={calendarProfile?.role} />
+      <main id="inicio" className="main-content portal-main agenda-closure-view">
+        {closure.screen ? <AgendaClosureScreen screen={closure.screen} /> : <div className="state-card">
+          {closure.error ? <><p role="alert">Não foi possível verificar o estado da Agenda.</p>
+            <button type="button" className="portal-control" onClick={closure.retry}>Tentar novamente</button></>
+            : <p role="status"><LoaderCircle className="spin" aria-hidden="true" /> Carregando Agenda…</p>}
+        </div>}
+      </main>
     </div>
   )
 

@@ -65,11 +65,17 @@ A Agenda lê os avisos da turma em `GET /api/catalog/notices?class=…`. Represe
 
 Em **Administração → Agenda da turma → Recuperação**, administradores gerais podem editar a grade e importar horários de um Excel `.xlsx` ou JSON. A primeira linha da planilha deve conter **Data**, **Início**, **Fim** e **Matéria**. **Turma**, **Professor** e **Local** são opcionais. Use os nomes de matérias e turmas do catálogo da Agenda. O painel mostra um exemplo de JSON e permite revisar a grade antes de salvar.
 
+A grade aceita mais de 200 horários. O arquivo deve ter até 1 MB. Acrescente ` (Prova)` ao nome da disciplina para identificar avaliações.
+
 Depois de salvar os horários, informe a duração de 1 a 90 dias e clique em **Ativar recuperação**. A Agenda abre a grade de recuperação imediatamente e volta à visão habitual ao final do prazo ou quando um administrador desliga o modo. [Especificação do modo de recuperação](https://github.com/Tech-2D/api/tree/main/specs/modo-recuperacao)
 
 ### Análise por conta
 
 Em **Administração → Turmas e acessos → Contas de usuários**, selecione **Ver análise** em uma conta para consultar a turma, as permissões, a situação do acesso e a atividade registrada em 7 ou 30 dias. [Especificação da análise por conta](https://github.com/Tech-2D/api/tree/main/specs/analise-conta)
+
+### Fechamento da Agenda
+
+Em **Administração → Manutenção → Fechamento da Agenda**, administradores gerais podem escolher um modelo, personalizar a mensagem e a aparência, rearranjar blocos e conferir a prévia no celular ou em tela larga. **Salvar rascunho** mantém a edição privada. **Publicar e fechar Agenda** troca a visualização do calendário pelo aviso. **Reabrir Agenda** restaura o calendário e mantém o rascunho.
 
 ### Limpeza de virada de ano
 

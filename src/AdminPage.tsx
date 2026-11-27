@@ -12,6 +12,7 @@ import { RecoveryAdminPanel } from './RecoveryAdminPanel'
 import { SchedulesAdminPanel } from './SchedulesAdminPanel'
 import { AgendaUsersPanel } from './AgendaUsersPanel'
 import { AgendaYearResetPanel } from './AgendaYearResetPanel'
+import { AgendaClosureAdmin } from './AgendaClosureAdmin'
 import { ClassLinkAdminPanel } from './ClassLinkAdminPanel'
 import { AdministratorsPanel } from './AdministratorsPanel'
 import { ATTACHMENTS_ENABLED, deleteActivityWithAttachments, formatAttachmentSize, MAX_ATTACHMENTS, removeAttachment, uploadAttachment, validateAttachment } from './attachments'
@@ -59,7 +60,7 @@ type AdminPageProps = {
 }
 
 type AdminTabId = 'activities' | 'recurrences' | 'retention' | 'notices' | 'suggestions'
-  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport' | 'recovery' | 'yearReset' | 'classLinks'
+  | 'representatives' | 'administrators' | 'classes' | 'updates' | 'feedback' | 'storage' | 'access' | 'assistant' | 'users' | 'schedules' | 'scheduleImport' | 'recovery' | 'yearReset' | 'classLinks' | 'agendaClosure'
 
 type AdminSection = {
   id: string
@@ -88,6 +89,7 @@ const adminDescriptions: Record<AdminTabId, string> = {
   retention: 'Defina por quanto tempo as atividades da turma ficam na Agenda.',
   storage: 'Consulte o espaço ocupado e gerencie os anexos das atividades.',
   yearReset: 'Revise os dados da Agenda que serão limpos na virada de ano.',
+  agendaClosure: 'Monte a tela que aparece enquanto a Agenda estiver fechada.',
 }
 
 export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, quickEditActivity, systemUpdates, onReturnToCalendar }: AdminPageProps) {
@@ -869,6 +871,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
     tabs: [
       { id: 'retention', label: 'Exclusão de atividades antigas', icon: Trash2 },
       ...(isSuperAdmin ? [
+        { id: 'agendaClosure' as const, label: 'Fechamento da Agenda', icon: DoorOpen },
         { id: 'storage' as const, label: 'Armazenamento de arquivos', icon: Archive },
         { id: 'yearReset' as const, label: 'Virada de ano', icon: CalendarDays },
       ] : []),
@@ -1194,6 +1197,7 @@ export default function AdminPage({ publicTurmaId, classNames, quickCreateDate, 
                   {isSuperAdmin && adminTab === 'access' && <SiteAccessPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'assistant' && <AssistantAdminPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'recovery' && <RecoveryAdminPanel key={user.uid} user={user} classNames={classNames} />}
+                  {isSuperAdmin && adminTab === 'agendaClosure' && <AgendaClosureAdmin key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'users' && <AgendaUsersPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'administrators' && <AdministratorsPanel key={user.uid} user={user} />}
                   {isSuperAdmin && adminTab === 'updates' && (
