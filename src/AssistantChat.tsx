@@ -66,6 +66,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [turns, setTurns] = useState<Turn[]>([])
+  const [enteringNotes, setEnteringNotes] = useState<Turn | null>(null)
   const [typingTurn, setTypingTurn] = useState<Turn | null>(null)
   const [typedText, setTypedText] = useState('')
   const [message, setMessage] = useState('')
@@ -214,6 +215,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
       const reply = { text: data.answer, cards: data.cards, kanbanResult: data.kanban_result, operation: data.notes_operation,
         formatted: Boolean(data.notes_operation) || markdownSyntax.test(data.answer) }
       setTurns(old => [...old, reply])
+      if (reply.operation && transcript.current && !chat.current?.hidden) setEnteringNotes(reply)
       if (!reply.formatted && transcript.current && !chat.current?.hidden && document.documentElement.dataset.motion !== 'reduzido'
         && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
         setTypedText('')
@@ -269,6 +271,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     void send('/api/kanban', { action, draft_id: kanban.id, confirmation_source: 'button', ...(items ? { items } : {}) })
   }
   function close() {
+    setEnteringNotes(null)
     setTypingTurn(null)
     setOpen(false)
     requestAnimationFrame(() => toggle.current?.focus())
@@ -281,6 +284,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
     transport.forget()
     setTypingTurn(null)
     setTurns([])
+    setEnteringNotes(null)
     setMessage('')
     setLinkedActivity(null)
     setError('')
@@ -346,7 +350,8 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
             void send('/api/chat', { message: question, preferred_class: preferredClass }, question)
           }} />}
         {turns.map((turn, index) => <div className={turn.cards?.length || turn.kanbanResult ? 'assistant-result-turn' : 'assistant-message'} key={index}>
-          <div className={turn.user ? 'assistant-turn user' : turn.operation ? 'assistant-turn assistant-turn-notes' : 'assistant-turn'}>
+          <div className={turn.user ? 'assistant-turn user' : turn.operation ? 'assistant-turn assistant-turn-notes' : 'assistant-turn'}
+            data-entering={turn === enteringNotes || undefined}>
             {turn.user ? turn.text : turn.formatted ? <AssistantReply text={turn.text} operation={turn.operation} />
               : <span className={turn === typingTurn ? 'assistant-typing-text' : undefined}>
               <span>{turn.text}</span>
@@ -355,7 +360,7 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
           </div>
           {!!turn.cards?.length && <div className="assistant-result-list">
             {turn.cards.map((card, index) => <ActivityResult key={card.id ?? index} activity={card}
-              agendaPath={agendaPath} onOpen={() => setOpen(false)} onPrepare={() => prepareFromResult(card)} />)}
+              agendaPath={agendaPath} onOpen={() => { setEnteringNotes(null); setOpen(false) }} onPrepare={() => prepareFromResult(card)} />)}
           </div>}
           {turn.kanbanResult && <div className="assistant-result-list" aria-label="Meu Kanban">
             {turn.kanbanResult.cards.map((card, index) => <article className="assistant-activity-card" key={index}>
