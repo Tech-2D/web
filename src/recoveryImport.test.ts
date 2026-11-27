@@ -14,13 +14,13 @@ describe('importação de horários de recuperação', () => {
     }))
     const result = parseRecoveryJson(JSON.stringify(rows), classes)
     expect(result).toHaveLength(243)
-    expect(result[0].subject).toBe('Ciência de Dados (Prova)')
+    expect(result[0]).toMatchObject({ subject: 'Ciência de Dados', kind: 'exam' })
   })
   it('importa um arquivo Excel com células de data e hora', async () => {
     const data = await readFile(new URL('../test/fixtures/horarios-recuperacao.xlsx', import.meta.url))
     const file = new File([new Uint8Array(data)], 'horarios-recuperacao.xlsx')
     await expect(importRecoveryFile(file, classes)).resolves.toEqual([{
-      date: '2026-12-07', start: '08:00', end: '08:50', subject: 'Matemática', className: classes[0], teacher: 'Ana', room: 'Sala 8',
+      date: '2026-12-07', start: '08:00', end: '08:50', subject: 'Matemática', className: classes[0], teacher: 'Ana', room: 'Sala 8', kind: 'lesson',
     }])
   })
   it('converte os campos em português e os usados na importação de professores', () => {
@@ -29,21 +29,21 @@ describe('importação de horários de recuperação', () => {
       className: '', professor: 'Ana', roomDescription: 'Lab',
     }]), classes)
     expect(actual).toEqual([
-      { date: '2026-12-07', start: '08:00', end: '08:50', subject: 'Matemática', className: classes[0], teacher: null, room: 'Sala 8' },
-      { date: '2026-12-08', start: '09:00', end: '10:00', subject: 'Língua Inglesa', className: null, teacher: 'Ana', room: 'Lab' },
+      { date: '2026-12-07', start: '08:00', end: '08:50', subject: 'Matemática', className: classes[0], teacher: null, room: 'Sala 8', kind: 'lesson' },
+      { date: '2026-12-08', start: '09:00', end: '10:00', subject: 'Língua Inglesa', className: null, teacher: 'Ana', room: 'Lab', kind: 'lesson' },
     ])
   })
 
   it('lê linhas do Excel com datas e horários nativos', () => {
     const serial = (Date.UTC(2026, 11, 7) - Date.UTC(1899, 11, 30)) / 86400000
     const result = parseRecoverySheet([
-      ['Matéria', 'Turma', 'Data', 'Início', 'Fim', 'Local'],
-      ['Matemática', classes[0], serial, 8 / 24, 530 / 1440, 8],
+      ['Matéria', 'Turma', 'Data', 'Início', 'Fim', 'Local', 'Tipo'],
+      ['Matemática', classes[0], serial, 8 / 24, 530 / 1440, 8, 'Prova'],
       [null, null, null, null, null, null],
       ['Língua Inglesa', 'Todas as turmas', new Date('2026-12-08T00:00:00Z'), '8:00', '08:50:00', null],
     ], classes)
     expect(result).toMatchObject([
-      { date: '2026-12-07', className: classes[0], start: '08:00', end: '08:50', room: '8' },
+      { date: '2026-12-07', className: classes[0], start: '08:00', end: '08:50', room: '8', kind: 'exam' },
       { date: '2026-12-08', className: null, start: '08:00', end: '08:50' },
     ])
   })

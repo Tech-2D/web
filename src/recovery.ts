@@ -10,7 +10,13 @@ export interface RecoveryLesson {
   className: string | null
   teacher: string | null
   room: string | null
+  kind?: 'lesson' | 'exam'
 }
+
+const examSuffix = /\s+\(prova\)$/i
+export const recoverySubject = (subject: string) => subject.trim().replace(examSuffix, '')
+export const recoveryKind = (lesson: Pick<RecoveryLesson, 'subject' | 'kind'>) =>
+  lesson.kind ?? (examSuffix.test(lesson.subject.trim()) ? 'exam' : 'lesson')
 
 export interface RecoveryPublication {
   id: number

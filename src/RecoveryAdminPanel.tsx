@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import type { User } from 'firebase/auth'
 import { FileUp, Plus, Trash2 } from 'lucide-react'
-import { formatRecoveryTime, recoveryRequest, type RecoveryContent, type RecoveryLesson, type RecoveryPublication } from './recovery'
+import { formatRecoveryTime, recoveryKind, recoveryRequest, recoverySubject, type RecoveryContent, type RecoveryLesson, type RecoveryPublication } from './recovery'
 import { importRecoveryFile, RECOVERY_SUBJECT_OPTIONS } from './recoveryImport'
 import './recovery.css'
 
@@ -158,18 +158,18 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
               </label>
               <span id="recovery-import-format">Excel (.xlsx) ou JSON</span>
             </div>
-            <p>Use a primeira aba do Excel com Data, Início, Fim e Matéria. Turma, Professor e Local são opcionais. Use as matérias e turmas da Agenda.</p>
+            <p>Use a primeira aba do Excel com Data, Início, Fim e Matéria. Na coluna Tipo, indique Aula ou Prova. Turma, Professor e Local são opcionais.</p>
             <details>
               <summary>Ver exemplo de JSON</summary>
-              <pre>{JSON.stringify([{ data: '07/12/2026', início: '08:00', fim: '08:50', matéria: 'Matemática', turma: classNames[0] ?? '', professor: '', local: '' }], null, 2)}</pre>
+              <pre>{JSON.stringify([{ data: '04/12/2026', início: '08:00', fim: '08:50', matéria: 'Matemática', tipo: 'Prova', turma: classNames[0] ?? '', professor: '', local: '' }], null, 2)}</pre>
             </details>
             {importing && <p role="status">Lendo horários…</p>}
             {importError && <p role="alert">{importError}</p>}
             {!!preview.length && <div className="recovery-import-preview">
-              <p role="status">{preview.length} {preview.length === 1 ? 'aula validada' : 'aulas validadas'}. {draft.lessons.length > 0 && 'O arquivo substitui a grade em edição.'}</p>
+              <p role="status">{preview.length} {preview.length === 1 ? 'horário validado' : 'horários validados'}, {preview.filter(lesson => recoveryKind(lesson) === 'exam').length} de prova. {draft.lessons.length > 0 && 'O arquivo substitui a grade em edição.'}</p>
               <ul>
                 {preview.slice(0, 3).map((lesson, index) => <li key={index}>
-                  {lesson.date.split('-').reverse().join('/')} · {lesson.start}–{lesson.end} · {lesson.subject}{lesson.className && ' · ' + lesson.className}
+                  {lesson.date.split('-').reverse().join('/')} · {lesson.start}–{lesson.end} · {lesson.subject}{recoveryKind(lesson) === 'exam' && ' · Prova'}{lesson.className && ' · ' + lesson.className}
                 </li>)}
               </ul>
               <div className="recovery-actions">
@@ -184,11 +184,17 @@ export function RecoveryAdminPanel({ user, classNames }: { user: User; className
             {manualOpen && draft.lessons.map((lesson, index) => (
               <div className="recovery-lesson" key={index} role="group" aria-label={'Aula ' + (index + 1)}>
                 <div className="recovery-fields">
-                  <label>Matéria<select className="portal-control" required value={lesson.subject} onChange={e => updateLesson(index, { subject: e.target.value })}>
+                  <label>Matéria<select className="portal-control" required value={recoverySubject(lesson.subject)} onChange={e => updateLesson(index, { subject: e.target.value, kind: recoveryKind(lesson) })}>
                     <option value="" disabled>Selecione uma matéria</option>
-                    {lesson.subject && !RECOVERY_SUBJECT_OPTIONS.includes(lesson.subject) &&
-                      <option value={lesson.subject} disabled>{lesson.subject} (fora do catálogo)</option>}
+                    {lesson.subject && !RECOVERY_SUBJECT_OPTIONS.includes(recoverySubject(lesson.subject)) &&
+                      <option value={recoverySubject(lesson.subject)} disabled>{recoverySubject(lesson.subject)} (fora do catálogo)</option>}
                     {RECOVERY_SUBJECT_OPTIONS.map(subject => <option key={subject}>{subject}</option>)}
+                  </select></label>
+                  <label>Tipo<select className="portal-control" value={recoveryKind(lesson)} onChange={e => updateLesson(index, {
+                    kind: e.target.value === 'exam' ? 'exam' : 'lesson', subject: recoverySubject(lesson.subject),
+                  })}>
+                    <option value="lesson">Aula de revisão</option>
+                    <option value="exam">Prova</option>
                   </select></label>
                   <label>Turma<select className="portal-control" value={lesson.className ?? ''} onChange={e => updateLesson(index, { className: e.target.value })}>
                     <option value="">Todas as turmas</option>

@@ -1,11 +1,11 @@
 import { normalizeClassName } from './classRequests'
-import type { RecoveryLesson } from './recovery'
+import { recoveryKind, recoverySubject, type RecoveryLesson } from './recovery'
 import { SUBJECTS } from './subjects'
 
 const recoverySubjects = [
   ...SUBJECTS, 'Ciência de Dados', 'Matemática 12-Inovação e Tecnologia', 'Segurança Cibernética',
 ]
-export const RECOVERY_SUBJECT_OPTIONS = recoverySubjects.flatMap(name => [name, name + ' (Prova)'])
+export const RECOVERY_SUBJECT_OPTIONS = recoverySubjects
 const columns = {
   date: ['data', 'date'],
   start: ['inicio', 'start', 'starttime'],
@@ -14,6 +14,7 @@ const columns = {
   className: ['turma', 'classname'],
   teacher: ['professor', 'teacher'],
   room: ['local', 'sala', 'room', 'roomdescription'],
+  kind: ['tipo', 'kind'],
 } satisfies Record<keyof RecoveryLesson, string[]>
 
 const columnNames = Object.keys(columns) as (keyof RecoveryLesson)[]
@@ -76,17 +77,22 @@ function normalizeLessons(rows: { values: Record<string, unknown>; label: string
     if (!date) throw new Error(label + ' — informe uma data válida (DD/MM/AAAA ou AAAA-MM-DD).')
     if (!start || !end || end <= start) throw new Error(label + ' — confira os horários de início e fim.')
     if (!inputSubject) throw new Error(label + ' — informe a matéria.')
-    const subject = availableSubjects.get(subjectKey(inputSubject))
+    const subject = availableSubjects.get(subjectKey(recoverySubject(inputSubject)))
     if (!subject) throw new Error(label + ' — matéria não encontrada na Agenda: ' + inputSubject + '.')
+    const inputKind = columnKey(readText('kind', 20))
+    const kind = inputKind === '' ? recoveryKind({ subject: inputSubject })
+      : ['exam', 'prova'].includes(inputKind) ? 'exam'
+        : ['lesson', 'aula', 'revisao'].includes(inputKind) ? 'lesson' : null
+    if (!kind) throw new Error(label + ' — informe Aula ou Prova no tipo de horário.')
     const inputClass = readText('className', 100)
     const className = !inputClass || classKey(inputClass) === 'TODAS AS TURMAS' ? null : available.get(classKey(inputClass))
     if (className === undefined) throw new Error(label + ' — turma não encontrada: ' + inputClass + '.')
     const teacher = readText('teacher', 120) || null
     const room = readText('room', 120) || null
-    const identity = JSON.stringify([date, start, end, subject, className, teacher, room])
+    const identity = JSON.stringify([date, start, end, subject, className, teacher, room, kind])
     if (seen.has(identity)) throw new Error(label + ' — esta aula está repetida no arquivo.')
     seen.add(identity)
-    return { date, start, end, subject, className, teacher, room }
+    return { date, start, end, subject, className, teacher, room, kind }
   })
 }
 

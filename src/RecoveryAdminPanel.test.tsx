@@ -31,7 +31,7 @@ it('imports and saves schedules from the file picker, preserving the metadata of
   expect(await screen.findByText('Horários salvos.')).toBeTruthy()
   expect(request.mock.calls[1][3]).toEqual({
     action: 'save', version: 2, title: draft.title, description: draft.description, link: draft.link,
-    lessons: [{ date: '2026-12-07', start: '08:00', end: '08:50', subject: 'Matemática', className: '', teacher: '', room: '' }],
+    lessons: [{ date: '2026-12-07', start: '08:00', end: '08:50', subject: 'Matemática', className: '', teacher: '', room: '', kind: 'lesson' }],
   })
 })
 
