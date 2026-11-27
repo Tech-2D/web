@@ -41,31 +41,42 @@
 .recovery-day[id] { scroll-margin-top: 6rem; }
 .recovery-day-title, .recovery-class-subject { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .75rem; }
 .recovery-exam-summary {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: .8rem 1.25rem;
-  padding: .9rem 1rem;
+  display: grid;
+  gap: .75rem;
+  padding: clamp(.7rem, 2vw, 1.05rem);
   margin-top: .9rem;
   border: 1px solid var(--line);
-  border-radius: .75rem;
+  border-radius: .85rem;
   background: var(--interface-subtle);
 }
-.recovery-exam-summary h3 { display: flex; align-items: center; gap: .5rem; margin: 0 0 .55rem; font-size: .95rem; }
-.recovery-exam-summary ul { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0; padding: 0; list-style: none; }
+.recovery-exam-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem .9rem; }
+.recovery-exam-header h3 { display: flex; align-items: center; gap: .55rem; margin: 0; font-size: 1rem; }
+.recovery-exam-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: .55rem;
+  background: var(--interface-surface);
+  color: var(--interface-accent);
+}
+.recovery-exam-summary ul { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.recovery-exam-summary li { flex: 0 1 7.1rem; min-width: 0; }
 .recovery-exam-summary .recovery-exam-date {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
+  display: grid;
+  gap: .2rem;
+  padding: .55rem .75rem;
+  border-radius: .65rem;
   background: var(--interface-surface);
   color: var(--interface-text);
   text-decoration: none;
-  font-size: .85rem;
+  line-height: 1.25;
 }
-.recovery-exam-date time { color: var(--interface-accent); font-variant-numeric: tabular-nums; font-weight: 800; }
-.recovery-exam-toggle { display: inline-flex; align-items: center; gap: .5rem; font-size: .9rem; font-weight: 650; }
-.recovery-exam-toggle input { accent-color: var(--interface-accent); inline-size: 1.1rem; block-size: 1.1rem; }
+.recovery-exam-summary .recovery-exam-date:hover { border-color: var(--interface-accent); }
+.recovery-exam-date time { color: var(--interface-accent); font-size: 1rem; font-variant-numeric: tabular-nums; font-weight: 800; }
+.recovery-exam-count { color: var(--ink-soft); font-size: .78rem; }
+.recovery-exam-toggle { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.75rem; font-size: .85rem; font-weight: 650; cursor: pointer; }
+.recovery-exam-toggle input { accent-color: var(--interface-accent); inline-size: 1.1rem; block-size: 1.1rem; margin: 0; }
 .recovery-exam-badge {
   display: inline-flex;
   align-items: center;
@@ -176,6 +187,7 @@ button.recovery-primary { background: var(--interface-accent); border-color: var
 button.recovery-primary:disabled { opacity: .55; cursor: default; }
 
 @media (max-width: 600px) {
+  .recovery-exam-summary li { flex: 1 1 5.4rem; max-width: 8rem; }
   .recovery-fields { grid-template-columns: minmax(0, 1fr); }
   .recovery-fields .recovery-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .recovery-class-card { grid-template-columns: minmax(0, 1fr); gap: .4rem; padding: .75rem; }

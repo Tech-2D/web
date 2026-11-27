@@ -83,8 +83,11 @@ export function RecoverySchedule({ period, turmaId }: {
           </label>
         </div>
         {(examDays.length > 0 || onlyExams) && <div className="recovery-exam-summary">
+          <div className="recovery-exam-header">
+            <h3><span className="recovery-exam-icon"><ClipboardList size={18} aria-hidden="true" /></span> Datas das provas</h3>
+            <label className="recovery-exam-toggle"><input type="checkbox" checked={onlyExams} onChange={event => setOnlyExams(event.target.checked)} /> Mostrar só provas</label>
+          </div>
           {examDays.length > 0 && <nav aria-label="Datas das provas de recuperação">
-            <h3><ClipboardList size={18} aria-hidden="true" /> Datas das provas</h3>
             <ul>
               {examDays.map(({ date, day, exams }) => <li key={date}>
                 <a className="portal-control recovery-exam-date" href={'#recuperacao-' + date}
@@ -96,12 +99,11 @@ export function RecoverySchedule({ period, turmaId }: {
                     section.scrollIntoView({ block: 'start' })
                   }}>
                   <time dateTime={date}><span className="sr-only">{dayLabel.format(day)}</span><span aria-hidden="true">{shortDate.format(day)}</span></time>
-                  <span>{examCount(exams)}</span>
+                  <span className="recovery-exam-count">{examCount(exams)}</span>
                 </a>
               </li>)}
             </ul>
           </nav>}
-          <label className="recovery-exam-toggle"><input type="checkbox" checked={onlyExams} onChange={event => setOnlyExams(event.target.checked)} /> Mostrar só provas</label>
         </div>}
         {visibleDays.length === 0 ? <div className="recovery-schedule-empty">
           <CalendarClock size={24} aria-hidden="true" />
