@@ -89,7 +89,7 @@ Em **Administração → Manutenção → Virada de ano**, administradores gerai
 
 ### Turma vinculada ao perfil
 
-Quando a conta ainda não tem vínculo, a Agenda pede que a pessoa confirme uma turma do catálogo. Em **Perfil → Minha turma**, ela pode trocar a turma depois de 30 dias ou pedir uma correção. Os administradores gerais revisam os pedidos em **Administração → Turmas e acessos → Trocas de turma**. O seletor do calendário serve para consultar outras turmas. [Especificação do vínculo](https://github.com/Tech-2D/api/tree/main/specs/vinculo-turma)
+Antes de abrir o calendário, alunos e representantes confirmam uma turma do catálogo. A Agenda mostra somente as atividades dessa turma. Em **Perfil → Minha turma → Gerenciar vínculo**, a pessoa pode trocar de turma depois de 30 dias ou pedir uma correção. Administradores gerais mantêm o seletor de turmas, a comparação e as atividades gerais. Eles revisam pedidos em **Administração → Turmas e acessos → Trocas de turma**. [Especificação do vínculo](https://github.com/Tech-2D/api/tree/main/specs/vinculo-turma)
 
 ## Rodar localmente
 

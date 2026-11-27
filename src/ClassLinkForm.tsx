@@ -36,7 +36,6 @@ export function ClassLinkForm({ user, data, onSave, onMissingClass }: {
   }
 
   return <form className={onMissingClass ? 'class-link-form class-setup-form' : 'portal-tool-row class-link-form'} onSubmit={save} aria-busy={busy}>
-    {data.link && <p>Turma vinculada <strong>{data.link.className}</strong></p>}
     {requesting && data.availableAt && <p>Você pode trocar por conta própria a partir de {dayFormat.format(new Date(data.availableAt))}. Antes disso, envie um pedido à administração.</p>}
     {data.link?.requestedClass && <p role="status">Aguardando análise do pedido para <strong>{data.link.requestedClass}</strong>.</p>}
     <label>{data.link ? 'Nova turma' : 'Sua turma'}<select className="portal-control" required value={selected}

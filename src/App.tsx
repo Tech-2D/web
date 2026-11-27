@@ -86,7 +86,7 @@ const emptyForm: Omit<ActivityInput, 'turmaId'> = {
 }
 
 function App() {
-  const [turmaId, setTurmaId] = useState<string | null>(null)
+  const [selectedTurma, setSelectedTurma] = useState<string | null>(null)
   const [classNames, setClassNames] = useState<string[]>([...CLASS_NAMES])
   const [classRequestOpen, setClassRequestOpen] = useState(false)
   const [subjectFilter, setSubjectFilter] = useState('')
@@ -105,6 +105,7 @@ function App() {
   const [quickCreateDate, setQuickCreateDate] = useState<string | null>(null)
   const [quickEditActivity, setQuickEditActivity] = useState<Activity | null>(null)
   const [calendarProfile, setCalendarProfile] = useState<AdminProfile | null>(null)
+  const [profileReady, setProfileReady] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuShortcuts, setMenuShortcuts] = useState(readMenuShortcuts)
   const [linkedMenuDialog, setLinkedMenuDialog] = useState(() => readAgendaMenuDialog(window.location.hash))
@@ -120,8 +121,9 @@ function App() {
   const [calendarUser, setCalendarUser] = useState<User | null>(null)
   const classLink = useClassLink(calendarUser)
   const preferredTurma = classLink.data?.link?.className ?? null
+  const canBrowseClasses = calendarProfile?.role === 'superadmin'
+  const turmaId = canBrowseClasses ? selectedTurma ?? preferredTurma ?? classNames[0] : preferredTurma
   useEffect(() => {
-    setTurmaId(preferredTurma)
     if (preferredTurma) savePreferredTurma(preferredTurma)
   }, [preferredTurma])
   const calendarRoute = !adminOpen && !kanbanOpen && !moreOptionsOpen
@@ -175,7 +177,16 @@ function App() {
       }),
       subscribeProfile: subscribeAdminProfile,
       publish: setCalendarProfile,
-      reset: () => { setQuickCreateDate(null); setQuickEditActivity(null) },
+      reset: () => {
+        setProfileReady(false)
+        setSelectedTurma(null)
+        setCompareMode(false)
+        setTurmaActivities([])
+        setGlobalActivities([])
+        setQuickCreateDate(null)
+        setQuickEditActivity(null)
+      },
+      ready: () => setProfileReady(true),
     })
     return stop
   }, [])
@@ -294,7 +305,7 @@ function App() {
   }, [linkedMenuDialog, openMenuDialog, turmaId])
 
   function chooseTurma(value: string) {
-    setTurmaId(value)
+    if (canBrowseClasses) setSelectedTurma(value)
   }
 
   function closeLinkedActivity() {
@@ -318,7 +329,7 @@ function App() {
 
   useEffect(() => {
     // A shared link loads only its activity; the full calendar starts when it is closed.
-    if (linkedActivityId) return
+    if (linkedActivityId || !calendarUser || !turmaId) return
     let loaded = false
     setLoading(true)
     setTurmaActivities([])
@@ -342,14 +353,16 @@ function App() {
         setLoadError('Não foi possível carregar a agenda. Tente novamente em alguns minutos.')
         setUpdatesError('Não foi possível carregar as atualizações. Tente novamente mais tarde.')
       }
-    }, turmaId || undefined)
-  }, [turmaId, linkedActivityId])
+    }, turmaId)
+  }, [calendarUser, turmaId, linkedActivityId, canBrowseClasses])
 
+  const calendarActivities = useMemo(() => [
+    ...turmaActivities.filter(activity => activity.turmaId === turmaId),
+    ...(canBrowseClasses ? globalActivities : []),
+  ], [turmaActivities, globalActivities, turmaId, canBrowseClasses])
   const activities = useMemo(() => {
-    const merged = [...turmaActivities, ...globalActivities]
-    return subjectFilter ? merged.filter((activity) => activity.subject === subjectFilter) : merged
-  }, [turmaActivities, globalActivities, subjectFilter])
-  const assistantActivities = useMemo(() => [...turmaActivities, ...globalActivities], [turmaActivities, globalActivities])
+    return subjectFilter ? calendarActivities.filter(activity => activity.subject === subjectFilter) : calendarActivities
+  }, [calendarActivities, subjectFilter])
   const assistantClass = preferredTurma ?? turmaId
 
   const recentActivities = useMemo(() => {
@@ -509,7 +522,7 @@ function App() {
       <SyncStatus />
       {ASSISTANT_ENDPOINT && calendarUser &&
         <Suspense fallback={null}><AssistantChat key={calendarUser.uid} account={calendarUser}
-          preferredClass={assistantClass} endpoint={ASSISTANT_ENDPOINT} welcomeActivities={assistantActivities} /></Suspense>}
+          preferredClass={assistantClass} endpoint={ASSISTANT_ENDPOINT} welcomeActivities={calendarActivities} /></Suspense>}
       <DialogLoadBoundary>
         <Suspense fallback={<main className="main-content"><p role="status">Carregando painel…</p></main>}>
           <AdminPage publicTurmaId={turmaId} classNames={classNames} quickCreateDate={quickCreateDate} quickEditActivity={quickEditActivity} systemUpdates={systemUpdates} onReturnToCalendar={closeAdmin} />
@@ -531,7 +544,7 @@ function App() {
     </div>
   )
 
-  if (!kanbanOpen && !preferredTurma) return (
+  if (!kanbanOpen && !canBrowseClasses && !preferredTurma) return (
     <div className="app-shell portal-frame">
       <SiteNavigation active="agenda" role={calendarProfile?.role} showProfileReminder={false} />
       <main id="inicio" className="main-content portal-main class-setup">
@@ -542,7 +555,8 @@ function App() {
           <div className="class-setup-content">
             <h1 id="class-setup-title">Qual é a sua turma?</h1>
             <p>Escolha sua turma para ver o calendário, as atividades e os avisos da sua sala.</p>
-            {classLink.error ? <>
+            {!profileReady ? <p className="class-setup-loading" role="status"><LoaderCircle className="spin" size={18} aria-hidden="true" /> Verificando acesso à Agenda…</p>
+            : classLink.error ? <>
               <p className="form-error" role="alert">{classLink.error}</p>
               <button type="button" className="portal-control" onClick={classLink.reload}>Tentar novamente</button>
             </> : calendarUser && classLink.data ? <>
@@ -565,24 +579,24 @@ function App() {
 
       {ASSISTANT_ENDPOINT && calendarUser &&
         <Suspense fallback={null}><AssistantChat key={calendarUser.uid} account={calendarUser}
-          preferredClass={assistantClass} endpoint={ASSISTANT_ENDPOINT} prefill={assistantPrefill} welcomeActivities={assistantActivities}
+          preferredClass={assistantClass} endpoint={ASSISTANT_ENDPOINT} prefill={assistantPrefill} welcomeActivities={calendarActivities}
           covered={Boolean(selectedDay || linkedActivityId)}
           onViewKanban={() => { if (kanbanOpen) setKanbanRefresh(value => value + 1) }} /></Suspense>}
 
       {kanbanOpen ? (
         <DialogLoadBoundary><Suspense fallback={<div className="state-card" role="status"><LoaderCircle className="spin" /><p>Carregando seu Kanban…</p></div>}>
-          <KanbanPage activities={[...turmaActivities, ...globalActivities]} refreshKey={kanbanRefresh} />
+          <KanbanPage activities={calendarActivities} refreshKey={kanbanRefresh} />
         </Suspense></DialogLoadBoundary>
       ) : moreOptionsOpen ? (
         <MoreOptionsPage
-          turmaId={preferredTurma}
+          turmaId={turmaId}
           onBack={closeMoreOptions}
           sections={menuSections}
           shortcuts={menuShortcuts}
           onToggleShortcut={toggleMenuShortcut}
           onResetShortcuts={resetMenuShortcuts}
         />
-      ) : compareMode ? (
+      ) : canBrowseClasses && compareMode ? (
       <main id="inicio" className="main-content portal-main">
         <Suspense fallback={<div className="state-card"><LoaderCircle className="spin" /><p>Carregando…</p></div>}>
           <CompareCalendar classNames={classNames} currentTurmaId={turmaId} onBack={() => setCompareMode(false)} />
@@ -598,12 +612,12 @@ function App() {
             </a>}
           </div>
           <div className="agenda-heading portal-tool-row">
-            <label className="turma-select-inline" aria-label="Turma selecionada">
+            {canBrowseClasses ? <label className="turma-select-inline" aria-label="Turma selecionada">
               <select className="portal-control" value={turmaId ?? ''} onChange={(event) => chooseTurma(event.target.value)}>
                 <option value="" disabled>Selecione uma turma</option>
                 {classNames.map((name) => <option key={name} value={name}>{name}</option>)}
               </select>
-            </label>
+            </label> : <strong className="agenda-bound-class">{turmaId}</strong>}
             {turmaId && (
               <label className="turma-select-inline" aria-label="Filtrar por matéria">
                 <select className="portal-control" value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}>
@@ -612,9 +626,9 @@ function App() {
                 </select>
               </label>
             )}
-            <button type="button" className="compare-link portal-control" onClick={() => setCompareMode(true)}>
+            {canBrowseClasses && <button type="button" className="compare-link portal-control" onClick={() => setCompareMode(true)}>
               <LayoutGrid size={14} aria-hidden="true" /> Comparar turmas
-            </button>
+            </button>}
             <button type="button" className="compare-link portal-control" onClick={() => setDocsOpen(true)}>
               <BookOpen size={14} aria-hidden="true" /> Comece por aqui
             </button>

@@ -57,6 +57,7 @@
 }
 .class-setup-content > p { margin: .65rem 0 1.3rem; color: var(--ink-soft); line-height: 1.55; }
 .class-setup-form { display: grid; gap: .65rem; }
+.agenda-bound-class { justify-self: start; padding: .45rem .65rem; border-radius: .5rem; background: var(--interface-subtle); color: var(--interface-accent); font-size: .875rem; }
 .class-setup-form label { font-size: .875rem; font-weight: 700; }
 .portal-frame .class-setup-form select { width: 100%; min-height: 3rem; padding-inline: .85rem; font-size: .95rem; }
 .class-setup-help {

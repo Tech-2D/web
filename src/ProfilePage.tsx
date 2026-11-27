@@ -126,6 +126,11 @@ export function ProfilePage() {
   }
 
   const preview = { ...fields, photoUrl: mine?.photoUrl ?? null }
+  const classEditor = user && classLink.data && <ClassLinkForm user={user} data={classLink.data} onSave={result => {
+    classLink.update(result)
+    if (result.link) savePreferredTurma(result.link.className)
+    setRefresh(value => value + 1)
+  }} />
   return <main className="profiles-page" aria-labelledby="profiles-title">
       <header className="profiles-header"><div><span className="profiles-eyebrow">Tech 2D · Comunidade</span><h1 id="profiles-title">Perfil e comunidade</h1></div><a className="profiles-back-link" href={sitePaths.agenda}><ArrowLeft size={17} />Voltar à Agenda</a></header>
       <nav className="profiles-tabs" aria-label="Área de perfis">
@@ -163,12 +168,14 @@ export function ProfilePage() {
             <h4 id="vinculo-turma-title">Minha turma</h4>
             {classLink.error ? <><p role="alert">{classLink.error}</p>
               <button type="button" className="profiles-link" onClick={classLink.reload}>Tentar novamente</button></>
-              : classLink.data ? <ClassLinkForm user={user} data={classLink.data} onSave={result => {
-                classLink.update(result)
-                if (result.link) savePreferredTurma(result.link.className)
-                setRefresh(value => value + 1)
-              }} /> : <p role="status">Carregando sua turma…</p>}
-            {classLink.data?.link?.requestedClass && <button type="button" className="profiles-link" onClick={classLink.reload}>Atualizar situação do pedido</button>}
+              : classLink.data ? linkedClass ? <>
+                <p className="profile-class-current"><strong>{linkedClass}</strong></p>
+                <details className="profile-class-management">
+                  <summary>Gerenciar vínculo</summary>
+                  {classEditor}
+                  {classLink.data.link?.requestedClass && <button type="button" className="profiles-link" onClick={classLink.reload}>Atualizar situação do pedido</button>}
+                </details>
+              </> : classEditor : <p role="status">Carregando sua turma…</p>}
           </section>}
           {!user ? <form onSubmit={authenticate} className="profiles-form"><p>Entre na sua conta para editar seu perfil.</p>
             <label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" /></label>
