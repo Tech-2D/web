@@ -57,4 +57,3 @@ export function KanbanDeleteDialog({ titles, shared, disabled, onCancel, onConfi
     </div>
   </dialog>
 }
-
