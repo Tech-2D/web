@@ -29,6 +29,43 @@
 .recovery-period time { display: inline-block; }
 .recovery-schedule-heading { padding-bottom: .95rem; border-bottom: 1px solid var(--line); }
 .recovery-schedule-heading p { margin: .25rem 0 0; color: var(--ink-soft); font-size: .85rem; }
+.recovery-layout button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; }
+.recovery-grid-scroll { margin-top: 1rem; }
+.recovery-grid-scroll .recovery-grid { color: var(--interface-text); }
+.recovery-grid-scroll .recovery-grid :is(th, td) { border-color: var(--line); }
+.recovery-grid-scroll .recovery-grid thead th { background: var(--interface-subtle); color: var(--interface-text); padding: .7rem; }
+.recovery-grid-scroll .recovery-grid thead th:first-child,
+.recovery-grid-scroll .recovery-grid tbody th {
+  position: sticky;
+  inset-inline-start: 0;
+  width: 5rem;
+  background: var(--interface-surface);
+  color: var(--ink-soft);
+  box-shadow: inset -1px 0 var(--line);
+  z-index: 1;
+}
+.recovery-grid thead th[id] { scroll-margin: 6rem 0 0 5rem; }
+.recovery-grid thead th:focus-visible { outline: 2px solid var(--interface-accent); outline-offset: -3px; }
+.recovery-grid thead th time { font-size: .95rem; font-variant-numeric: tabular-nums; }
+.recovery-grid thead th[data-exam-day="true"] time { color: var(--interface-accent); }
+.recovery-grid-scroll .recovery-grid thead th small { color: var(--ink-soft); font-size: .76rem; }
+.recovery-grid-lesson {
+  display: grid;
+  gap: .38rem;
+  margin-bottom: .3rem;
+  padding: .55rem;
+  border: 1px solid var(--line);
+  border-radius: .5rem;
+  background: var(--interface-surface);
+  overflow-wrap: anywhere;
+}
+.recovery-grid-lesson:last-child { margin-bottom: 0; }
+.recovery-grid-lesson[data-exam="true"] { border-inline-start: .23rem solid var(--interface-accent); background: var(--interface-subtle); }
+.recovery-grid-lesson .recovery-class-subject { gap: .3rem; }
+.recovery-grid-lesson .recovery-class-subject strong { font-size: .83rem; }
+.recovery-grid-lesson .recovery-class-meta { display: grid; gap: .3rem; font-size: .75rem; }
+.recovery-grid-lesson .recovery-class-label { font-size: .68rem; }
+.recovery-grid-time { margin: 0; color: var(--interface-accent); font-size: .74rem; font-weight: 750; font-variant-numeric: tabular-nums; }
 .recovery-search-row { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem 1rem; margin-top: .9rem; }
 .recovery-search-row .portal-search { flex: 1 1 16rem; min-height: 2.75rem; }
 .portal-frame button.recovery-clear-search { min-height: 2rem; padding: .25rem .45rem; }
@@ -75,8 +112,21 @@
 .recovery-exam-summary .recovery-exam-date:hover { border-color: var(--interface-accent); }
 .recovery-exam-date time { color: var(--interface-accent); font-size: 1rem; font-variant-numeric: tabular-nums; font-weight: 800; }
 .recovery-exam-count { color: var(--ink-soft); font-size: .78rem; }
-.recovery-exam-toggle { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.75rem; font-size: .85rem; font-weight: 650; cursor: pointer; }
-.recovery-exam-toggle input { accent-color: var(--interface-accent); inline-size: 1.1rem; block-size: 1.1rem; margin: 0; }
+.portal-frame .recovery-exam-header button.recovery-exam-toggle {
+  justify-content: center;
+  gap: .5rem;
+  min-height: 2.75rem;
+  padding: .42rem .85rem;
+  border-radius: .75rem;
+  color: var(--interface-accent);
+  font-size: .875rem;
+  font-weight: 700;
+}
+.portal-frame .recovery-exam-header button.recovery-exam-toggle[aria-pressed="true"] {
+  border-color: var(--interface-accent);
+  background: var(--interface-accent);
+  color: var(--interface-on-accent);
+}
 .recovery-exam-badge {
   display: inline-flex;
   align-items: center;
