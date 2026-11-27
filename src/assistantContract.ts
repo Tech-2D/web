@@ -20,6 +20,7 @@ export type Activity = Omit<AssistantActivityReference, 'id'> & {
 }
 export type AssistantResponse = {
   answer: string
+  notes_operation?: string
   kanban?: Kanban | null
   cards?: Activity[]
   remaining_messages?: number | null
@@ -69,6 +70,7 @@ function kanban(value: unknown) {
 
 export function parseAssistantResponse(value: unknown): AssistantResponse {
   if (!object(value) || !string(value.answer) ||
+    (value.notes_operation !== undefined && !string(value.notes_operation)) ||
     (value.cards !== undefined && (!Array.isArray(value.cards) || !value.cards.every(card =>
       object(card) && (card.id === null || string(card.id)) && string(card.title) && string(card.type) &&
       string(card.type_label) && date(card.date) &&

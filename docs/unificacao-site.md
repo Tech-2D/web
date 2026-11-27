@@ -9,6 +9,8 @@ O repositório `Tech-2D/web` publica o site em [tech-2d.github.io/web/](https://
 
 As três páginas usam uma instalação npm, um build Vite e o mesmo workflow de publicação. A navegação é interna, na mesma aba. Agenda e Professores compartilham Firebase, configuração de backend, aparência e atalhos de `src/`. As preferências de turma conservam as chaves de armazenamento existentes; cada área mantém seu catálogo, pois professores abrange turmas que ainda não têm agenda. Cada página carrega seus estilos específicos.
 
+O D2 exibe Markdown nas respostas e destaca disciplina, ano letivo, média e situação nas consultas de Notas.
+
 ## Publicação e transição
 
 1. Validar testes, lint e build antes da troca.

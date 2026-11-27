@@ -32,6 +32,42 @@ afterEach(() => {
 })
 
 describe('contrato do chat integrado', () => {
+  it('destaca a média anual e mostra cada média semestral uma vez', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({
+      notes_operation: 'grades_lookup',
+      answer: [
+        'Matemática 9-Banco de Dados · 2026',
+        'Média informada do 1º semestre: 9,00',
+        'Média informada do 2º semestre: 9,45',
+        '1º semestre: 9,00 · 2º semestre: 9,45 · média anual: 9,30. Situação em Notas: aprovação direta.',
+      ].join('\n'),
+    })))
+    chat()
+    send('Como estou em Banco de Dados?')
+
+    await screen.findByRole('region', { name: 'Notas de Matemática 9-Banco de Dados, 2026' })
+    expect(screen.getByText('média anual').parentElement?.textContent).toBe('média anual9,30')
+    expect(screen.getByText('aprovação direta')).toBeTruthy()
+    expect(screen.getAllByText('9,00')).toHaveLength(1)
+    expect(screen.getAllByText('9,45')).toHaveLength(1)
+    expect(screen.queryByText(/Média informada/)).toBeNull()
+  })
+
+  it('renderiza Markdown do assistente e mantém o texto do usuário literal', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({
+      answer: '### Confira a Agenda\n\n- **Próxima prova**\n- [Abrir Agenda](https://tech-2d.github.io/web/)\n- [Link inválido](javascript:alert%281%29)\n\n<script>alert(1)</script>',
+    })))
+    chat()
+    send('**Minha pergunta**')
+
+    await screen.findByRole('heading', { name: 'Confira a Agenda' })
+    expect(screen.getByText('Próxima prova').tagName).toBe('STRONG')
+    expect(screen.getByRole('link', { name: 'Abrir Agenda' }).getAttribute('href')).toBe('https://tech-2d.github.io/web/')
+    expect(screen.queryByRole('link', { name: 'Link inválido' })).toBeNull()
+    expect(screen.getByText('**Minha pergunta**').tagName).toBe('DIV')
+    expect(document.querySelector('.assistant-markdown script')).toBeNull()
+  })
+
   it('moves the launcher, saves its position and only opens through a separate click', () => {
     const props = { account, endpoint, preferredClass: '2° TECH D' }
     const view = render(<AssistantChat {...props} />)

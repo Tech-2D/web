@@ -3,6 +3,7 @@ import { CalendarDays, ChevronDown, Maximize2, Minimize2, Plus, Sparkles, X } fr
 import type { User } from 'firebase/auth'
 import { KanbanCardFace } from './KanbanCardFace'
 import { AssistantWelcome } from './AssistantWelcome'
+import { AssistantReply } from './AssistantReply'
 import type { WelcomeActivity } from './assistantWelcomeContext'
 import { PRIORITIES } from './kanban'
 import type { Activity, AssistantActivityReference, Batch, BatchInput, CardInput, Draft, Fields, Kanban } from './assistantContract'
@@ -17,10 +18,11 @@ import './kanban.css'
 import './assistantChat.css'
 import './d2Sprites.css'
 
-type Turn = { text: string; user?: boolean; cards?: Activity[] }
+type Turn = { text: string; user?: boolean; cards?: Activity[]; operation?: string; formatted?: boolean }
 type D2Reaction = 'repouso' | 'saudacao' | 'respondendo' | 'confirmacao'
 
 const noWelcomeActivities: readonly WelcomeActivity[] = []
+const markdownSyntax = /(?:^|\n)\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>\s|```)|\*[^*\n]+\*|\b_{1,2}[^_\n]+_{1,2}\b|`[^`]+`|\[[^\]]+\]\(|<https?:\/\//
 const kanbanDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
 const launcherHints = [
   'Quer saber o que tem na Agenda hoje?',
@@ -209,9 +211,10 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
             ? `${data.remaining_messages} mensagens restantes hoje`
             : '')
       }
-      const reply = { text: data.answer, cards: data.cards }
+      const reply = { text: data.answer, cards: data.cards, operation: data.notes_operation,
+        formatted: Boolean(data.notes_operation) || markdownSyntax.test(data.answer) }
       setTurns(old => [...old, reply])
-      if (transcript.current && !chat.current?.hidden && document.documentElement.dataset.motion !== 'reduzido'
+      if (!reply.formatted && transcript.current && !chat.current?.hidden && document.documentElement.dataset.motion !== 'reduzido'
         && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
         setTypedText('')
         setTypingTurn(reply)
@@ -343,8 +346,9 @@ export default function AssistantChat({ account, preferredClass, endpoint, prefi
             void send('/api/chat', { message: question, preferred_class: preferredClass }, question)
           }} />}
         {turns.map((turn, index) => <div className={turn.cards?.length ? 'assistant-result-turn' : 'assistant-message'} key={index}>
-          <div className={turn.user ? 'assistant-turn user' : 'assistant-turn'}>
-            {turn.user ? turn.text : <span className={turn === typingTurn ? 'assistant-typing-text' : undefined}>
+          <div className={turn.user ? 'assistant-turn user' : turn.operation ? 'assistant-turn assistant-turn-notes' : 'assistant-turn'}>
+            {turn.user ? turn.text : turn.formatted ? <AssistantReply text={turn.text} operation={turn.operation} />
+              : <span className={turn === typingTurn ? 'assistant-typing-text' : undefined}>
               <span>{turn.text}</span>
               {turn === typingTurn && <span aria-hidden="true">{typedText}<i /></span>}
             </span>}
