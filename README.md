@@ -23,6 +23,12 @@ O site ainda usa funções no formato do Firestore (`doc`, `collection`, `onSnap
 
 O histórico da migração do Firestore para o PostgreSQL está em [docs/historico](docs/historico/README.md).
 
+## Kanban
+
+Use **Selecionar** para marcar cartões e mover ou excluir o grupo. Você pode arrastar pelo cartão ou pelo controle de seleção. Dois cliques também pegam o cartão para soltar com outro clique. A lixeira aparece durante o arraste e pede confirmação antes de excluir.
+
+No Assistente, peça seus cartões do Meu Kanban ou faça consultas da Agenda, do Kanban e do Cadê o Professor na mesma mensagem.
+
 ## Agenda da turma
 
 Calendário mensal com tarefas, lições, trabalhos e eventos por turma. Representantes e o superadministrador criam, editam e excluem atividades.
